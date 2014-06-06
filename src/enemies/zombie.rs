@@ -60,6 +60,7 @@ pub trait Zombie {
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game);
 	fn draw(&self, display: &graphics::Graphics);
 	fn damage_rectangle(&self) -> Rectangle;
+	fn zombie_type(&self) -> int;
 }
 
 pub struct SlowZombie {
@@ -76,7 +77,8 @@ pub struct RandomZombie {
 }
 
 pub struct CloudZombie {
-	character: Character
+	character: Character,
+	chasing:   bool
 }
 
 impl SlowZombie {
@@ -183,6 +185,10 @@ impl Zombie for SlowZombie {
 			height: Y_BOX.height(),
 		}
 	}
+
+	fn zombie_type(&self) -> int {
+		1
+	}
 }
 
 impl CrazyZombie {
@@ -280,7 +286,7 @@ impl Zombie for CrazyZombie {
 
 		// keep going to target unless it has been reached
 		if !self.chasing {
-			self.character.set_new_crazy_target();
+			self.character.set_new_target();
 		} else {
 			self.character.target_x = player_x;
 			self.character.target_y = player_y;
@@ -309,6 +315,10 @@ impl Zombie for CrazyZombie {
 			width: X_BOX.width(),
 			height: Y_BOX.height(),
 		}
+	}
+
+	fn zombie_type(&self) -> int {
+		2
 	}
 }
 
@@ -418,6 +428,10 @@ impl Zombie for RandomZombie {
 			height: Y_BOX.height(),
 		}
 	}
+
+	fn zombie_type(&self) -> int {
+		3
+	}
 }
 
 impl CloudZombie {
@@ -425,7 +439,8 @@ impl CloudZombie {
 	           x: units::Game, y: units::Game) -> CloudZombie {
 
 		let mut new_cloud_zombie = CloudZombie { 
-			character: common::Character::new(x, y)
+			character: common::Character::new(x, y), 
+			chasing:   false
 		};
 
 		for motion in sprite::MOTIONS.iter() {
@@ -495,20 +510,34 @@ impl Zombie for CloudZombie {
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
 
 		// run physics sim
-		self.character.update_x(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
-		self.character.update_y(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
+		self.character.update_x(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY);
+		self.character.update_y(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
+		// if close to player, start chasing
+		self.chasing = match self.character.distance( player_x, player_y ) {
+			d if d < 50.0 => true,
+			_             => false
+		};
+
+		// keep going to target unless it has been reached
+		if !self.chasing {
+			self.character.set_new_target();
+		} else {
+			self.character.target_x = player_x;
+			self.character.target_y = player_y;
+		}
+
 		self.character.accel_x = match self.character.center_x() {
-			center if center < player_x => 1,
-			center if center > player_x => -1,
-			_				            => 0
+			center if center < self.character.target_x => 1,
+			center if center > self.character.target_x => -1,
+			_				            	 		   => 0
 		};
 		self.character.accel_y = match self.character.center_y() {
-			center if center < player_y => 1, 
-			center if center > player_y => -1, 
-			_				            => 0
+			center if center < self.character.target_y => 1, 
+			center if center > self.character.target_y => -1, 
+			_				            	 		   => 0
 		};
 	}
 
@@ -523,5 +552,9 @@ impl Zombie for CloudZombie {
 			width: X_BOX.width(),
 			height: Y_BOX.height(),
 		}
+	}
+
+	fn zombie_type(&self) -> int {
+		4
 	}
 }

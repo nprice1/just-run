@@ -297,7 +297,7 @@ impl Character {
 		sqrt(xs + ys)
 	}
 
-	pub fn set_new_crazy_target(&mut self) {
+	pub fn set_new_target(&mut self) {
 		let mut rng = task_rng();
 		let distance_to_target = self.distance( self.target_x, self.target_y );
 

@@ -80,12 +80,12 @@ impl Game {
 				updates:     0,
 				level:       0,
 			};
-		game.spawn_zombie(3);
+		game.spawn_zombie(rng.gen_range(1u, 5u));
 
 		game
 	}
 
-	pub fn spawn_zombie(&mut self, kind: int) {
+	pub fn spawn_zombie(&mut self, kind: uint) {
 		let mut rng = task_rng();
 		match kind {
 			1 => {
@@ -141,7 +141,7 @@ impl Game {
 			);
 
 		self.enemies = enemies_vector;
-		self.spawn_zombie(3);
+		self.spawn_zombie(rng.gen_range(1u, 5u));
 
 		self.goal = goal::Goal::new(
 				&mut self.display, 
@@ -275,6 +275,7 @@ impl Game {
 
 	/// Passes the current time in milliseconds to our underlying actors.
 	fn update(&mut self, elapsed_time: units::Millis) {
+		let mut rng = task_rng();
 		self.map.update(elapsed_time);
 		self.player.update(elapsed_time, &self.map);
 		for i in range(0u, self.enemies.len()) { 
@@ -289,7 +290,7 @@ impl Game {
 			if enemy.damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
 			 	collidedWithZombie = true;
 			 	break;
-			 }
+			}
 		}
 		let enteredGoal = self.goal.damage_rectangle().collides_with(&self.player.character.damage_rectangle());
 
@@ -300,13 +301,27 @@ impl Game {
 				(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(), 
 				(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
 			);
-			self.spawn_zombie(3);
+			self.spawn_zombie(rng.gen_range(1u, 5u));
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
 			// print progress and start a new game
 			println!("Game Over! You made it to level {}", self.level);
 			self.restart();
+		}
+
+		// populate cloud zombies
+		if self.updates != 0 {
+			let mut new_zombies = false;
+			for enemy in self.enemies.iter() { 
+				if enemy.zombie_type() == 4 && self.updates % 300 == 0 {
+				  new_zombies = true;
+				  break;
+				}
+			}
+			if new_zombies {
+				self.spawn_zombie(4);
+			}
 		}
 	}
 }
