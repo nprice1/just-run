@@ -305,7 +305,7 @@ impl Character {
 			let chance_x = rng.gen_range(1u, 3u);
 			let chance_y = rng.gen_range(1u, 3u);
 			let plus_or_minus = rng.gen_range(1u, 3u);
-			self.target_x = match self.center_x() + units::Game(10.0) {
+			self.target_x = match self.center_x() {
 				center if plus_or_minus == 1 => {
 						if center > units::Tile(1).to_game() && center < units::Tile(16).to_game() {
 							center + units::Tile(chance_x).to_game()

@@ -80,12 +80,12 @@ impl Game {
 				updates:     0,
 				level:       0,
 			};
-		game.spawn_zombie(rng.gen_range(1u, 5u));
+		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 
 		game
 	}
 
-	pub fn spawn_zombie(&mut self, kind: uint) {
+	pub fn spawn_zombie(&mut self, kind: uint, location: (units::Game, units::Game)) {
 		let mut rng = task_rng();
 		match kind {
 			1 => {
@@ -113,11 +113,14 @@ impl Game {
 				self.enemies.push(zombie as ~enemies::Zombie);
 			}
 			_ => {
-				let zombie = ~enemies::CloudZombie::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
+				let zombie = match location {
+					(units::Game(0.0), units::Game(0.0)) => ~enemies::CloudZombie::new(
+																&mut self.display, 
+																(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+																(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+															),
+					(x, y) => ~enemies::CloudZombie::new(&mut self.display, x, y),
+				};
 				self.enemies.push(zombie as ~enemies::Zombie);
 			}
 		};
@@ -141,7 +144,7 @@ impl Game {
 			);
 
 		self.enemies = enemies_vector;
-		self.spawn_zombie(rng.gen_range(1u, 5u));
+		self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 
 		self.goal = goal::Goal::new(
 				&mut self.display, 
@@ -275,7 +278,6 @@ impl Game {
 
 	/// Passes the current time in milliseconds to our underlying actors.
 	fn update(&mut self, elapsed_time: units::Millis) {
-		let mut rng = task_rng();
 		self.map.update(elapsed_time);
 		self.player.update(elapsed_time, &self.map);
 		for i in range(0u, self.enemies.len()) { 
@@ -301,7 +303,7 @@ impl Game {
 				(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(), 
 				(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
 			);
-			self.spawn_zombie(rng.gen_range(1u, 5u));
+			self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
@@ -313,14 +315,16 @@ impl Game {
 		// populate cloud zombies
 		if self.updates != 0 {
 			let mut new_zombies = false;
+			let mut zombie_location: (units::Game, units::Game) = (units::Game(0.0), units::Game(0.0));
 			for enemy in self.enemies.iter() { 
 				if enemy.zombie_type() == 4 && self.updates % 300 == 0 {
 				  new_zombies = true;
+				  zombie_location = enemy.get_target();
 				  break;
 				}
 			}
 			if new_zombies {
-				self.spawn_zombie(4);
+				self.spawn_zombie(4, zombie_location);
 			}
 		}
 	}

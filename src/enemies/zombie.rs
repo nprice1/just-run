@@ -61,6 +61,7 @@ pub trait Zombie {
 	fn draw(&self, display: &graphics::Graphics);
 	fn damage_rectangle(&self) -> Rectangle;
 	fn zombie_type(&self) -> int;
+	fn get_target(&self) -> (units::Game, units::Game);
 }
 
 pub struct SlowZombie {
@@ -188,6 +189,10 @@ impl Zombie for SlowZombie {
 
 	fn zombie_type(&self) -> int {
 		1
+	}
+
+	fn get_target(&self) -> (units::Game, units::Game) {
+		(self.character.target_x, self.character.target_y)
 	}
 }
 
@@ -320,6 +325,10 @@ impl Zombie for CrazyZombie {
 	fn zombie_type(&self) -> int {
 		2
 	}
+
+	fn get_target(&self) -> (units::Game, units::Game) {
+		(self.character.target_x, self.character.target_y)
+	}
 }
 
 impl RandomZombie {
@@ -431,6 +440,10 @@ impl Zombie for RandomZombie {
 
 	fn zombie_type(&self) -> int {
 		3
+	}
+
+	fn get_target(&self) -> (units::Game, units::Game) {
+		(self.character.target_x, self.character.target_y)
 	}
 }
 
@@ -556,5 +569,9 @@ impl Zombie for CloudZombie {
 
 	fn zombie_type(&self) -> int {
 		4
+	}
+
+	fn get_target(&self) -> (units::Game, units::Game) {
+		(self.character.target_x, self.character.target_y)
 	}
 }
