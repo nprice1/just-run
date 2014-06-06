@@ -297,13 +297,13 @@ impl Character {
 		sqrt(xs + ys)
 	}
 
-	pub fn set_new_target(&mut self, range: uint) {
+	pub fn set_new_crazy_target(&mut self) {
 		let mut rng = task_rng();
 		let distance_to_target = self.distance( self.target_x, self.target_y );
 
 		if distance_to_target < 20.0 {
-			let chance_x = rng.gen_range(1u, range);
-			let chance_y = rng.gen_range(1u, range);
+			let chance_x = rng.gen_range(1u, 3u);
+			let chance_y = rng.gen_range(1u, 3u);
 			let plus_or_minus = rng.gen_range(1u, 3u);
 			self.target_x = match self.center_x() + units::Game(10.0) {
 				center if plus_or_minus == 1 => {
@@ -337,6 +337,16 @@ impl Character {
 						}
 					}
 			};
+		}
+	}
+
+	pub fn set_new_random_target(&mut self) {
+		let mut rng = task_rng();
+		let distance_to_target = self.distance( self.target_x, self.target_y );
+
+		if distance_to_target < 20.0 {
+			self.target_x = units::Tile(rng.gen_range(1u, 18u)).to_game();
+			self.target_y = units::Tile(rng.gen_range(1u, 18u)).to_game();
 		}
 	}
 

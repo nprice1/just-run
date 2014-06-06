@@ -280,7 +280,7 @@ impl Zombie for CrazyZombie {
 
 		// keep going to target unless it has been reached
 		if !self.chasing {
-			self.character.set_new_target(3);
+			self.character.set_new_crazy_target();
 		} else {
 			self.character.target_x = player_x;
 			self.character.target_y = player_y;
@@ -392,7 +392,7 @@ impl Zombie for RandomZombie {
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
-		self.character.set_new_target(16);
+		self.character.set_new_random_target();
 
 		self.character.accel_x = match self.character.center_x() {
 			center if center < self.character.target_x => 1,
