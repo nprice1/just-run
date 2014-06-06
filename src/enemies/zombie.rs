@@ -10,6 +10,9 @@ use game::common::Character;
 
 type MotionTup = (sprite::Motion, sprite::Facing);
 
+static SPRITE_NUM_FRAMES:  units::Frame  = 2;
+static SPRITE_FPS:         units::Fps    = 20;
+
 // Slow Zombie
 static SLOW_STAND_FRAME: units::Tile = units::Tile(3);
 static SLOW_WALK_FRAME:  units::Tile = units::Tile(4);
@@ -26,14 +29,14 @@ static CRAZY_CHASING_WALKING_ACCEL: units::Acceleration = units::Acceleration(0.
 static CRAZY_MAX_VELOCITY: units::Velocity      = units::Velocity(0.15859375);
 
 // Random Zombie
-static RANDOM_STAND_FRAME: units::Tile = units::Tile(5);
-static RANDOM_WALK_FRAME:  units::Tile = units::Tile(6);
+static RANDOM_STAND_FRAME: units::Tile = units::Tile(7);
+static RANDOM_WALK_FRAME:  units::Tile = units::Tile(7);
 
 static RANDOM_WALKING_ACCEL: units::Acceleration = units::Acceleration(0.00183007812);
 static RANDOM_MAX_VELOCITY: units::Velocity      = units::Velocity(0.20859375);
 
 // Cloud Zombie
-static CLOUD_STAND_FRAME: units::Tile = units::Tile(5);
+static CLOUD_STAND_FRAME: units::Tile = units::Tile(6);
 static CLOUD_WALK_FRAME:  units::Tile = units::Tile(6);
 
 static CLOUD_WALKING_ACCEL: units::Acceleration = units::Acceleration(0.00083007812);
@@ -277,7 +280,7 @@ impl Zombie for CrazyZombie {
 
 		// keep going to target unless it has been reached
 		if !self.chasing {
-			self.character.set_new_target();
+			self.character.set_new_target(3);
 		} else {
 			self.character.target_x = player_x;
 			self.character.target_y = player_y;
@@ -331,16 +334,16 @@ impl RandomZombie {
 	               movement: (sprite::Motion, sprite::Facing)) {
 
 		self.character.sprites.find_or_insert_with(movement, |key| -> ~sprite::Updatable<_> {
-			let asset_path = ~"assets/base/Npc/NpcWeed.bmp";
+			let asset_path = ~"assets/base/Npc/NpcCemet.bmp";
 			let (motion, facing) = *key;
 			let motion_frame = match motion {
-				sprite::Standing => SLOW_STAND_FRAME,
-				sprite::Walking  => SLOW_WALK_FRAME
+				sprite::Standing => RANDOM_STAND_FRAME,
+				sprite::Walking  => RANDOM_WALK_FRAME
 			};
 
 			let facing_frame = match facing {
-				sprite::West => WEST_OFFSET,
-				sprite::East => EAST_OFFSET
+				sprite::West => units::Tile(1),
+				sprite::East => units::Tile(2)
 			};
 
 			match movement {
@@ -384,20 +387,22 @@ impl Zombie for RandomZombie {
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
 
 		// run physics sim
-		self.character.update_x(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
-		self.character.update_y(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
+		self.character.update_x(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
+		self.character.update_y(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
+		self.character.set_new_target(16);
+
 		self.character.accel_x = match self.character.center_x() {
-			center if center < player_x => 1,
-			center if center > player_x => -1,
-			_				            => 0
+			center if center < self.character.target_x => 1,
+			center if center > self.character.target_x => -1,
+			_				            	 		   => 0
 		};
 		self.character.accel_y = match self.character.center_y() {
-			center if center < player_y => 1, 
-			center if center > player_y => -1, 
-			_				            => 0
+			center if center < self.character.target_y => 1, 
+			center if center > self.character.target_y => -1, 
+			_				            	 		   => 0
 		};
 	}
 
@@ -437,11 +442,11 @@ impl CloudZombie {
 	               movement: (sprite::Motion, sprite::Facing)) {
 
 		self.character.sprites.find_or_insert_with(movement, |key| -> ~sprite::Updatable<_> {
-			let asset_path = ~"assets/base/Npc/NpcWeed.bmp";
+			let asset_path = ~"assets/base/Npc/NpcMaze.bmp";
 			let (motion, facing) = *key;
 			let motion_frame = match motion {
-				sprite::Standing => SLOW_STAND_FRAME,
-				sprite::Walking  => SLOW_WALK_FRAME
+				sprite::Standing => CLOUD_STAND_FRAME,
+				sprite::Walking  => CLOUD_WALK_FRAME
 			};
 
 			let facing_frame = match facing {
@@ -462,12 +467,12 @@ impl CloudZombie {
 
 				// moving 
 				(sprite::Walking, _) => {
-					~sprite::Sprite::new(
-						display,
+					~sprite::AnimatedSprite::new(
+						display, asset_path,
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
-						asset_path
-					) as ~sprite::Updatable<_>
+						SPRITE_NUM_FRAMES, SPRITE_FPS
+					).unwrap() as ~sprite::Updatable<_>
 				}
 			}
 		});

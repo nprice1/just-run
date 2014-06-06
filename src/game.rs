@@ -80,7 +80,7 @@ impl Game {
 				updates:     0,
 				level:       0,
 			};
-		game.spawn_zombie(2);
+		game.spawn_zombie(3);
 
 		game
 	}
@@ -141,7 +141,7 @@ impl Game {
 			);
 
 		self.enemies = enemies_vector;
-		self.spawn_zombie(2);
+		self.spawn_zombie(3);
 
 		self.goal = goal::Goal::new(
 				&mut self.display, 
@@ -300,7 +300,7 @@ impl Game {
 				(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(), 
 				(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
 			);
-			self.spawn_zombie(2);
+			self.spawn_zombie(3);
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
