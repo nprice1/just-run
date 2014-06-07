@@ -29,7 +29,7 @@ impl Graphics {
 			"Just F&#%IN RUN",                       // title
 			video::PosCentered, video::PosCentered,  // position (x,y)
 			w as int, h as int,
-			[video::InputGrabbed]
+			[video::InputFocus]
 		);
 
 		let window_context = match current_mode {
@@ -40,7 +40,7 @@ impl Graphics {
 		let render_context = render::Renderer::from_window(
 			window_context,
 			render::DriverAuto,
-			[render::Software],
+			[render::Accelerated],
 		);
 
 		let graphics: Graphics = match render_context {
