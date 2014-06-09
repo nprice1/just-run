@@ -2,11 +2,10 @@
 
 extern crate sdl2;
 extern crate collections;
-extern crate rand;
 
 pub mod game;
 
 pub fn main() {
-	let mut story = ::game::Game::new();
+	let mut story = game::Game::new();
 	story.start();
 }
