@@ -123,6 +123,7 @@ impl Game {
 	}
 
 	pub fn start(&mut self) {
+		self.display.play_music();
 		self.event_loop();
 		sdl::quit();
 	}
@@ -190,8 +191,10 @@ impl Game {
 			if self.controller.was_key_released(keycode::ReturnKey) {
 				if self.paused {
 					self.paused = false;
+					self.display.resume_music();
 				} else {
 					self.paused = true;
+					self.display.pause_music();
 				}
 			}
 

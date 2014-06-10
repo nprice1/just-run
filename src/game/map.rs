@@ -172,7 +172,6 @@ impl Map {
 						sprite.draw(graphics,
 						            (units::Tile(b).to_game(),
 						             units::Tile(a).to_game()));
-;
 					}
 					_ => {}
 				};

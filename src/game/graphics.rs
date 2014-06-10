@@ -14,9 +14,14 @@ use sdl2::render;
 use sdl2::video;
 use sdl2::mouse;
 
+use sdl2_mixer::Music;
+use sdl2_mixer::{init,allocate_channels,open_audio};
+use sdl2_mixer::{InitMp3,InitFlac,InitMod,InitFluidSynth,InitModPlug,InitOgg,DEFAULT_FREQUENCY};
+
 /// Acts as a buffer to the underlying display
 pub struct Graphics {
 	screen:   Box<render::Renderer<video::Window>>,
+	music:    Music,
 	pub sprite_cache:  HashMap<string::String, Rc<Box<render::Texture>>>,
 }
 
@@ -44,11 +49,18 @@ impl Graphics {
 			render::Accelerated,
 		);
 
+		// setup audio
+		open_audio(DEFAULT_FREQUENCY, 0x8010u16, 2, 1024);
+		allocate_channels(0);
+		init(InitMp3 | InitFlac | InitMod | InitFluidSynth | InitModPlug | InitOgg);
+		let music = Music::from_file( &Path::new("assets/background.wav") ).unwrap();
+
 		let graphics: Graphics = match render_context {
 			Ok(renderer) => {
 				Graphics{
 					screen:        box renderer,
 					sprite_cache:  HashMap::<string::String, Rc<Box<render::Texture>>>::new(),
+					music:         music
 				}
 			},
 			Err(msg) => {fail!(msg)},
@@ -113,5 +125,15 @@ impl Graphics {
 
 	pub fn clear_buffer(&self) {
 		self.screen.clear();
+	}
+
+	pub fn play_music(&self) {
+		self.music.play(10000);
+	}
+	pub fn pause_music(&self) {
+		Music::pause();
+	}
+	pub fn resume_music(&self) {
+		Music::resume();
 	}
 }
