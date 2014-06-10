@@ -410,6 +410,7 @@ impl Zombie for RandomZombie {
 		self.character.update_y(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
 	}
 
+	#[allow(unused_variable)]
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
 		self.character.set_new_random_target();
 

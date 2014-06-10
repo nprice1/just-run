@@ -1,5 +1,3 @@
-use std::f64;
-
 static TILE_SIZE: i32          =  32;
 static SCALE: f64              = 1.0;
 

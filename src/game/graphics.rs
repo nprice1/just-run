@@ -27,6 +27,7 @@ pub struct Graphics {
 
 impl Graphics {
 	/// Prepare the display for rendering
+	#[allow(unused_must_use)]
 	pub fn new() -> Graphics {
 		let (units::Pixel(w), units::Pixel(h)) = 
 			(game::game::SCREEN_WIDTH.to_pixel(), game::game::SCREEN_HEIGHT.to_pixel());
@@ -98,7 +99,7 @@ impl Graphics {
 				}
 			}
 
-			match borrowed_display.create_texture_from_surface(box sprite_surface) {
+			match borrowed_display.create_texture_from_surface(&sprite_surface) {
 				Ok(texture) => Rc::new(box texture),
 				Err(msg) => fail!("sprite could not be rendered: {}", msg)
 			}
@@ -111,6 +112,7 @@ impl Graphics {
 		self.sprite_cache.remove(&file_path);
 	}
 	
+	#[allow(unused_must_use)]
 	pub fn blit_surface(&self,
 	                    src: &render::Texture,
 	                    src_rect:  &rect::Rect,
@@ -123,10 +125,12 @@ impl Graphics {
 		self.screen.present();
 	}
 
+	#[allow(unused_must_use)]
 	pub fn clear_buffer(&self) {
 		self.screen.clear();
 	}
 
+	#[allow(unused_must_use)]
 	pub fn play_music(&self) {
 		self.music.play(10000);
 	}

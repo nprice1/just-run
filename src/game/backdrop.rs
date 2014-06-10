@@ -21,7 +21,7 @@ impl FixedBackdrop {
 	}
 
 	/// Repeatedly paints the asset across the entire screen.
-	/// Moving the destination rectangle `BACKGROUND_SIZE` pixels
+	/// Moving the destination rectangle `size` pixels
 	/// in either direction as it progresses.
 	pub fn draw(&self, graphics: &graphics::Graphics, size: units::Tile) {
 		let (mut x, mut y) = (0i32,0i32);
