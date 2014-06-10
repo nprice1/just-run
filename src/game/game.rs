@@ -124,6 +124,9 @@ impl Game {
 
 	pub fn start(&mut self) {
 		self.display.play_music();
+		self.display.clear_buffer();
+		self.map.draw_start_screen(&self.display);
+		self.display.switch_buffers();
 		self.event_loop();
 		sdl::quit();
 	}
@@ -229,7 +232,7 @@ impl Game {
 			let elapsed_time    = current_time_ms - last_update_time;
 		
 			// only update if not in paused state, or when drawing the initial frame
-			if !self.paused || self.updates == 0 {
+			if !self.paused {
 				self.update(cmp::min(elapsed_time, MAX_FRAME_TIME));
 				last_update_time = current_time_ms;
 
