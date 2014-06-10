@@ -23,12 +23,9 @@ static STAND_FRAME: units::Tile   = units::Tile(0);
 static FACING_WEST: units::Tile  = units::Tile(0 + CHAR_OFFSET);
 static FACING_EAST: units::Tile  = units::Tile(1 + CHAR_OFFSET);
 
-/// Encapsulates the pysical motion of a player as it relates to
-/// a sprite which can be animated, positioned, and drawn on the screen.
 pub struct Player {
 	pub character: common::Character
 }
-
 
 impl Player {
 	/// Loads and initializes a set of sprite-sheets for the various combinatoins of directions.
@@ -142,10 +139,4 @@ impl Player {
 	pub fn stop_moving_vertically(&mut self) {
 		self.character.accel_y = 0;
 	}
-	
-	/// The player has been hit by a zombie
-	pub fn take_damage(&mut self) {
-		println!("zombie has collided with me! D:");
-	}
-
 }

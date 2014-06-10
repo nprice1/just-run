@@ -59,12 +59,7 @@ pub struct Map {
 }
 
 impl Map {
-	/// Will initialize a map (20 * 15) tiles:
-	///
-	/// * Most of these tiles will be `Air` tiles.
-	/// * There are 15-tile high walls in the first and last columns. 
-	/// * A small "obstacle course", 5-tiles wide, is placed about 2 tiles in.
-	/// * A 3-tile high chain is placed on the left-side of this obstacle course.
+	/// Will initialize a map (20 * 20) tiles:
 	pub fn create_test_map(graphics: &mut graphics::Graphics) -> Map {
 		static rows: uint = 20; // 480
 		static cols: uint = 20; // 640

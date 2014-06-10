@@ -26,7 +26,7 @@ pub static SCREEN_HEIGHT: units::Tile = units::Tile(20);
 pub static POSSIBLE_CHARACTER_TILES: uint = 18;
 pub static POSSIBLE_GOAL_TILES:		 uint = 17;
 
-/// An instance of the `rust-story` game with its own event loop.
+/// An instance of the `just-run` game with its own event loop.
 pub struct Game {
 	player:  player::Player,
 	enemies: Vec<Box<enemies::Zombie>>,
@@ -231,7 +231,7 @@ impl Game {
 			let current_time_ms = units::Millis(sdl::get_ticks() as int);
 			let elapsed_time    = current_time_ms - last_update_time;
 		
-			// only update if not in paused state, or when drawing the initial frame
+			// only update if not in paused state
 			if !self.paused {
 				self.update(cmp::min(elapsed_time, MAX_FRAME_TIME));
 				last_update_time = current_time_ms;

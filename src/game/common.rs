@@ -15,7 +15,7 @@ use game::units::AsGame;
 pub type MotionTup = (sprite::Motion, sprite::Facing);
 
 // collision detection boxes
-// (expressed as `units::Game`
+// (expressed as `units::Game`)
 static X_BOX: Rectangle = Rectangle {
 	x: units::Game(6.0), y: units::Game(10.0), 
 	width: units::Game(20.0), height: units::Game(12.0)
@@ -50,7 +50,6 @@ impl Character {
 	///
 	/// The player will spawn at `x` and `y`, though it will immediately be subject to gravity.
 	/// The player is initailized `standing` facing `east`.
-	/// The player will continue to fall until some collision is detected.
 	pub fn new(x: units::Game, y: units::Game) -> Character {
 		// insert sprites into map
 		let sprite_map = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
