@@ -18,11 +18,11 @@ debug: RUST_FLAGS += -g -Z time-passes
 debug: compile
 
 deps:	
-	git submodule update --init	
-	mkdir -p lib	
-	rm -f lib/libsdl2*	
-	cd lib/rust-sdl2; make clean && make
-	cp lib/rust-sdl2/build/lib/libsdl2* lib/
+	cd ../rust-sdl2; git pull; make	
+	cp ~/rust-playground/rust-sdl2/build/lib/libsdl2* ../JustRun/lib/
+	cp ~/rust-playground/rust-sdl2/build/lib/libsdl2* ../rust-sdl2_mixer/lib/
+	cd ../rust-sdl2_mixer; git pull; rustc -L lib src/sdl2_mixer/lib.rs
+	cp ~/rust-playground/rust-sdl2_mixer/libsdl2_mixer* ../JustRun/lib/
 
 doc:
 	rustdoc $(LDFLAGS) src/main.rs
