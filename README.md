@@ -5,7 +5,7 @@ WAS BORROWED FROM:
 
 https://github.com/drbawb/rust-story
 
-This project uses [rust-sdl2](https://github.com/AngryLawyer/rust-sdl2) which binds to SDL2 and [rust-sdl2_mixer](https://github.com/andelf/rust-sdl2_mixer).
+This project uses [rust-sdl2](https://github.com/AngryLawyer/rust-sdl2) which binds to SDL2, [rust-sdl2_mixer](https://github.com/andelf/rust-sdl2_mixer), and [rust-sdl2_ttf](https://github.com/andelf/rust-sdl2_ttf).
 
 To run the project:
  * Install [`rust@master`](https://github.com/mozilla/rust)
