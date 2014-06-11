@@ -9,9 +9,6 @@ use game::units;
 use game::collisions::Rectangle;
 use game::units::{AsGame,AsTile};
 
-static START_SIZE: units::Tile = units::Tile(20);
-static BACKGROUND_SIZE: units::Tile = units::Tile(4);
-
 #[deriving(PartialEq,Eq,Clone)]
 pub enum TileType {
 	Air,
@@ -53,7 +50,6 @@ impl Tile {
 
 pub struct Map {
 	background:  backdrop::FixedBackdrop,
-	start:       backdrop::FixedBackdrop,
 	sprites:     ~[~[Tile]],
 	tiles:       ~[~[Tile]],
 }
@@ -122,7 +118,6 @@ impl Map {
 		];
 		let mut map = Map {
 			background: backdrop::FixedBackdrop::new("assets/base/bkBlue.bmp".to_string(), graphics),
-			start: backdrop::FixedBackdrop::new("assets/start.bmp".to_string(), graphics),
 			sprites: sprite_slice,
 			tiles: tile_slice
 		};
@@ -143,11 +138,7 @@ impl Map {
 	}
 
 	pub fn draw_background(&self, graphics: &graphics::Graphics) {
-		self.background.draw(graphics, BACKGROUND_SIZE);
-	}
-
-	pub fn draw_start_screen(&self, graphics: &graphics::Graphics) {
-		self.start.draw(graphics, START_SIZE);
+		self.background.draw(graphics);
 	}
 
 	pub fn draw_sprites(&self, graphics: &graphics::Graphics) {

@@ -125,7 +125,7 @@ impl Game {
 	pub fn start(&mut self) {
 		self.display.play_music();
 		self.display.clear_buffer();
-		self.map.draw_start_screen(&self.display);
+		self.map.draw_background(&self.display);
 		self.display.switch_buffers();
 		self.event_loop();
 		sdl::quit();

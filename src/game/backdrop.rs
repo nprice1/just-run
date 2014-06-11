@@ -10,6 +10,8 @@ use sdl2::render::Texture;
 
 use collections::string;
 
+static BACKGROUND_SIZE: units::Tile = units::Tile(4);
+
 pub struct FixedBackdrop {
 	surface: Rc<Box<Texture>>
 }
@@ -21,11 +23,11 @@ impl FixedBackdrop {
 	}
 
 	/// Repeatedly paints the asset across the entire screen.
-	/// Moving the destination rectangle `size` pixels
+	/// Moving the destination rectangle `BACKGROUND_SIZE` pixels
 	/// in either direction as it progresses.
-	pub fn draw(&self, graphics: &graphics::Graphics, size: units::Tile) {
+	pub fn draw(&self, graphics: &graphics::Graphics) {
 		let (mut x, mut y) = (0i32,0i32);
-		let units::Pixel(tile_size) = size.to_pixel();
+		let units::Pixel(tile_size) = BACKGROUND_SIZE.to_pixel();
 
 		while units::Pixel(x) < game::SCREEN_WIDTH.to_pixel() {
 			while units::Pixel(y) < game::SCREEN_HEIGHT.to_pixel() {
