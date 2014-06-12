@@ -3,3 +3,4 @@
 lib/*.rlib
 bin/**
 doc/**
+highscore.txt

@@ -1,7 +1,9 @@
 use std::cmp;
 use std::io::Timer;
+use std::io::File;
 use std::vec::Vec;
 use std::rand::{task_rng, Rng};
+use collections::string::String;
 
 use sdl2::rect;
 use sdl2::sdl;
@@ -47,6 +49,7 @@ pub struct Game {
 	paused:      bool,
 	updates:     int,
 	level:       int, 
+	highscore:   int,
 }
 
 impl Game {
@@ -85,6 +88,7 @@ impl Game {
 				paused:      true,
 				updates:     0,
 				level:       0,
+				highscore:   Game::get_highscore(),
 			};
 		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 
@@ -134,13 +138,19 @@ impl Game {
 
 	pub fn start(&mut self) {
 		self.display.play_music();
+		self.draw_start_screen();
+		self.event_loop();
+		sdl::quit();
+	}
+
+	pub fn draw_start_screen(&mut self) {
 		self.display.clear_buffer();
 		self.map.draw_background(&self.display);
 		self.display.switch_buffers();
 		self.display.draw_text("JUST F&#%IN RUN!!!", rect!(45, 50, 550, 200));
+		let score_string = String::from_str("CURRENT HIGHSCORE: ").append(self.highscore.to_str().as_slice());
+		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
 		self.display.draw_text("PRESS ENTER AND START RUNNING...", rect!(160, 500, 300, 50));
-		self.event_loop();
-		sdl::quit();
 	}
 
 	pub fn restart(&mut self) {
@@ -323,6 +333,7 @@ impl Game {
 		if collidedWithZombie {
 			// print progress and start a new game
 			println!("Game Over! You made it to level {}", self.level);
+			self.store_highscore(self.level);
 			self.restart();
 		}
 
@@ -339,6 +350,24 @@ impl Game {
 			}
 			if new_zombies {
 				self.spawn_zombie(4, zombie_location);
+			}
+		}
+	}
+
+	fn get_highscore() -> int {
+		match File::open(&Path::new("highscore.txt")).read_to_str() {
+		    Ok(score) => { from_str(score.as_slice()).unwrap() }, // succeeded
+		    Err(e) => { println!("failed to get highscore: {}", e); 0 }
+		}
+	}
+
+	fn store_highscore(&mut self, new_score: int) {
+		if new_score > self.highscore {
+			match File::create(&Path::new("highscore.txt")).write_int(new_score) {
+			    Ok(()) => { 
+			    	self.highscore = new_score;
+			    }, // succeeded
+			    Err(e) => println!("failed to write highscore: {}", e)
 			}
 		}
 	}
