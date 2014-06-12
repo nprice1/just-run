@@ -3,9 +3,11 @@ use std::io::Timer;
 use std::vec::Vec;
 use std::rand::{task_rng, Rng};
 
+use sdl2::rect;
 use sdl2::sdl;
 use sdl2::event;
 use sdl2::keycode;
+use sdl2_ttf;
 
 pub use game::units::{AsGame};
 
@@ -25,6 +27,13 @@ pub static SCREEN_HEIGHT: units::Tile = units::Tile(20);
 
 pub static POSSIBLE_CHARACTER_TILES: uint = 18;
 pub static POSSIBLE_GOAL_TILES:		 uint = 17;
+
+// hadle the annoying Rect i32
+macro_rules! rect(
+    ($x:expr, $y:expr, $w:expr, $h:expr) => (
+        rect::Rect::new($x as i32, $y as i32, $w as i32, $h as i32)
+    )
+)
 
 /// An instance of the `just-run` game with its own event loop.
 pub struct Game {
@@ -49,6 +58,7 @@ impl Game {
 		// initialize all major subsystems
 		// hide the mouse cursor in our drawing context
 		sdl::init(sdl::InitEverything);
+		sdl2_ttf::init();
 		let mut display = graphics::Graphics::new();
 		let controller  = input::Input::new();
 		let mut rng = task_rng();
@@ -127,6 +137,8 @@ impl Game {
 		self.display.clear_buffer();
 		self.map.draw_background(&self.display);
 		self.display.switch_buffers();
+		self.display.draw_text("JUST F&#%IN RUN!!!", rect!(45, 50, 550, 200));
+		self.display.draw_text("PRESS ENTER AND START RUNNING...", rect!(160, 500, 300, 50));
 		self.event_loop();
 		sdl::quit();
 	}

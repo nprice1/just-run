@@ -102,6 +102,7 @@ impl<C: AsGame> Updatable<C> for Sprite {
 
 /// Represents a 32x32 2D character w/ a number of frames
 /// Frames will be selected based on time-deltas supplied through update
+#[allow(dead_code)]
 pub struct AnimatedSprite {
 	pub source_rect:   rect::Rect,
 	pub sprite_sheet:  Rc<Box<render::Texture>>,

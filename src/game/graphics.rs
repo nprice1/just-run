@@ -14,14 +14,18 @@ use sdl2::render;
 use sdl2::video;
 use sdl2::mouse;
 
-use sdl2_mixer::Music;
-use sdl2_mixer::{init,allocate_channels,open_audio};
-use sdl2_mixer::{InitMp3,InitFlac,InitMod,InitFluidSynth,InitModPlug,InitOgg,DEFAULT_FREQUENCY};
+use sdl2_mixer;
+use sdl2_ttf;
+
+// fail when error
+macro_rules! trying(
+    ($e:expr) => (match $e { Ok(e) => e, Err(e) => fail!("failed: {}", e) })
+)
 
 /// Acts as a buffer to the underlying display
 pub struct Graphics {
 	screen:   Box<render::Renderer<video::Window>>,
-	music:    Music,
+	music:    sdl2_mixer::Music,
 	pub sprite_cache:  HashMap<string::String, Rc<Box<render::Texture>>>,
 }
 
@@ -51,10 +55,10 @@ impl Graphics {
 		);
 
 		// setup audio
-		open_audio(DEFAULT_FREQUENCY, 0x8010u16, 2, 1024);
-		allocate_channels(0);
-		init(InitMp3 | InitFlac | InitMod | InitFluidSynth | InitModPlug | InitOgg);
-		let music = Music::from_file( &Path::new("assets/background.wav") ).unwrap();
+		sdl2_mixer::open_audio(sdl2_mixer::DEFAULT_FREQUENCY, 0x8010u16, 2, 1024);
+		sdl2_mixer::allocate_channels(0);
+		sdl2_mixer::init(sdl2_mixer::InitMp3 | sdl2_mixer::InitFlac | sdl2_mixer::InitMod | sdl2_mixer::InitFluidSynth | sdl2_mixer::InitModPlug | sdl2_mixer::InitOgg);
+		let music = sdl2_mixer::Music::from_file( &Path::new("assets/background.wav") ).unwrap();
 
 		let graphics: Graphics = match render_context {
 			Ok(renderer) => {
@@ -135,9 +139,19 @@ impl Graphics {
 		self.music.play(10000);
 	}
 	pub fn pause_music(&self) {
-		Music::pause();
+		sdl2_mixer::Music::pause();
 	}
 	pub fn resume_music(&self) {
-		Music::resume();
+		sdl2_mixer::Music::resume();
+	}
+
+	#[allow(unused_must_use)]
+	pub fn draw_text(&self, text: &str, dest_rect: rect::Rect) {
+		let font = trying!(sdl2_ttf::Font::from_file(&Path::new("assets/font.ttf"), 128));
+		// render a surface, and convert it to a texture bound to the renderer
+	    let surface = trying!(font.render_str_blended(text, pixels::RGBA(255, 0, 0, 255)));
+	    let texture = trying!(self.screen.create_texture_from_surface(&surface));
+    	self.screen.copy(&texture, None, Some(dest_rect));
+    	self.switch_buffers();
 	}
 }

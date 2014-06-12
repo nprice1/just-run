@@ -1,5 +1,7 @@
 #![crate_id="rust-story#0.0.1"]
 
+
+#![feature(macro_rules)]
 extern crate sdl2;
 extern crate sdl2_mixer;
 extern crate sdl2_ttf;
