@@ -154,9 +154,6 @@ impl Game {
 	}
 
 	pub fn draw_game_over_screen(&mut self) {
-		self.display.clear_buffer();
-		self.map.draw_background(&self.display);
-		self.display.switch_buffers();
 		self.display.draw_text("GAME OVER MAN!", rect!(45, 50, 550, 200));
 		let score_string = String::from_str("YOUR SCORE: ").append(self.level.to_str().as_slice());
 		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
