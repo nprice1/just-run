@@ -157,6 +157,9 @@ impl Game {
 		self.display.draw_text("GAME OVER MAN!", rect!(45, 50, 550, 200));
 		let score_string = String::from_str("YOUR SCORE: ").append(self.level.to_str().as_slice());
 		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
+		if self.level > self.highscore {
+			self.display.draw_text("NEW HIGHSCORE!!", rect!(120, 400, 400, 60));
+		}
 		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
 	}
 
@@ -183,7 +186,6 @@ impl Game {
 
 		self.paused = true;
 		self.updates = 0;
-		self.draw_game_over_screen();
 		self.level = 0;
 	}
 
@@ -341,7 +343,8 @@ impl Game {
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
-			// store score and start a new game
+			// draw game over screen store score and start a new game
+			self.draw_game_over_screen();
 			self.store_highscore(self.level);
 			self.restart();
 		}
