@@ -153,6 +153,16 @@ impl Game {
 		self.display.draw_text("PRESS ENTER AND START RUNNING...", rect!(160, 500, 300, 50));
 	}
 
+	pub fn draw_game_over_screen(&mut self) {
+		self.display.clear_buffer();
+		self.map.draw_background(&self.display);
+		self.display.switch_buffers();
+		self.display.draw_text("GAME OVER MAN!", rect!(45, 50, 550, 200));
+		let score_string = String::from_str("YOUR SCORE: ").append(self.level.to_str().as_slice());
+		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
+		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
+	}
+
 	pub fn restart(&mut self) {
 		println!("Restarting game...");
 
@@ -176,6 +186,7 @@ impl Game {
 
 		self.paused = true;
 		self.updates = 0;
+		self.draw_game_over_screen();
 		self.level = 0;
 	}
 
@@ -258,10 +269,12 @@ impl Game {
 				self.update(cmp::min(elapsed_time, MAX_FRAME_TIME));
 				last_update_time = current_time_ms;
 
-				// draw
-				self.display.clear_buffer(); // clear back-buffer
-				self.draw();
-				self.display.switch_buffers();
+				// draw if game has been started
+				if self.updates != 0 {
+					self.display.clear_buffer(); // clear back-buffer
+					self.draw();
+					self.display.switch_buffers();
+				}
 			}
 
 			// throttle event-loop based on iteration time vs frame deadline
@@ -331,8 +344,7 @@ impl Game {
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
-			// print progress and start a new game
-			println!("Game Over! You made it to level {}", self.level);
+			// store score and start a new game
 			self.store_highscore(self.level);
 			self.restart();
 		}
