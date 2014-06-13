@@ -15,6 +15,7 @@ pub use game::units::{AsGame};
 
 pub use game::units;
 pub use game::enemies;
+pub use game::powerups;
 pub use game::map;
 pub use game::input;
 pub use game::goal;
@@ -39,10 +40,11 @@ macro_rules! rect(
 
 /// An instance of the `just-run` game with its own event loop.
 pub struct Game {
-	player:  player::Player,
-	enemies: Vec<Box<enemies::Zombie>>,
-	goal:    goal::Goal,
-	map:     map::Map,
+	player:   player::Player,
+	enemies:  Vec<Box<enemies::Zombie>>,
+	powerups: Vec<Box<powerups::Powerup>>,
+	goal:     goal::Goal,
+	map:      map::Map,
 
 	display:     graphics::Graphics,
 	controller:  input::Input,
@@ -66,6 +68,7 @@ impl Game {
 		let controller  = input::Input::new();
 		let mut rng = task_rng();
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
+		let powerups_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 
 		let mut game = Game {
 				map: map::Map::create_test_map(&mut display),
@@ -76,6 +79,7 @@ impl Game {
 				),
 
 				enemies: enemies_vector,
+				powerups: powerups_vector,
 
 				goal: goal::Goal::new(
 					&mut display, 
@@ -91,6 +95,7 @@ impl Game {
 				highscore:   Game::get_highscore(),
 			};
 		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
+		game.spawn_powerup(rng.gen_range(1u, 5u));
 
 		game
 	}
@@ -136,6 +141,47 @@ impl Game {
 		};
 	}
 
+	pub fn spawn_powerup(&mut self, kind: uint) {
+		let mut rng = task_rng();
+		// 20% chance of generating a powerup
+		if rng.gen_range(1u, 11u) > 8 {
+			match kind {
+				1 => {
+					let powerup = box powerups::SpeedUp::new(
+									&mut self.display, 
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+								);
+					self.powerups.push(powerup as Box<powerups::Powerup>);
+				}
+				2 => {
+					let powerup = box powerups::KillZombie::new(
+									&mut self.display, 
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+								);
+					self.powerups.push(powerup as Box<powerups::Powerup>);
+				}
+				3 => {
+					let powerup = box powerups::WipeOut::new(
+									&mut self.display, 
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+								);
+					self.powerups.push(powerup as Box<powerups::Powerup>);
+				}
+				_ => {
+					let powerup = box powerups::Freeze::new(
+									&mut self.display, 
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+								);
+					self.powerups.push(powerup as Box<powerups::Powerup>);
+				}
+			};
+		}
+	}
+
 	pub fn start(&mut self) {
 		self.display.play_music();
 		self.draw_start_screen();
@@ -168,6 +214,7 @@ impl Game {
 
 		let mut rng = task_rng();
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
+		let powerup_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 
 		self.player = player::Player::new(
 				&mut self.display,
@@ -176,7 +223,9 @@ impl Game {
 			);
 
 		self.enemies = enemies_vector;
+		self.powerups = powerup_vector;
 		self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
+		self.spawn_powerup(rng.gen_range(1u, 5u));
 
 		self.goal = goal::Goal::new(
 				&mut self.display, 
@@ -307,6 +356,7 @@ impl Game {
 
 		// foreground
 		self.goal.draw(&self.display);
+		for powerup in self.powerups.iter() { powerup.draw(&self.display); }
 		self.player.character.draw(&self.display);
 		for enemy in self.enemies.iter() { enemy.draw(&self.display); }
 		self.map.draw(&self.display);
@@ -332,6 +382,21 @@ impl Game {
 		}
 		let enteredGoal = self.goal.damage_rectangle().collides_with(&self.player.character.damage_rectangle());
 
+		// Apply powerup
+		let mut counter = 0;
+		let mut powerup_type = 0;
+		for powerup in self.powerups.mut_iter() { 
+			if powerup.damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
+			 	powerup_type = powerup.get_type();
+			 	break;
+			}
+			counter = counter + 1;
+		}
+		if powerup_type > 0 {
+			self.powerups.remove(counter);
+			self.apply_powerup(powerup_type);
+		}
+
 		if enteredGoal {
 			let mut rng = task_rng();
 			self.goal = goal::Goal::new(
@@ -340,6 +405,7 @@ impl Game {
 				(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
 			);
 			self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
+			self.spawn_powerup(rng.gen_range(1u, 5u));
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
@@ -363,6 +429,23 @@ impl Game {
 			if new_zombies {
 				self.spawn_zombie(4, zombie_location);
 			}
+		}
+	}
+
+	fn apply_powerup(&self, kind: int) {
+		match kind {
+			// speed up player
+			1 => { self.player.apply_speedup(); },
+			// kill random zombie
+			2 => { 
+			},
+			// wipe out all zombies
+			3 => { 
+			},
+			// freeze all zombies
+			_ => {
+
+			},
 		}
 	}
 

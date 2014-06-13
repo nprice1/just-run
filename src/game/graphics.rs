@@ -136,7 +136,7 @@ impl Graphics {
 
 	#[allow(unused_must_use)]
 	pub fn play_music(&self) {
-		self.music.play(10000);
+		self.music.play(100000);
 	}
 	pub fn pause_music(&self) {
 		sdl2_mixer::Music::pause();

@@ -139,4 +139,8 @@ impl Player {
 	pub fn stop_moving_vertically(&mut self) {
 		self.character.accel_y = 0;
 	}
+
+	pub fn apply_speedup(&self) {
+		
+	}
 }

@@ -13,3 +13,4 @@ pub mod map;
 pub mod player;
 pub mod sprite;
 pub mod goal;
+pub mod powerups;

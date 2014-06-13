@@ -14,14 +14,12 @@ static SPRITE_NUM_FRAMES:  units::Frame  = 2;
 static SPRITE_FPS:         units::Fps    = 20;
 
 // Slow Zombie
-static SLOW_STAND_FRAME: units::Tile = units::Tile(3);
 static SLOW_WALK_FRAME:  units::Tile = units::Tile(4);
 
 static SLOW_WALKING_ACCEL:  units::Acceleration  = units::Acceleration(0.00003007812);
 static SLOW_MAX_VELOCITY: units::Velocity      = units::Velocity(0.15859375);
 
 // Crazy Zombie
-static CRAZY_STAND_FRAME: units::Tile = units::Tile(5);
 static CRAZY_WALK_FRAME:  units::Tile = units::Tile(6);
 
 static CRAZY_START_WALKING_ACCEL:  units::Acceleration  = units::Acceleration(0.00063007812);
@@ -29,14 +27,12 @@ static CRAZY_CHASING_WALKING_ACCEL: units::Acceleration = units::Acceleration(0.
 static CRAZY_MAX_VELOCITY: units::Velocity      = units::Velocity(0.15859375);
 
 // Random Zombie
-static RANDOM_STAND_FRAME: units::Tile = units::Tile(7);
 static RANDOM_WALK_FRAME:  units::Tile = units::Tile(7);
 
 static RANDOM_WALKING_ACCEL: units::Acceleration = units::Acceleration(0.00183007812);
 static RANDOM_MAX_VELOCITY: units::Velocity      = units::Velocity(0.20859375);
 
 // Cloud Zombie
-static CLOUD_STAND_FRAME: units::Tile = units::Tile(6);
 static CLOUD_WALK_FRAME:  units::Tile = units::Tile(6);
 
 static CLOUD_WALKING_ACCEL: units::Acceleration = units::Acceleration(0.00083007812);
@@ -105,38 +101,20 @@ impl SlowZombie {
 
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcWeed.bmp".to_string();
-			let (motion, facing) = *key;
-			let motion_frame = match motion {
-				sprite::Standing => SLOW_STAND_FRAME,
-				sprite::Walking  => SLOW_WALK_FRAME
-			};
+			let (_, facing) = *key;
+			let motion_frame = SLOW_WALK_FRAME;
 
 			let facing_frame = match facing {
 				sprite::West => WEST_OFFSET,
 				sprite::East => EAST_OFFSET
 			};
-
-			match movement {
-				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::Sprite::new(
-						display, 
-						(motion_frame, facing_frame), 
-						(units::Tile(1), units::Tile(1)),	
-						asset_path
-					) as Box<sprite::Updatable<_>> 
-				}
-
-				// moving 
-				(sprite::Walking, _) => {
-					box sprite::Sprite::new(
-						display,
-						(motion_frame, facing_frame),
-						(units::Tile(1), units::Tile(1)),
-						asset_path
-					) as Box<sprite::Updatable<_>>
-				}
-			}
+				
+			box sprite::Sprite::new(
+				display,
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				asset_path
+			) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -220,38 +198,20 @@ impl CrazyZombie {
 
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcWeed.bmp".to_string();
-			let (motion, facing) = *key;
-			let motion_frame = match motion {
-				sprite::Standing => CRAZY_STAND_FRAME,
-				sprite::Walking  => CRAZY_WALK_FRAME
-			};
+			let (_, facing) = *key;
+			let motion_frame = CRAZY_WALK_FRAME;
 
 			let facing_frame = match facing {
 				sprite::West => WEST_OFFSET,
 				sprite::East => EAST_OFFSET
 			};
-
-			match movement {
-				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::Sprite::new(
-						display, 
-						(motion_frame, facing_frame), 
-						(units::Tile(1), units::Tile(1)),	
-						asset_path
-					) as Box<sprite::Updatable<_>> 
-				}
-
-				// moving 
-				(sprite::Walking, _) => {
-					box sprite::Sprite::new(
-						display,
-						(motion_frame, facing_frame),
-						(units::Tile(1), units::Tile(1)),
-						asset_path
-					) as Box<sprite::Updatable<_>>
-				}
-			}
+					
+			box sprite::Sprite::new(
+				display,
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				asset_path
+			) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -354,38 +314,20 @@ impl RandomZombie {
 
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcCemet.bmp".to_string();
-			let (motion, facing) = *key;
-			let motion_frame = match motion {
-				sprite::Standing => RANDOM_STAND_FRAME,
-				sprite::Walking  => RANDOM_WALK_FRAME
-			};
+			let (_, facing) = *key;
+			let motion_frame = RANDOM_WALK_FRAME;
 
 			let facing_frame = match facing {
 				sprite::West => units::Tile(1),
 				sprite::East => units::Tile(2)
 			};
 
-			match movement {
-				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::Sprite::new(
-						display, 
-						(motion_frame, facing_frame), 
-						(units::Tile(1), units::Tile(1)),	
-						asset_path
-					) as Box<sprite::Updatable<_>> 
-				}
-
-				// moving 
-				(sprite::Walking, _) => {
-					box sprite::Sprite::new(
-						display,
-						(motion_frame, facing_frame),
-						(units::Tile(1), units::Tile(1)),
-						asset_path
-					) as Box<sprite::Updatable<_>>
-				}
-			}
+			box sprite::Sprite::new(
+				display,
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				asset_path
+			) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -472,38 +414,20 @@ impl CloudZombie {
 
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcMaze.bmp".to_string();
-			let (motion, facing) = *key;
-			let motion_frame = match motion {
-				sprite::Standing => CLOUD_STAND_FRAME,
-				sprite::Walking  => CLOUD_WALK_FRAME
-			};
+			let (_, facing) = *key;
+			let motion_frame = CLOUD_WALK_FRAME;
 
 			let facing_frame = match facing {
 				sprite::West => WEST_OFFSET,
 				sprite::East => EAST_OFFSET
 			};
 
-			match movement {
-				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::Sprite::new(
-						display, 
-						(motion_frame, facing_frame), 
-						(units::Tile(1), units::Tile(1)),	
-						asset_path
-					) as Box<sprite::Updatable<_>> 
-				}
-
-				// moving 
-				(sprite::Walking, _) => {
-					box sprite::AnimatedSprite::new(
-						display, asset_path,
-						(motion_frame, facing_frame),
-						(units::Tile(1), units::Tile(1)),
-						SPRITE_NUM_FRAMES, SPRITE_FPS
-					).unwrap() as Box<sprite::Updatable<_>>
-				}
-			}
+			box sprite::AnimatedSprite::new(
+				display, asset_path,
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				SPRITE_NUM_FRAMES, SPRITE_FPS
+			).unwrap() as Box<sprite::Updatable<_>>
 		});
 	}
 }
