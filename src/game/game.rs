@@ -147,7 +147,7 @@ impl Game {
 		if rng.gen_range(1u, 11u) > 8 {
 			match kind {
 				1 => {
-					let powerup = box powerups::SpeedUp::new(
+					let powerup = box powerups::CricketBat::new(
 									&mut self.display, 
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
@@ -432,22 +432,24 @@ impl Game {
 		}
 	}
 
-	fn apply_powerup(&self, kind: int) {
+	fn apply_powerup(&mut self, kind: int) {
+		let mut rng = task_rng();
+		let length = self.enemies.len();
 		match kind {
-			// speed up player
-			1 => { self.player.apply_speedup(); },
+			// kill next zombie you touch without dying
+			1 => { println!("CRICKET BAT"); },
 			// kill random zombie
-			2 => { 
-			},
-			// wipe out all zombies
-			3 => { 
-			},
+			2 => { self.enemies.remove( rng.gen_range(0u, length) ); },
+			// wipe out all zombies in given range
+			3 => { println!("WIPING OUT ZOMBIES"); },
 			// freeze all zombies
-			_ => {
-
-			},
+			_ => { println!("FREEZING ZOMBIES"); },
+			// TODO: sticky feet
+			// TODO: wipe out that alternates as debuff
 		}
 	}
+
+
 
 	fn get_highscore() -> int {
 		match File::open(&Path::new("highscore.txt")).read_to_str() {

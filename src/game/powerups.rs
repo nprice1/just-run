@@ -34,7 +34,7 @@ pub trait Powerup {
 	fn get_type(&self) -> int;
 }
 
-pub struct SpeedUp {
+pub struct CricketBat {
 	character: Character
 }
 
@@ -50,11 +50,11 @@ pub struct Freeze {
 	character: Character
 }
 
-impl SpeedUp {
+impl CricketBat {
 	pub fn new(graphics: &mut graphics::Graphics,
-	           x: units::Game, y: units::Game) -> SpeedUp {
+	           x: units::Game, y: units::Game) -> CricketBat {
 
-		let mut new_slow_zombie = SpeedUp { 
+		let mut new_slow_zombie = CricketBat { 
 			character: common::Character::new(x, y)
 		};
 
@@ -87,7 +87,7 @@ impl SpeedUp {
 	}
 }
 
-impl Powerup for SpeedUp {
+impl Powerup for CricketBat {
 	fn draw(&self, display: &graphics::Graphics) {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 	}
@@ -273,3 +273,5 @@ impl Powerup for Freeze {
 		4
 	}
 }
+
+// TODO: Add trap powerup with benefits(?)
