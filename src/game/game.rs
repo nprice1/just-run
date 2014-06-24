@@ -411,7 +411,8 @@ impl Game {
 		if collidedWithZombie {
 			// draw game over screen store score and start a new game
 			self.draw_game_over_screen();
-			self.store_highscore(self.level);
+			let level = self.level;
+			self.store_highscore(level);
 			self.restart();
 		}
 

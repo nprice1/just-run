@@ -50,8 +50,8 @@ impl Tile {
 
 pub struct Map {
 	background:  backdrop::FixedBackdrop,
-	sprites:     ~[~[Tile]],
-	tiles:       ~[~[Tile]],
+	sprites:     Vec<Box<Vec<Box<Tile>>>>,
+	tiles:       Vec<Box<Vec<Box<Tile>>>>,
 }
 
 impl Map {
@@ -72,67 +72,30 @@ impl Map {
 
 		let blank_tile = Tile::new();
 		let wall_tile = Tile::from_sprite(sprite, Wall);
-		let sprite_slice: ~[~[Tile]] = box [ 
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ]
-		];
-		let tile_slice: ~[~[Tile]] = box [ 
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ],
-			box [ blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone(), blank_tile.clone() ]
-		];
-		let mut map = Map {
+		let mut sprite_vec: Vec<Box<Vec<Box<Tile>>>> = Vec::new();
+		let mut tile_vec: Vec<Box<Vec<Box<Tile>>>> = Vec::new();
+		for i in range(0, rows) {
+			let mut vec = box Vec::new();
+			let mut vec2 = box Vec::new();
+			for j in range(0, cols) {
+				// make the border
+				if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 {
+					vec.push(box wall_tile.clone());
+					vec2.push(box wall_tile.clone());
+				}
+				else {
+					vec.push(box blank_tile.clone());
+					vec2.push(box blank_tile.clone());
+				}
+			}
+			sprite_vec.push(vec);
+			tile_vec.push(vec2);
+		}
+		let map = Map {
 			background: backdrop::FixedBackdrop::new("assets/base/bkBlue.bmp".to_string(), graphics),
-			sprites: sprite_slice,
-			tiles: tile_slice
+			sprites: sprite_vec,
+			tiles: tile_vec
 		};
-	
-		// init `floor`
-		for i in range(0, cols) {
-			map.tiles[rows - 1][i] = wall_tile.clone(); // store a reference
-			map.tiles[0][i] = wall_tile.clone(); 
-		}
-
-		// "safety wall"
-		for i in range (0, rows) {
-			map.tiles[i][0] = wall_tile.clone();
-			map.tiles[i][cols - 1] = wall_tile.clone();
-		}
 	
 		map
 	}
@@ -143,8 +106,8 @@ impl Map {
 
 	pub fn draw_sprites(&self, graphics: &graphics::Graphics) {
 		for a in range(0, self.sprites.len()) {
-			for b in range(0, self.sprites[a].len()) {
-				match self.sprites[a][b].sprite {
+			for b in range(0, self.sprites.get(a).len()) {
+				match self.sprites.get(a).get(b).sprite {
 					Some(ref sprite) => {
 						sprite.draw(graphics, 
 						            (units::Tile(b).to_game(),
@@ -159,8 +122,8 @@ impl Map {
 	/// Draws current state to `display`
 	pub fn draw(&self, graphics: &graphics::Graphics) {
 		for a in range(0, self.tiles.len()) {
-			for b in range(0, self.tiles[a].len()) {
-				match self.tiles[a][b].sprite {
+			for b in range(0, self.tiles.get(a).len()) {
+				match self.tiles.get(a).get(b).sprite {
 					Some(ref sprite) => {
 						sprite.draw(graphics,
 						            (units::Tile(b).to_game(),
@@ -206,7 +169,7 @@ impl Map {
 		for row in range(first_row, last_row + 1) {
 			for col in range(first_col, last_col + 1) {
 				collision_tiles.push( 
-					CollisionTile::new(units::Tile(row), units::Tile(col), self.tiles[row][col].tile_type)
+					CollisionTile::new(units::Tile(row), units::Tile(col), self.tiles.get(row).get(col).tile_type)
 				);
 			}
 		}
