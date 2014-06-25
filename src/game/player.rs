@@ -24,7 +24,8 @@ static FACING_WEST: units::Tile  = units::Tile(0 + CHAR_OFFSET);
 static FACING_EAST: units::Tile  = units::Tile(1 + CHAR_OFFSET);
 
 pub struct Player {
-	pub character: common::Character
+	pub character: common::Character,
+	cricket_bat: bool
 }
 
 impl Player {
@@ -37,7 +38,8 @@ impl Player {
 	pub fn new(graphics: &mut graphics::Graphics, x: units::Game, y: units::Game) -> Player {
 		// construct new player
 		let mut new_player = Player{
-			character: common::Character::new(x, y)
+			character: common::Character::new(x, y),
+			cricket_bat: false
 		};
 
 		// load sprites for every possible movement tuple.
@@ -140,7 +142,15 @@ impl Player {
 		self.character.accel_y = 0;
 	}
 
-	pub fn apply_speedup(&self) {
-		
+	pub fn give_bat(&mut self) {
+		self.cricket_bat = true;
+	}
+
+	pub fn take_bat(&mut self) {
+		self.cricket_bat = false;
+	}
+
+	pub fn has_bat(&self) -> bool {
+		self.cricket_bat
 	}
 }

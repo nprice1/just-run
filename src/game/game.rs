@@ -21,6 +21,7 @@ pub use game::input;
 pub use game::goal;
 pub use game::player;
 pub use game::graphics;
+pub use game::collisions::Rectangle;
 
 static TARGET_FRAMERATE: units::Fps  =  60;
 static MAX_FRAME_TIME: units::Millis =  units::Millis(5 * (1000 / TARGET_FRAMERATE) as int);
@@ -46,12 +47,13 @@ pub struct Game {
 	goal:     goal::Goal,
 	map:      map::Map,
 
-	display:     graphics::Graphics,
-	controller:  input::Input,
-	paused:      bool,
-	updates:     int,
-	level:       int, 
-	highscore:   int,
+	display:        graphics::Graphics,
+	controller:     input::Input,
+	paused:         bool,
+	updates:        int,
+	level:          int, 
+	highscore:      int,
+	freeze_counter: int
 }
 
 impl Game {
@@ -87,12 +89,13 @@ impl Game {
 					(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
 				),
 
-				display:     display,
-				controller:  controller, 
-				paused:      true,
-				updates:     0,
-				level:       0,
-				highscore:   Game::get_highscore(),
+				display:        display,
+				controller:     controller, 
+				paused:         true,
+				updates:        0,
+				level:          0,
+				highscore:      Game::get_highscore(),
+				freeze_counter: 0
 			};
 		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 		game.spawn_powerup(rng.gen_range(1u, 5u));
@@ -366,17 +369,28 @@ impl Game {
 	fn update(&mut self, elapsed_time: units::Millis) {
 		self.map.update(elapsed_time);
 		self.player.update(elapsed_time, &self.map);
-		for i in range(0u, self.enemies.len()) { 
-			let enemy = self.enemies.get_mut(i);
-			enemy.set_acceleration(self.player.character.center_x(), self.player.character.center_y()); 
-			enemy.update(elapsed_time, &self.map); 
+		if self.freeze_counter == 0 {
+			for i in range(0u, self.enemies.len()) { 
+				let enemy = self.enemies.get_mut(i);
+				enemy.set_acceleration(self.player.character.center_x(), self.player.character.center_y()); 
+				enemy.update(elapsed_time, &self.map); 
+			}
+		}
+		else {
+			self.freeze_counter = self.freeze_counter - 1;
 		}
 		self.goal.update(elapsed_time);
 
 		let mut collidedWithZombie = false;
-		for enemy in self.enemies.iter() { 
-			if enemy.damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
-			 	collidedWithZombie = true;
+		for i in range(0, self.enemies.len()) { 
+			if self.enemies.get(i).damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
+				if self.player.has_bat() {
+					self.enemies.remove(i);
+					self.player.take_bat();
+				}
+			 	else {
+			 		collidedWithZombie = true;
+			 	}
 			 	break;
 			}
 		}
@@ -438,19 +452,30 @@ impl Game {
 		let length = self.enemies.len();
 		match kind {
 			// kill next zombie you touch without dying
-			1 => { println!("CRICKET BAT"); },
+			1 => { println!("CRICKET BAT"); self.player.give_bat(); },
 			// kill random zombie
-			2 => { self.enemies.remove( rng.gen_range(0u, length) ); },
+			2 => { println!("KILL ZOMBIE"); self.enemies.remove( rng.gen_range(0u, length) ); },
 			// wipe out all zombies in given range
-			3 => { println!("WIPING OUT ZOMBIES"); },
+			3 => { 
+				println!("WIPE OUT");
+				let mut kill_vector = Vec::new();
+				let mut count = 0;
+				for enemy in self.enemies.iter() { 
+				    if self.player.character.distance( enemy.get_x(), enemy.get_y() ) < 200.0 {
+				    	kill_vector.push(count);
+				    }
+				    count = count + 1;
+				}
+				for index in kill_vector.iter() {
+					self.enemies.remove(*index);
+				}
+			},
 			// freeze all zombies
-			_ => { println!("FREEZING ZOMBIES"); },
+			_ => { println!("FREEZE"); self.freeze_counter = 300; },
 			// TODO: sticky feet
 			// TODO: wipe out that alternates as debuff
 		}
 	}
-
-
 
 	fn get_highscore() -> int {
 		match File::open(&Path::new("highscore.txt")).read_to_str() {
