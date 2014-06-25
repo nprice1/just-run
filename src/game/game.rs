@@ -458,17 +458,19 @@ impl Game {
 			// wipe out all zombies in given range
 			3 => { 
 				println!("WIPE OUT");
-				let mut kill_vector = Vec::new();
-				let mut count = 0;
-				for enemy in self.enemies.iter() { 
-				    if self.player.character.distance( enemy.get_x(), enemy.get_y() ) < 200.0 {
-				    	kill_vector.push(count);
-				    }
-				    count = count + 1;
+				let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
+				for _ in range(0, self.enemies.len()) { 
+					let enemy = self.enemies.pop();
+					match enemy {
+						Some(enemy) => {
+							if self.player.character.distance( enemy.get_x(), enemy.get_y() ) > 200.0 {
+						    	new_enemies.push(enemy);
+						    }
+						},
+						None => {}
+					}
 				}
-				for index in kill_vector.iter() {
-					self.enemies.remove(*index);
-				}
+				self.enemies = new_enemies;
 			},
 			// freeze all zombies
 			_ => { println!("FREEZE"); self.freeze_counter = 300; },
