@@ -25,7 +25,8 @@ static FACING_EAST: units::Tile  = units::Tile(1 + CHAR_OFFSET);
 
 pub struct Player {
 	pub character: common::Character,
-	cricket_bat: bool
+	cricket_bat: bool, 
+	sticky_count: int
 }
 
 impl Player {
@@ -39,7 +40,8 @@ impl Player {
 		// construct new player
 		let mut new_player = Player{
 			character: common::Character::new(x, y),
-			cricket_bat: false
+			cricket_bat: false,
+			sticky_count: 0
 		};
 
 		// load sprites for every possible movement tuple.
@@ -64,8 +66,12 @@ impl Player {
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
 
 		// run physics sim
-		self.character.update_x(map, WALKING_ACCEL, MAX_VELOCITY);
-		self.character.update_y(map, WALKING_ACCEL, MAX_VELOCITY);
+		self.character.update_x(map, WALKING_ACCEL, MAX_VELOCITY, self.sticky_count > 0);
+		self.character.update_y(map, WALKING_ACCEL, MAX_VELOCITY, self.sticky_count > 0);
+
+		if self.sticky_count > 0 {
+		  self.sticky_count = self.sticky_count - 1;
+		}
 	}
 
 	/// Loads a sprite for the selected `movement`, stores it in the player's sprite map.
@@ -152,5 +158,9 @@ impl Player {
 
 	pub fn has_bat(&self) -> bool {
 		self.cricket_bat
+	}
+
+	pub fn give_sticky_feet(&mut self) {
+		self.sticky_count = 500;
 	}
 }

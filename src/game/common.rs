@@ -95,7 +95,7 @@ impl Character {
 		self.movement = (last_action, direction);
 	}
 
-	pub fn update_x(&mut self, map: &map::Map, acceleration: units::Acceleration, max_velocity: units::Velocity) {
+	pub fn update_x(&mut self, map: &map::Map, acceleration: units::Acceleration, max_velocity: units::Velocity, sticky: bool) {
 		// compute next velocity
 		let accel_x: units::Acceleration = if self.accel_x < 0  {
 			-acceleration
@@ -106,9 +106,15 @@ impl Character {
 		self.velocity_x = self.velocity_x + (accel_x * self.elapsed_time);
 
 		if self.accel_x < 0 {
-			self.velocity_x =  units::max(self.velocity_x, -max_velocity);
+			self.velocity_x = match sticky {
+				false => { units::max(self.velocity_x, -max_velocity) },
+				_     => { -max_velocity }
+			}
 		} else if self.accel_x > 0 {
-			self.velocity_x = units::min(self.velocity_x, max_velocity);
+			self.velocity_x = match sticky {
+				false => { units::min(self.velocity_x, max_velocity) },
+				_     => { max_velocity }
+			}
 		} 
 
 		// x-axis collision checking 
@@ -151,7 +157,7 @@ impl Character {
 		}
 	}
 
-	pub fn update_y (&mut self, map: &map::Map, acceleration: units::Acceleration, max_velocity: units::Velocity) {
+	pub fn update_y (&mut self, map: &map::Map, acceleration: units::Acceleration, max_velocity: units::Velocity, sticky: bool) {
 		// compute next velocity
 		let accel_y: units::Acceleration = if self.accel_y < 0  {
 			-acceleration 
@@ -162,9 +168,15 @@ impl Character {
 		self.velocity_y = self.velocity_y + (accel_y * self.elapsed_time);
 
 		if self.accel_y < 0 {
-			self.velocity_y =  units::max(self.velocity_y, -max_velocity);
+			self.velocity_y =  match sticky {
+				false => { units::max(self.velocity_y, -max_velocity) },
+				_     => { -max_velocity }
+			}
 		} else if self.accel_y > 0 {
-			self.velocity_y = units::min(self.velocity_y, max_velocity);
+			self.velocity_y = match sticky {
+				false => { units::min(self.velocity_y, max_velocity) },
+				_     => { max_velocity }
+			}
 		} 
 
 		// calculate delta

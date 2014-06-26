@@ -173,8 +173,16 @@ impl Game {
 								);
 					self.powerups.push(powerup as Box<powerups::Powerup>);
 				}
-				_ => {
+				4 => {
 					let powerup = box powerups::Freeze::new(
+									&mut self.display, 
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+								);
+					self.powerups.push(powerup as Box<powerups::Powerup>);
+				}
+				_ => {
+					let powerup = box powerups::StickyFeet::new(
 									&mut self.display, 
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
@@ -473,7 +481,8 @@ impl Game {
 				self.enemies = new_enemies;
 			},
 			// freeze all zombies
-			_ => { println!("FREEZE"); self.freeze_counter = 300; },
+			4 => { println!("FREEZE"); self.freeze_counter = 300; },
+			_ => { println!("STICKY FEET"); self.player.give_sticky_feet(); }
 			// TODO: sticky feet
 			// TODO: wipe out that alternates as debuff
 		}

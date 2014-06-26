@@ -137,8 +137,8 @@ impl Zombie for SlowZombie {
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
 
 		// run physics sim
-		self.character.update_x(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
-		self.character.update_y(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
+		self.character.update_x(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY, false);
+		self.character.update_y(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY, false);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
@@ -248,8 +248,8 @@ impl Zombie for CrazyZombie {
 		};
 
 		// run physics sim
-		self.character.update_x(map, acceleration, CRAZY_MAX_VELOCITY);
-		self.character.update_y(map, acceleration, CRAZY_MAX_VELOCITY);
+		self.character.update_x(map, acceleration, CRAZY_MAX_VELOCITY, false);
+		self.character.update_y(map, acceleration, CRAZY_MAX_VELOCITY, false);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
@@ -366,8 +366,8 @@ impl Zombie for RandomZombie {
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
 
 		// run physics sim
-		self.character.update_x(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
-		self.character.update_y(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
+		self.character.update_x(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY, false);
+		self.character.update_y(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY, false);
 	}
 
 	#[allow(unused_variable)]
@@ -474,8 +474,8 @@ impl Zombie for CloudZombie {
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
 
 		// run physics sim
-		self.character.update_x(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY);
-		self.character.update_y(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY);
+		self.character.update_x(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY, false);
+		self.character.update_y(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY, false);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {

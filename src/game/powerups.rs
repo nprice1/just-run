@@ -14,10 +14,11 @@ static SPRITE_NUM_FRAMES:  units::Frame  = 2;
 static SPRITE_FPS:         units::Fps    = 20;
 
 // Sprite locations
-static SPEEDUP_FRAME: units::Tile = units::Tile(1);
+static CRICKET_FRAME: units::Tile = units::Tile(1);
 static KILLZOMBIE_FRAME: units::Tile = units::Tile(2);
 static WIPEOUT_FRAME: units::Tile = units::Tile(3);
 static FREEZE_FRAME: units::Tile = units::Tile(7);
+static STICKY_FRAME: units::Tile = units::Tile(8);
 
 static X_BOX: Rectangle = Rectangle {
 	x: units::Game(6.0), y: units::Game(10.0), 
@@ -50,21 +51,25 @@ pub struct Freeze {
 	character: Character
 }
 
+pub struct StickyFeet {
+	character: Character
+}
+
 impl CricketBat {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> CricketBat {
 
-		let mut new_slow_zombie = CricketBat { 
+		let mut new_powerup = CricketBat { 
 			character: common::Character::new(x, y)
 		};
 
 		for motion in sprite::MOTIONS.iter() {
 			for facing in sprite::FACINGS.iter() {
-				new_slow_zombie.load_sprite(graphics, (*motion, *facing));
+				new_powerup.load_sprite(graphics, (*motion, *facing));
 			}
 		}
 
-		new_slow_zombie
+		new_powerup
 	}
 
 	pub fn load_sprite(&mut self, 
@@ -73,7 +78,7 @@ impl CricketBat {
 
 		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = SPEEDUP_FRAME;
+			let motion_frame = CRICKET_FRAME;
 
 			let facing_frame = units::Tile(0);
 
@@ -110,17 +115,17 @@ impl KillZombie {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> KillZombie {
 
-		let mut new_crazy_zombie = KillZombie { 
+		let mut new_powerup = KillZombie { 
 			character: common::Character::new(x, y)
 		};
 
 		for motion in sprite::MOTIONS.iter() {
 			for facing in sprite::FACINGS.iter() {
-				new_crazy_zombie.load_sprite(graphics, (*motion, *facing));
+				new_powerup.load_sprite(graphics, (*motion, *facing));
 			}
 		}
 
-		new_crazy_zombie
+		new_powerup
 	}
 
 	pub fn load_sprite(&mut self, 
@@ -166,17 +171,17 @@ impl WipeOut {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> WipeOut {
 
-		let mut new_random_zombie = WipeOut { 
+		let mut new_powerup = WipeOut { 
 			character: common::Character::new(x, y)
 		};
 
 		for motion in sprite::MOTIONS.iter() {
 			for facing in sprite::FACINGS.iter() {
-				new_random_zombie.load_sprite(graphics, (*motion, *facing));
+				new_powerup.load_sprite(graphics, (*motion, *facing));
 			}
 		}
 
-		new_random_zombie
+		new_powerup
 	}
 
 	pub fn load_sprite(&mut self, 
@@ -222,17 +227,17 @@ impl Freeze {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> Freeze {
 
-		let mut new_cloud_zombie = Freeze { 
+		let mut new_powerup = Freeze { 
 			character: common::Character::new(x, y)
 		};
 
 		for motion in sprite::MOTIONS.iter() {
 			for facing in sprite::FACINGS.iter() {
-				new_cloud_zombie.load_sprite(graphics, (*motion, *facing));
+				new_powerup.load_sprite(graphics, (*motion, *facing));
 			}
 		}
 
-		new_cloud_zombie
+		new_powerup
 	}
 
 	pub fn load_sprite(&mut self, 
@@ -271,6 +276,62 @@ impl Powerup for Freeze {
 
 	fn get_type(&self) -> int {
 		4
+	}
+}
+
+impl StickyFeet {
+	pub fn new(graphics: &mut graphics::Graphics,
+	           x: units::Game, y: units::Game) -> StickyFeet {
+
+		let mut new_powerup = StickyFeet { 
+			character: common::Character::new(x, y)
+		};
+
+		for motion in sprite::MOTIONS.iter() {
+			for facing in sprite::FACINGS.iter() {
+				new_powerup.load_sprite(graphics, (*motion, *facing));
+			}
+		}
+
+		new_powerup
+	}
+
+	pub fn load_sprite(&mut self, 
+	               display: &mut graphics::Graphics,
+	               movement: (sprite::Motion, sprite::Facing)) {
+
+		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
+			let asset_path = "assets/base/powerups.bmp".to_string();
+			let motion_frame = STICKY_FRAME;
+
+			let facing_frame = units::Tile(0);
+
+			box sprite::Sprite::new(
+				display,
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				asset_path
+			) as Box<sprite::Updatable<_>>
+		});
+	}
+}
+
+impl Powerup for StickyFeet {
+	fn draw(&self, display: &graphics::Graphics) {
+		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+	}
+
+	fn damage_rectangle(&self) -> Rectangle {
+		Rectangle {
+			x: self.character.x + X_BOX.left(),
+			y: self.character.y + Y_BOX.top(),
+			width: X_BOX.width(),
+			height: Y_BOX.height(),
+		}
+	}
+
+	fn get_type(&self) -> int {
+		5
 	}
 }
 
