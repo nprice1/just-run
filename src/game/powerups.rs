@@ -1,3 +1,5 @@
+use std::collections::hashmap::HashMap;
+
 use game::collisions::Rectangle;
 use game::sprite;
 use game::graphics;
@@ -10,15 +12,14 @@ use game::common::Character;
 
 type MotionTup = (sprite::Motion, sprite::Facing);
 
-static SPRITE_NUM_FRAMES:  units::Frame  = 2;
-static SPRITE_FPS:         units::Fps    = 20;
-
 // Sprite locations
 static CRICKET_FRAME: units::Tile = units::Tile(1);
 static KILLZOMBIE_FRAME: units::Tile = units::Tile(2);
 static WIPEOUT_FRAME: units::Tile = units::Tile(3);
 static FREEZE_FRAME: units::Tile = units::Tile(7);
 static STICKY_FRAME: units::Tile = units::Tile(8);
+static NUKE_FRAME: units::Tile = units::Tile(9);
+static BAD_FRAME: units::Tile = units::Tile(10);
 
 static X_BOX: Rectangle = Rectangle {
 	x: units::Game(6.0), y: units::Game(10.0), 
@@ -33,26 +34,39 @@ pub trait Powerup {
 	fn draw(&self, display: &graphics::Graphics);
 	fn damage_rectangle(&self) -> Rectangle;
 	fn get_type(&self) -> int;
+	fn toggle_debuff(&mut self);
+	fn is_debuff(&self) -> bool;
 }
 
 pub struct CricketBat {
-	character: Character
+	character: Character, 
+	is_debuff: bool
 }
 
 pub struct KillZombie {
-	character: Character
+	character: Character, 
+	is_debuff: bool
 }
 
 pub struct WipeOut {
-	character: Character
+	character: Character, 
+	is_debuff: bool
 }
 
 pub struct Freeze {
-	character: Character
+	character: Character, 
+	is_debuff: bool
 }
 
 pub struct StickyFeet {
-	character: Character
+	character: Character, 
+	is_debuff: bool
+}
+
+pub struct Nuke {
+	character: Character, 
+	alternate_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
+	is_debuff: bool
 }
 
 impl CricketBat {
@@ -60,7 +74,8 @@ impl CricketBat {
 	           x: units::Game, y: units::Game) -> CricketBat {
 
 		let mut new_powerup = CricketBat { 
-			character: common::Character::new(x, y)
+			character: common::Character::new(x, y), 
+			is_debuff: false
 		};
 
 		for motion in sprite::MOTIONS.iter() {
@@ -106,6 +121,14 @@ impl Powerup for CricketBat {
 		}
 	}
 
+	fn toggle_debuff(&mut self) {
+		self.is_debuff = !self.is_debuff;
+	}
+
+	fn is_debuff(&self) -> bool {
+		self.is_debuff
+	}
+
 	fn get_type(&self) -> int {
 		1
 	}
@@ -116,7 +139,8 @@ impl KillZombie {
 	           x: units::Game, y: units::Game) -> KillZombie {
 
 		let mut new_powerup = KillZombie { 
-			character: common::Character::new(x, y)
+			character: common::Character::new(x, y), 
+			is_debuff: false
 		};
 
 		for motion in sprite::MOTIONS.iter() {
@@ -162,6 +186,14 @@ impl Powerup for KillZombie {
 		}
 	}
 
+	fn toggle_debuff(&mut self) {
+		self.is_debuff = !self.is_debuff;
+	}
+
+	fn is_debuff(&self) -> bool {
+		self.is_debuff
+	}
+
 	fn get_type(&self) -> int {
 		2
 	}
@@ -172,7 +204,8 @@ impl WipeOut {
 	           x: units::Game, y: units::Game) -> WipeOut {
 
 		let mut new_powerup = WipeOut { 
-			character: common::Character::new(x, y)
+			character: common::Character::new(x, y), 
+			is_debuff: false
 		};
 
 		for motion in sprite::MOTIONS.iter() {
@@ -218,6 +251,14 @@ impl Powerup for WipeOut {
 		}
 	}
 
+	fn toggle_debuff(&mut self) {
+		self.is_debuff = !self.is_debuff;
+	}
+
+	fn is_debuff(&self) -> bool {
+		self.is_debuff
+	}
+
 	fn get_type(&self) -> int {
 		3
 	}
@@ -228,7 +269,8 @@ impl Freeze {
 	           x: units::Game, y: units::Game) -> Freeze {
 
 		let mut new_powerup = Freeze { 
-			character: common::Character::new(x, y)
+			character: common::Character::new(x, y), 
+			is_debuff: false
 		};
 
 		for motion in sprite::MOTIONS.iter() {
@@ -250,12 +292,12 @@ impl Freeze {
 
 			let facing_frame = units::Tile(0);
 
-			box sprite::AnimatedSprite::new(
-				display, asset_path,
+			box sprite::Sprite::new(
+				display,
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
-				SPRITE_NUM_FRAMES, SPRITE_FPS
-			).unwrap() as Box<sprite::Updatable<_>>
+				asset_path
+			) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -274,6 +316,14 @@ impl Powerup for Freeze {
 		}
 	}
 
+	fn toggle_debuff(&mut self) {
+		self.is_debuff = !self.is_debuff;
+	}
+
+	fn is_debuff(&self) -> bool {
+		self.is_debuff
+	}
+
 	fn get_type(&self) -> int {
 		4
 	}
@@ -284,7 +334,8 @@ impl StickyFeet {
 	           x: units::Game, y: units::Game) -> StickyFeet {
 
 		let mut new_powerup = StickyFeet { 
-			character: common::Character::new(x, y)
+			character: common::Character::new(x, y), 
+			is_debuff: false
 		};
 
 		for motion in sprite::MOTIONS.iter() {
@@ -330,8 +381,100 @@ impl Powerup for StickyFeet {
 		}
 	}
 
+	fn toggle_debuff(&mut self) {
+		self.is_debuff = !self.is_debuff;
+	}
+
+	fn is_debuff(&self) -> bool {
+		self.is_debuff
+	}
+
 	fn get_type(&self) -> int {
 		5
+	}
+}
+
+impl Nuke {
+	pub fn new(graphics: &mut graphics::Graphics,
+	           x: units::Game, y: units::Game) -> Nuke {
+
+		let mut new_powerup = Nuke { 
+			character: common::Character::new(x, y), 
+			alternate_sprites: HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new(),
+			is_debuff: false
+		};
+
+		for motion in sprite::MOTIONS.iter() {
+			for facing in sprite::FACINGS.iter() {
+				new_powerup.load_sprite(graphics, (*motion, *facing));
+			}
+		}
+
+		new_powerup
+	}
+
+	pub fn load_sprite(&mut self, 
+	               display: &mut graphics::Graphics,
+	               movement: (sprite::Motion, sprite::Facing)) {
+
+		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
+			let asset_path = "assets/base/powerups.bmp".to_string();
+			let motion_frame = NUKE_FRAME;
+
+			let facing_frame = units::Tile(0);
+
+			box sprite::Sprite::new(
+				display,
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				asset_path
+			) as Box<sprite::Updatable<_>>
+		});
+
+		self.alternate_sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
+			let asset_path = "assets/base/powerups.bmp".to_string();
+			let motion_frame = BAD_FRAME;
+
+			let facing_frame = units::Tile(0);
+
+			box sprite::Sprite::new(
+				display,
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				asset_path
+			) as Box<sprite::Updatable<_>>
+		});
+	}
+}
+
+impl Powerup for Nuke {
+	fn draw(&self, display: &graphics::Graphics) {
+		if self.is_debuff {
+			self.alternate_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		} else {
+			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		}
+	}
+
+	fn damage_rectangle(&self) -> Rectangle {
+		Rectangle {
+			x: self.character.x + X_BOX.left(),
+			y: self.character.y + Y_BOX.top(),
+			width: X_BOX.width(),
+			height: Y_BOX.height(),
+		}
+	}
+
+	fn toggle_debuff(&mut self) {
+		self.is_debuff = !self.is_debuff;
+	}
+
+	fn is_debuff(&self) -> bool {
+		self.is_debuff
+	}
+
+	fn get_type(&self) -> int {
+		6
 	}
 }
 

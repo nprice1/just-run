@@ -98,7 +98,7 @@ impl Game {
 				freeze_counter: 0
 			};
 		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
-		game.spawn_powerup(rng.gen_range(1u, 5u));
+		game.spawn_powerup(rng.gen_range(1u, 7u));
 
 		game
 	}
@@ -181,8 +181,16 @@ impl Game {
 								);
 					self.powerups.push(powerup as Box<powerups::Powerup>);
 				}
-				_ => {
+				5 => {
 					let powerup = box powerups::StickyFeet::new(
+									&mut self.display, 
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+								);
+					self.powerups.push(powerup as Box<powerups::Powerup>);
+				}
+				_ => {
+					let powerup = box powerups::Nuke::new(
 									&mut self.display, 
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
@@ -236,7 +244,7 @@ impl Game {
 		self.enemies = enemies_vector;
 		self.powerups = powerup_vector;
 		self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
-		self.spawn_powerup(rng.gen_range(1u, 5u));
+		self.spawn_powerup(rng.gen_range(1u, 7u));
 
 		self.goal = goal::Goal::new(
 				&mut self.display, 
@@ -247,6 +255,7 @@ impl Game {
 		self.paused = true;
 		self.updates = 0;
 		self.level = 0;
+		self.freeze_counter = 0;
 	}
 
 	/// Polls current input events & dispatches them to the engine.
@@ -387,6 +396,13 @@ impl Game {
 		else {
 			self.freeze_counter = self.freeze_counter - 1;
 		}
+		for i in range(0, self.powerups.len()) {
+			let powerup = self.powerups.get_mut(i);
+		    // change debuff status every 10 updates
+			if self.updates % 20 == 0 {
+				powerup.toggle_debuff();
+			}
+		}
 		self.goal.update(elapsed_time);
 
 		let mut collidedWithZombie = false;
@@ -408,15 +424,14 @@ impl Game {
 		let mut counter = 0;
 		let mut powerup_type = 0;
 		for powerup in self.powerups.mut_iter() { 
-			if powerup.damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
-			 	powerup_type = powerup.get_type();
+			if powerup.damage_rectangle().collides_with(&self.player.character.damage_rectangle()) {
+				powerup_type = 1;
 			 	break;
 			}
 			counter = counter + 1;
 		}
 		if powerup_type > 0 {
-			self.powerups.remove(counter);
-			self.apply_powerup(powerup_type);
+			self.apply_powerup(counter);
 		}
 
 		if enteredGoal {
@@ -427,7 +442,7 @@ impl Game {
 				(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
 			);
 			self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
-			self.spawn_powerup(rng.gen_range(1u, 5u));
+			self.spawn_powerup(rng.gen_range(1u, 7u));
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
@@ -455,37 +470,70 @@ impl Game {
 		}
 	}
 
-	fn apply_powerup(&mut self, kind: int) {
-		let mut rng = task_rng();
-		let length = self.enemies.len();
-		match kind {
-			// kill next zombie you touch without dying
-			1 => { println!("CRICKET BAT"); self.player.give_bat(); },
-			// kill random zombie
-			2 => { println!("KILL ZOMBIE"); self.enemies.remove( rng.gen_range(0u, length) ); },
-			// wipe out all zombies in given range
-			3 => { 
-				println!("WIPE OUT");
-				let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
-				for _ in range(0, self.enemies.len()) { 
-					let enemy = self.enemies.pop();
-					match enemy {
-						Some(enemy) => {
-							if self.player.character.distance( enemy.get_x(), enemy.get_y() ) > 200.0 {
-						    	new_enemies.push(enemy);
-						    }
-						},
-						None => {}
+	fn apply_powerup(&mut self, index: uint) {
+		match self.powerups.remove(index) {
+			Some(powerup) => { 
+				let kind = powerup.get_type();
+				let length = self.enemies.len();
+				match kind {
+					// kill next zombie you touch without dying
+					1 => { println!("CRICKET BAT"); self.player.give_bat(); },
+					// kill random zombie
+					2 => { println!("KILL ZOMBIE"); let mut rng = task_rng(); self.enemies.remove( rng.gen_range(0u, length) ); },
+					// wipe out all zombies in given range
+					3 => { 
+						println!("WIPE OUT");
+						let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
+						for _ in range(0, self.enemies.len()) { 
+							let enemy = self.enemies.pop();
+							match enemy {
+								Some(enemy) => {
+									if self.player.character.distance( enemy.get_x(), enemy.get_y() ) > 200.0 {
+								    	new_enemies.push(enemy);
+								    }
+								},
+								None => {}
+							}
+						}
+						self.enemies = new_enemies;
+					},
+					// freeze all zombies
+					4 => { println!("FREEZE"); self.freeze_counter = 300; },
+					5 => { println!("STICKY FEET"); self.player.give_sticky_feet(); },
+					_ => { 
+						if powerup.is_debuff() {
+							println!("SUCKS TO BE YOU"); 
+							let mut rng = task_rng();
+							let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
+							for _ in range(0, self.enemies.len()) { 
+								let enemy = self.enemies.pop();
+								match enemy {
+									Some(enemy) => {
+										if rng.gen_range(1u, 11u) >= 3 {
+											let crazy_zombie = box enemies::CrazyZombie::new(
+												&mut self.display, 
+												enemy.get_x(),
+												enemy.get_y()
+											);
+									    	new_enemies.push(crazy_zombie);
+									    } else {
+									    	new_enemies.push(enemy);
+									    }
+									},
+									None => {}
+								}
+							}
+							self.enemies = new_enemies;
+						} else {
+							println!("NUKE"); 
+							let empty_vec: Vec<Box<enemies::Zombie>> = Vec::new();
+							self.enemies = empty_vec;
+						} 
 					}
-				}
-				self.enemies = new_enemies;
+				};
 			},
-			// freeze all zombies
-			4 => { println!("FREEZE"); self.freeze_counter = 300; },
-			_ => { println!("STICKY FEET"); self.player.give_sticky_feet(); }
-			// TODO: sticky feet
-			// TODO: wipe out that alternates as debuff
-		}
+			_  => { () }
+	    };
 	}
 
 	fn get_highscore() -> int {
