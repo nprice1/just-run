@@ -14,6 +14,8 @@ use game::units::AsGame;
 
 pub type MotionTup = (sprite::Motion, sprite::Facing);
 
+static KILL_FRAME:  units::Tile = units::Tile(0);
+
 // collision detection boxes
 // (expressed as `units::Game`)
 static X_BOX: Rectangle = Rectangle {
@@ -41,7 +43,10 @@ pub struct Character {
 	pub accel_x:       int,
 	pub accel_y:       int, 
 	pub target_x:      units::Game, 
-	pub target_y:      units::Game
+	pub target_y:      units::Game,
+
+	// flags
+	pub killed: int
 }
 
 impl Character {
@@ -68,15 +73,31 @@ impl Character {
 			accel_x: 1,
 			accel_y: 0, 
 			target_x: x, 
-			target_y: y
+			target_y: y, 
+
+			killed: -1
 		};
 
 		new_character
 	}
 
 	/// Draws player to screen
-	pub fn draw(&self, display: &graphics::Graphics) {
-		self.sprites.get(&self.movement).draw(display, (self.x, self.y));
+	pub fn draw(&self, display: &mut graphics::Graphics) {
+		if self.killed >= 0 {
+			let asset_path = "assets/base/killed.bmp".to_string();
+			let motion_frame = KILL_FRAME; 
+			let facing_frame = units::Tile(0);
+			let sprite = box sprite::Sprite::new(
+					display,
+					(motion_frame, facing_frame),
+					(units::Tile(1), units::Tile(1)),
+					asset_path
+				) as Box<sprite::Updatable<_>>;
+
+			sprite.draw(display, (self.x, self.y));
+		} else {
+			self.sprites.get(&self.movement).draw(display, (self.x, self.y));
+		}
 	}
 
 	pub fn current_motion(&mut self) {
@@ -88,6 +109,10 @@ impl Character {
 			} else {
 				(sprite::Walking, last_facing)
 			}	
+	}
+
+	pub fn kill_character(&mut self) {
+		self.killed = 2;
 	}
 
 	pub fn set_facing(&mut self, direction: sprite::Facing) {

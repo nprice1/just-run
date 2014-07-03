@@ -44,6 +44,7 @@ pub struct Game {
 	player:   player::Player,
 	enemies:  Vec<Box<enemies::Zombie>>,
 	powerups: Vec<Box<powerups::Powerup>>,
+	killed:   Vec<Box<enemies::Zombie>>,
 	goal:     goal::Goal,
 	map:      map::Map,
 
@@ -71,32 +72,34 @@ impl Game {
 		let mut rng = task_rng();
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let powerups_vector: Vec<Box<powerups::Powerup>> = Vec::new();
+		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 
 		let mut game = Game {
-				map: map::Map::create_test_map(&mut display),
-				player: player::Player::new(
-					&mut display,
-					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-				),
+			map: map::Map::create_test_map(&mut display),
+			player: player::Player::new(
+				&mut display,
+				(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+				(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+			),
 
-				enemies: enemies_vector,
-				powerups: powerups_vector,
+			enemies: enemies_vector,
+			powerups: powerups_vector,
+			killed: killed_vector,
 
-				goal: goal::Goal::new(
-					&mut display, 
-					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(), 
-					(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
-				),
+			goal: goal::Goal::new(
+				&mut display, 
+				(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(), 
+				(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
+			),
 
-				display:        display,
-				controller:     controller, 
-				paused:         true,
-				updates:        0,
-				level:          0,
-				highscore:      Game::get_highscore(),
-				freeze_counter: 0
-			};
+			display:        display,
+			controller:     controller, 
+			paused:         true,
+			updates:        0,
+			level:          0,
+			highscore:      Game::get_highscore(),
+			freeze_counter: 0
+		};
 		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 		game.spawn_powerup(rng.gen_range(1u, 7u));
 
@@ -234,6 +237,7 @@ impl Game {
 		let mut rng = task_rng();
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let powerup_vector: Vec<Box<powerups::Powerup>> = Vec::new();
+		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 
 		self.player = player::Player::new(
 				&mut self.display,
@@ -243,6 +247,7 @@ impl Game {
 
 		self.enemies = enemies_vector;
 		self.powerups = powerup_vector;
+		self.killed = killed_vector;
 		self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 		self.spawn_powerup(rng.gen_range(1u, 7u));
 
@@ -369,16 +374,30 @@ impl Game {
 	}
 
 	/// Instructs our actors to draw their current state to the screen.
-	fn draw(&self) {
+	fn draw(&mut self) {
 		// background
 		self.map.draw_background(&self.display);
 		self.map.draw_sprites(&self.display);
 
 		// foreground
-		self.goal.draw(&self.display);
-		for powerup in self.powerups.iter() { powerup.draw(&self.display); }
-		self.player.character.draw(&self.display);
-		for enemy in self.enemies.iter() { enemy.draw(&self.display); }
+		self.goal.draw(&mut self.display);
+		for powerup in self.powerups.iter() { powerup.draw(&mut self.display); }
+		for enemy in self.enemies.iter() { enemy.draw(&mut self.display); }
+		self.player.character.draw(&mut self.display);
+		let mut kill_list: Vec<Box<enemies::Zombie>> = Vec::new();
+		for _ in range(0, self.killed.len()) { 
+			match self.killed.pop() {
+				Some(killed) => {
+					let mut mut_killed = killed;
+					mut_killed.draw(&mut self.display);
+					if !mut_killed.is_killed() {
+						kill_list.push(mut_killed);
+					}
+				},
+				None => {}
+			}; 
+		}
+		self.killed = kill_list;
 		self.map.draw(&self.display);
 	}
 
@@ -409,8 +428,15 @@ impl Game {
 		for i in range(0, self.enemies.len()) { 
 			if self.enemies.get(i).damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
 				if self.player.has_bat() {
-					self.enemies.remove(i);
-					self.player.take_bat();
+					match self.enemies.remove(i) {
+						Some(enemy) => {
+							let mut mut_enemy = enemy;
+							mut_enemy.kill_zombie();
+							self.killed.push(mut_enemy);
+							self.player.take_bat();
+						}, 
+						None => {}
+					};
 				}
 			 	else {
 			 		collidedWithZombie = true;
@@ -446,6 +472,8 @@ impl Game {
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie {
+			self.player.character.kill_character();
+			self.draw();
 			// draw game over screen store score and start a new game
 			self.draw_game_over_screen();
 			let level = self.level;
@@ -479,7 +507,18 @@ impl Game {
 					// kill next zombie you touch without dying
 					1 => { println!("CRICKET BAT"); self.player.give_bat(); },
 					// kill random zombie
-					2 => { println!("KILL ZOMBIE"); let mut rng = task_rng(); self.enemies.remove( rng.gen_range(0u, length) ); },
+					2 => { 
+						println!("KILL ZOMBIE"); 
+						let mut rng = task_rng(); 
+						match self.enemies.remove( rng.gen_range(0u, length) ) {
+							Some(killed) => {
+								let mut mut_enemy = killed;
+								mut_enemy.kill_zombie();
+								self.killed.push(mut_enemy);
+							},
+							None => {}
+						};
+					},
 					// wipe out all zombies in given range
 					3 => { 
 						println!("WIPE OUT");
@@ -490,6 +529,10 @@ impl Game {
 								Some(enemy) => {
 									if self.player.character.distance( enemy.get_x(), enemy.get_y() ) > 200.0 {
 								    	new_enemies.push(enemy);
+								    } else {
+								    	let mut mut_enemy = enemy;
+								    	mut_enemy.kill_zombie();
+								    	self.killed.push(mut_enemy);
 								    }
 								},
 								None => {}
@@ -526,8 +569,16 @@ impl Game {
 							self.enemies = new_enemies;
 						} else {
 							println!("NUKE"); 
-							let empty_vec: Vec<Box<enemies::Zombie>> = Vec::new();
-							self.enemies = empty_vec;
+							for _ in range(0, self.enemies.len()) {
+								match self.enemies.pop() {
+									Some(enemy) => {
+										let mut mut_enemy = enemy;
+										mut_enemy.kill_zombie();
+										self.killed.push(mut_enemy);
+									},
+									None => {}
+								};
+							}
 						} 
 					}
 				};

@@ -54,12 +54,14 @@ static Y_BOX: Rectangle = Rectangle {
 pub trait Zombie {
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map);
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game);
-	fn draw(&self, display: &graphics::Graphics);
+	fn draw(&self, display: &mut graphics::Graphics);
 	fn damage_rectangle(&self) -> Rectangle;
 	fn zombie_type(&self) -> int;
 	fn get_target(&self) -> (units::Game, units::Game);
 	fn get_x(&self) -> units::Game;
 	fn get_y(&self) -> units::Game;
+	fn kill_zombie(&mut self);
+	fn is_killed(&mut self) -> bool;
 }
 
 pub struct SlowZombie {
@@ -154,8 +156,8 @@ impl Zombie for SlowZombie {
 		};
 	}
 
-	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+	fn draw(&self, display: &mut graphics::Graphics) {
+		self.character.draw(display);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -181,6 +183,17 @@ impl Zombie for SlowZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn kill_zombie(&mut self) {
+		self.character.kill_character();
+	}
+
+	fn is_killed(&mut self) -> bool {
+		match self.character.killed {
+			0 => { true },
+			_ => { self.character.killed = self.character.killed - 1; false }
+		}
 	}
 }
 
@@ -279,8 +292,8 @@ impl Zombie for CrazyZombie {
 		};
 	}
 
-	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+	fn draw(&self, display: &mut graphics::Graphics) {
+		self.character.draw(display);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -306,6 +319,17 @@ impl Zombie for CrazyZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn kill_zombie(&mut self) {
+		self.character.kill_character();
+	}
+
+	fn is_killed(&mut self) -> bool {
+		match self.character.killed {
+			0 => { true },
+			_ => { self.character.killed = self.character.killed - 1; false }
+		}
 	}
 }
 
@@ -386,8 +410,8 @@ impl Zombie for RandomZombie {
 		};
 	}
 
-	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+	fn draw(&self, display: &mut graphics::Graphics) {
+		self.character.draw(display);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -413,6 +437,17 @@ impl Zombie for RandomZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn kill_zombie(&mut self) {
+		self.character.kill_character();
+	}
+
+	fn is_killed(&mut self) -> bool {
+		match self.character.killed {
+			0 => { true },
+			_ => { self.character.killed = self.character.killed - 1; false }
+		}
 	}
 }
 
@@ -505,8 +540,8 @@ impl Zombie for CloudZombie {
 		};
 	}
 
-	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+	fn draw(&self, display: &mut graphics::Graphics) {
+		self.character.draw(display);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -532,5 +567,16 @@ impl Zombie for CloudZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn kill_zombie(&mut self) {
+		self.character.kill_character();
+	}
+
+	fn is_killed(&mut self) -> bool {
+		match self.character.killed {
+			0 => { true },
+			_ => { self.character.killed = self.character.killed - 1; false }
+		}
 	}
 }
