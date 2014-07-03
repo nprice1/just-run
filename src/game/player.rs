@@ -40,7 +40,7 @@ impl Player {
 		// construct new player
 		let mut new_player = Player{
 			character: common::Character::new(x, y),
-			cricket_bat: true,
+			cricket_bat: false,
 			sticky_count: 0
 		};
 
