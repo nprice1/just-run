@@ -14,6 +14,9 @@ use game::units::AsGame;
 
 pub type MotionTup = (sprite::Motion, sprite::Facing);
 
+static SPRITE_NUM_FRAMES:  units::Frame  = 3;
+static SPRITE_FPS:         units::Fps    = 20;
+
 static KILL_FRAME:  units::Tile = units::Tile(0);
 
 // collision detection boxes
@@ -30,6 +33,7 @@ static Y_BOX: Rectangle = Rectangle {
 pub struct Character {
 	// assets
 	pub sprites:   HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
+	pub killed_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
 
 	// positioning
 	pub x: units::Game, 
@@ -58,11 +62,13 @@ impl Character {
 	pub fn new(x: units::Game, y: units::Game) -> Character {
 		// insert sprites into map
 		let sprite_map = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
+		let killed_vec: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
 
 		// construct new player
 		let new_character = Character{
 			elapsed_time: units::Millis(0),
 			sprites:   sprite_map,
+			killed_sprite: killed_vec,
 
 			x: x,
 			y: y,
@@ -81,23 +87,27 @@ impl Character {
 		new_character
 	}
 
-	/// Draws player to screen
+	// Draws player to screen
 	pub fn draw(&self, display: &mut graphics::Graphics) {
 		if self.killed >= 0 {
-			let asset_path = "assets/base/killed.bmp".to_string();
-			let motion_frame = KILL_FRAME; 
-			let facing_frame = units::Tile(0);
-			let sprite = box sprite::Sprite::new(
-					display,
-					(motion_frame, facing_frame),
-					(units::Tile(1), units::Tile(1)),
-					asset_path
-				) as Box<sprite::Updatable<_>>;
-
-			sprite.draw(display, (self.x, self.y));
+			self.killed_sprite.get(0).draw(display, (self.x, self.y));
 		} else {
 			self.sprites.get(&self.movement).draw(display, (self.x, self.y));
 		}
+	}
+
+	pub fn load_killed_sprite(&mut self, display: &mut graphics::Graphics)
+	{
+		let asset_path = "assets/base/killed.bmp".to_string();
+		let motion_frame = KILL_FRAME; 
+		let facing_frame = units::Tile(0);
+		let sprite = box sprite::AnimatedSprite::new(
+				display, asset_path, 
+				(motion_frame, facing_frame),
+				(units::Tile(1), units::Tile(1)),
+				SPRITE_NUM_FRAMES, SPRITE_FPS
+			).unwrap() as Box<sprite::Updatable<_>>;
+		self.killed_sprite.push(sprite);
 	}
 
 	pub fn current_motion(&mut self) {
@@ -112,7 +122,11 @@ impl Character {
 	}
 
 	pub fn kill_character(&mut self) {
-		self.killed = 2;
+		self.killed = 5;
+	}
+
+	pub fn is_killed(&self) -> bool {
+		self.killed >= 0
 	}
 
 	pub fn set_facing(&mut self, direction: sprite::Facing) {

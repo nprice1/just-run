@@ -415,6 +415,7 @@ impl Game {
 		else {
 			self.freeze_counter = self.freeze_counter - 1;
 		}
+		for i in range(0, self.killed.len()) { self.killed.get_mut(i).update(elapsed_time, &self.map) }
 		for i in range(0, self.powerups.len()) {
 			let powerup = self.powerups.get_mut(i);
 		    // change debuff status every 10 updates

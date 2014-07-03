@@ -103,6 +103,7 @@ impl SlowZombie {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
+		self.character.load_killed_sprite(display);
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcWeed.bmp".to_string();
 			let (_, facing) = *key;
@@ -137,6 +138,9 @@ impl Zombie for SlowZombie {
 		 	self.character.set_facing(sprite::East);
 		} 
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		if self.character.is_killed() {
+			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+		}
 
 		// run physics sim
 		self.character.update_x(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY, false);
@@ -219,6 +223,7 @@ impl CrazyZombie {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
+		self.character.load_killed_sprite(display);
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcWeed.bmp".to_string();
 			let (_, facing) = *key;
@@ -253,6 +258,9 @@ impl Zombie for CrazyZombie {
 		 	self.character.set_facing(sprite::East);
 		} 
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		if self.character.is_killed() {
+			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+		}
 
 		// set proper acceleration
 		let acceleration = match self.chasing {
@@ -354,6 +362,7 @@ impl RandomZombie {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
+		self.character.load_killed_sprite(display);
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcCemet.bmp".to_string();
 			let (_, facing) = *key;
@@ -388,6 +397,9 @@ impl Zombie for RandomZombie {
 		 	self.character.set_facing(sprite::East);
 		} 
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		if self.character.is_killed() {
+			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+		}
 
 		// run physics sim
 		self.character.update_x(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY, false);
@@ -473,6 +485,7 @@ impl CloudZombie {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
+		self.character.load_killed_sprite(display);
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/Npc/NpcMaze.bmp".to_string();
 			let (_, facing) = *key;
@@ -507,6 +520,9 @@ impl Zombie for CloudZombie {
 		 	self.character.set_facing(sprite::East);
 		} 
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		if self.character.is_killed() {
+			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+		}
 
 		// run physics sim
 		self.character.update_x(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY, false);

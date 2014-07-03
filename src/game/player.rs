@@ -40,7 +40,7 @@ impl Player {
 		// construct new player
 		let mut new_player = Player{
 			character: common::Character::new(x, y),
-			cricket_bat: false,
+			cricket_bat: true,
 			sticky_count: 0
 		};
 
@@ -64,6 +64,9 @@ impl Player {
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		if self.character.is_killed() {
+			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+		}
 
 		// run physics sim
 		self.character.update_x(map, WALKING_ACCEL, MAX_VELOCITY, self.sticky_count > 0);
@@ -82,6 +85,7 @@ impl Player {
 		graphics: &mut graphics::Graphics, 
 		movement: (sprite::Motion, sprite::Facing)
 	) {
+		self.character.load_killed_sprite(graphics);
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let file_path = "assets/base/MyChar.bmp".to_string();
 			let (_, facing) = *key;
