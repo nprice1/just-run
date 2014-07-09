@@ -1,3 +1,5 @@
+use std::collections::hashmap::HashMap;
+
 use game::graphics;
 use game::sprite;
 
@@ -8,8 +10,11 @@ use game::units;
 use game::common;
 use game::common::Character;
 
+pub type MotionTup = (sprite::Motion, sprite::Facing);
+
 // player sprite animation
 static CHAR_OFFSET:        uint          = 12;
+static CRICKET_OFFSET:     uint          = 10;
 static SPRITE_NUM_FRAMES:  units::Frame  = 3;
 static SPRITE_FPS:         units::Fps    = 20;
 
@@ -22,9 +27,12 @@ static STAND_FRAME: units::Tile   = units::Tile(0);
 // horizontal facing (Facing)
 static FACING_WEST: units::Tile  = units::Tile(0 + CHAR_OFFSET);
 static FACING_EAST: units::Tile  = units::Tile(1 + CHAR_OFFSET);
+static CRICKET_FACING_WEST: units::Tile  = units::Tile(0 + CRICKET_OFFSET);
+static CRICKET_FACING_EAST: units::Tile  = units::Tile(1 + CRICKET_OFFSET);
 
 pub struct Player {
 	pub character: common::Character,
+	cricket_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
 	cricket_bat: bool, 
 	sticky_count: int
 }
@@ -37,9 +45,11 @@ impl Player {
 	/// The player is initailized `standing` facing `east`.
 	/// The player will continue to fall until some collision is detected.
 	pub fn new(graphics: &mut graphics::Graphics, x: units::Game, y: units::Game) -> Player {
+		let cricket = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
 		// construct new player
 		let mut new_player = Player{
 			character: common::Character::new(x, y),
+			cricket_sprites: cricket,
 			cricket_bat: false,
 			sticky_count: 0
 		};
@@ -64,6 +74,7 @@ impl Player {
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		self.cricket_sprites.get_mut(&self.character.movement).update(elapsed_time);
 		if self.character.is_killed() {
 			self.character.killed_sprite.get_mut(0).update(elapsed_time);
 		}
@@ -86,8 +97,40 @@ impl Player {
 		movement: (sprite::Motion, sprite::Facing)
 	) {
 		self.character.load_killed_sprite(graphics);
+		self.cricket_sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+			let file_path = "assets/MyChar.bmp".to_string();
+			let (_, facing) = *key;
+			let motion_frame = STAND_FRAME;
+
+			let facing_frame = match facing {
+				sprite::West => CRICKET_FACING_WEST,
+				sprite::East => CRICKET_FACING_EAST
+			};
+
+			match movement {
+				// static: standing in place
+				(sprite::Standing, _) => {
+					box sprite::Sprite::new(
+						graphics, 
+						(motion_frame, facing_frame), 
+						(units::Tile(1), units::Tile(1)),	
+						file_path
+					) as Box<sprite::Updatable<_>> 
+				}
+
+				// dynamic: 
+				(sprite::Walking, _) => {
+					box sprite::AnimatedSprite::new(
+						graphics, file_path,
+						(motion_frame, facing_frame),
+						(units::Tile(1), units::Tile(1)),
+						SPRITE_NUM_FRAMES, SPRITE_FPS
+					).unwrap() as Box<sprite::Updatable<_>>
+				}
+			}
+		});
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
-			let file_path = "assets/base/MyChar.bmp".to_string();
+			let file_path = "assets/MyChar.bmp".to_string();
 			let (_, facing) = *key;
 			let motion_frame = STAND_FRAME;
 
@@ -118,6 +161,15 @@ impl Player {
 				}
 			}
 		});
+	}
+
+	//draw the player
+	pub fn draw(&self, display: &mut graphics::Graphics) {
+		if self.cricket_bat {
+			self.cricket_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		} else {
+			self.character.draw(display);
+		}
 	}
 
 	/// The player will immediately face `West`

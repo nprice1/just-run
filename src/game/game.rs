@@ -383,7 +383,7 @@ impl Game {
 		self.goal.draw(&mut self.display);
 		for powerup in self.powerups.iter() { powerup.draw(&mut self.display); }
 		for enemy in self.enemies.iter() { enemy.draw(&mut self.display); }
-		self.player.character.draw(&mut self.display);
+		self.player.draw(&mut self.display);
 		let mut kill_list: Vec<Box<enemies::Zombie>> = Vec::new();
 		for _ in range(0, self.killed.len()) { 
 			match self.killed.pop() {

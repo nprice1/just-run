@@ -5,7 +5,6 @@ use std::collections::hashmap::HashMap;
 use game::graphics;
 use game::sprite;
 
-
 use game::collisions::{Info,Rectangle};
 use game::map;
 
