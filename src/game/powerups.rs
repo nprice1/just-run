@@ -36,6 +36,8 @@ pub trait Powerup {
 	fn get_type(&self) -> int;
 	fn toggle_debuff(&mut self);
 	fn is_debuff(&self) -> bool;
+	fn is_finished(&mut self) -> bool;
+	fn set_timer(&mut self);
 }
 
 pub struct CricketBat {
@@ -45,11 +47,14 @@ pub struct CricketBat {
 
 pub struct KillZombie {
 	character: Character, 
+	animation_timer: int,
 	is_debuff: bool
 }
 
 pub struct WipeOut {
 	character: Character, 
+	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	animation_timer: int,
 	is_debuff: bool
 }
 
@@ -66,6 +71,8 @@ pub struct StickyFeet {
 pub struct Nuke {
 	character: Character, 
 	alternate_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
+	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	animation_timer: int,
 	is_debuff: bool
 }
 
@@ -132,6 +139,14 @@ impl Powerup for CricketBat {
 	fn get_type(&self) -> int {
 		1
 	}
+
+	fn is_finished(&mut self) -> bool {
+		true
+	}
+
+	fn set_timer(&mut self) {
+		;
+	}
 }
 
 impl KillZombie {
@@ -140,6 +155,7 @@ impl KillZombie {
 
 		let mut new_powerup = KillZombie { 
 			character: common::Character::new(x, y), 
+			animation_timer: 0,
 			is_debuff: false
 		};
 
@@ -197,14 +213,29 @@ impl Powerup for KillZombie {
 	fn get_type(&self) -> int {
 		2
 	}
+
+	fn is_finished(&mut self) -> bool {
+		match self.animation_timer {
+			0 => { true },
+			_ => { self.animation_timer = self.animation_timer - 1; false }
+		}
+	}
+
+	fn set_timer(&mut self) {
+		self.animation_timer = 1;
+	}
 }
 
 impl WipeOut {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> WipeOut {
 
+		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+
 		let mut new_powerup = WipeOut { 
 			character: common::Character::new(x, y), 
+			animation_sprite: animation,
+			animation_timer: 0,
 			is_debuff: false
 		};
 
@@ -261,6 +292,17 @@ impl Powerup for WipeOut {
 
 	fn get_type(&self) -> int {
 		3
+	}
+
+	fn is_finished(&mut self) -> bool {
+		match self.animation_timer {
+			0 => { true },
+			_ => { self.animation_timer = self.animation_timer - 1; false }
+		}
+	}
+
+	fn set_timer(&mut self) {
+		self.animation_timer = 2;
 	}
 }
 
@@ -327,6 +369,14 @@ impl Powerup for Freeze {
 	fn get_type(&self) -> int {
 		4
 	}
+
+	fn is_finished(&mut self) -> bool {
+		true
+	}
+
+	fn set_timer(&mut self) {
+		;
+	}
 }
 
 impl StickyFeet {
@@ -392,15 +442,27 @@ impl Powerup for StickyFeet {
 	fn get_type(&self) -> int {
 		5
 	}
+
+	fn is_finished(&mut self) -> bool {
+		true	
+	}
+
+	fn set_timer(&mut self) {
+		;
+	}
 }
 
 impl Nuke {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> Nuke {
 
+		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+
 		let mut new_powerup = Nuke { 
 			character: common::Character::new(x, y), 
 			alternate_sprites: HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new(),
+			animation_sprite: animation,
+			animation_timer: 0,
 			is_debuff: false
 		};
 
@@ -475,6 +537,17 @@ impl Powerup for Nuke {
 
 	fn get_type(&self) -> int {
 		6
+	}
+
+	fn is_finished(&mut self) -> bool {
+		match self.animation_timer {
+			0 => { true },
+			_ => { self.animation_timer = self.animation_timer - 1; false }
+		}
+	}
+
+	fn set_timer(&mut self) {
+		self.animation_timer = 2;
 	}
 }
 

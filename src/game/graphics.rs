@@ -8,11 +8,11 @@ use game::units;
 use game::units::{AsPixel};
 
 use sdl2::rect;
-use sdl2::pixels;
 use sdl2::surface;
 use sdl2::render;
 use sdl2::video;
 use sdl2::mouse;
+use sdl2::pixels;
 
 use sdl2_mixer;
 use sdl2_ttf;
@@ -153,5 +153,15 @@ impl Graphics {
 	    let texture = trying!(self.screen.create_texture_from_surface(&surface));
     	self.screen.copy(&texture, None, Some(dest_rect));
     	self.switch_buffers();
+	}
+
+	#[allow(unused_must_use)]
+	pub fn draw_line(&self, source: (i32, i32), dest: (i32, i32)) {
+		let (x1,y1) = source;
+		let (x2,y2) = dest;
+		let source_point = rect::Point::new(x1, y1);
+		let dest_point = rect::Point::new(x2, y2);
+		self.screen.set_draw_color(pixels::RGB(255, 255, 255));
+		self.screen.draw_line(source_point, dest_point);
 	}
 }

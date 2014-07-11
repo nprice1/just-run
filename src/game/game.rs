@@ -41,12 +41,13 @@ macro_rules! rect(
 
 /// An instance of the `just-run` game with its own event loop.
 pub struct Game {
-	player:   player::Player,
-	enemies:  Vec<Box<enemies::Zombie>>,
-	powerups: Vec<Box<powerups::Powerup>>,
-	killed:   Vec<Box<enemies::Zombie>>,
-	goal:     goal::Goal,
-	map:      map::Map,
+	player:    player::Player,
+	enemies:   Vec<Box<enemies::Zombie>>,
+	powerups:  Vec<Box<powerups::Powerup>>,
+	killed:    Vec<Box<enemies::Zombie>>,
+	activated: Vec<Box<powerups::Powerup>>,
+	goal:      goal::Goal,
+	map:       map::Map,
 
 	display:        graphics::Graphics,
 	controller:     input::Input,
@@ -73,6 +74,7 @@ impl Game {
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let powerups_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
+		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 
 		let mut game = Game {
 			map: map::Map::create_test_map(&mut display),
@@ -85,6 +87,7 @@ impl Game {
 			enemies: enemies_vector,
 			powerups: powerups_vector,
 			killed: killed_vector,
+			activated: activated_vector,
 
 			goal: goal::Goal::new(
 				&mut display, 
@@ -150,8 +153,9 @@ impl Game {
 	pub fn spawn_powerup(&mut self, kind: uint) {
 		let mut rng = task_rng();
 		// 20% chance of generating a powerup
-		if rng.gen_range(1u, 11u) > 8 {
-			match kind {
+		let type_of = 2;
+		if rng.gen_range(1u, 11u) > 0 {
+			match type_of {
 				1 => {
 					let powerup = box powerups::CricketBat::new(
 									&mut self.display, 
@@ -385,6 +389,27 @@ impl Game {
 		for enemy in self.enemies.iter() { enemy.draw(&mut self.display); }
 		self.player.draw(&mut self.display);
 		let mut kill_list: Vec<Box<enemies::Zombie>> = Vec::new();
+		let mut active_list: Vec<Box<powerups::Powerup>> = Vec::new();
+		for _ in range(0, self.activated.len()) { 
+			match self.activated.pop() {
+				Some(activated) => {
+					let mut mut_activated = activated;
+					let killed_enemy = self.killed.get(self.killed.len() - 1);
+					// draw 'bullet' for kill zombie 
+					if mut_activated.get_type() == 2 {
+						let (units::Game(player_x), units::Game(player_y)) = (self.player.character.center_x(), self.player.character.center_y());
+						let (units::Game(enemy_x), units::Game(enemy_y)) = (killed_enemy.get_x(), killed_enemy.get_y()); 
+						self.display.draw_line( (player_x as i32, player_y as i32), (enemy_x as i32, enemy_y as i32) );
+					} else {
+						mut_activated.draw(&mut self.display);
+					}
+					if !mut_activated.is_finished() {
+						active_list.push(mut_activated);
+					}
+				},
+				None => {}
+			}; 
+		}
 		for _ in range(0, self.killed.len()) { 
 			match self.killed.pop() {
 				Some(killed) => {
@@ -514,6 +539,7 @@ impl Game {
 						match self.enemies.remove( rng.gen_range(0u, length) ) {
 							Some(killed) => {
 								let mut mut_enemy = killed;
+								self.activated.push(powerup);
 								mut_enemy.kill_zombie();
 								self.killed.push(mut_enemy);
 							},
@@ -540,6 +566,7 @@ impl Game {
 							}
 						}
 						self.enemies = new_enemies;
+						self.activated.push(powerup);
 					},
 					// freeze all zombies
 					4 => { println!("FREEZE"); self.freeze_counter = 300; },
@@ -580,6 +607,7 @@ impl Game {
 									None => {}
 								};
 							}
+							self.activated.push(powerup);
 						} 
 					}
 				};
