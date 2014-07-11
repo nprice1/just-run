@@ -153,9 +153,8 @@ impl Game {
 	pub fn spawn_powerup(&mut self, kind: uint) {
 		let mut rng = task_rng();
 		// 20% chance of generating a powerup
-		let type_of = 2;
-		if rng.gen_range(1u, 11u) > 0 {
-			match type_of {
+		if rng.gen_range(1u, 11u) > 8 {
+			match kind {
 				1 => {
 					let powerup = box powerups::CricketBat::new(
 									&mut self.display, 
@@ -394,9 +393,9 @@ impl Game {
 			match self.activated.pop() {
 				Some(activated) => {
 					let mut mut_activated = activated;
-					let killed_enemy = self.killed.get(self.killed.len() - 1);
 					// draw 'bullet' for kill zombie 
 					if mut_activated.get_type() == 2 {
+						let killed_enemy = self.killed.get(self.killed.len() - 1);
 						let (units::Game(player_x), units::Game(player_y)) = (self.player.character.center_x(), self.player.character.center_y());
 						let (units::Game(enemy_x), units::Game(enemy_y)) = (killed_enemy.get_x(), killed_enemy.get_y()); 
 						self.display.draw_line( (player_x as i32, player_y as i32), (enemy_x as i32, enemy_y as i32) );
@@ -423,6 +422,7 @@ impl Game {
 			}; 
 		}
 		self.killed = kill_list;
+		self.activated = active_list;
 		self.map.draw(&self.display);
 	}
 
@@ -441,6 +441,7 @@ impl Game {
 			self.freeze_counter = self.freeze_counter - 1;
 		}
 		for i in range(0, self.killed.len()) { self.killed.get_mut(i).update(elapsed_time, &self.map) }
+		for i in range(0, self.activated.len()) { self.activated.get_mut(i).update(elapsed_time, &self.map) }
 		for i in range(0, self.powerups.len()) {
 			let powerup = self.powerups.get_mut(i);
 		    // change debuff status every 10 updates
@@ -566,7 +567,9 @@ impl Game {
 							}
 						}
 						self.enemies = new_enemies;
-						self.activated.push(powerup);
+						let mut mut_powerup = powerup;
+						mut_powerup.set_timer();
+						self.activated.push(mut_powerup);
 					},
 					// freeze all zombies
 					4 => { println!("FREEZE"); self.freeze_counter = 300; },

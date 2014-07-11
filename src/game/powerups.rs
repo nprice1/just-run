@@ -4,6 +4,7 @@ use game::collisions::Rectangle;
 use game::sprite;
 use game::graphics;
 use game::Game;
+use game::map;
 
 use game::units;
 
@@ -11,6 +12,9 @@ use game::common;
 use game::common::Character;
 
 type MotionTup = (sprite::Motion, sprite::Facing);
+
+static SPRITE_NUM_FRAMES:  units::Frame  = 3;
+static SPRITE_FPS:         units::Fps    = 20;
 
 // Sprite locations
 static CRICKET_FRAME: units::Tile = units::Tile(1);
@@ -20,6 +24,9 @@ static FREEZE_FRAME: units::Tile = units::Tile(7);
 static STICKY_FRAME: units::Tile = units::Tile(8);
 static NUKE_FRAME: units::Tile = units::Tile(9);
 static BAD_FRAME: units::Tile = units::Tile(10);
+
+// Animation frames 
+static WIPEOUT_ANIMATION_FRAME: units::Tile = units::Tile(1);
 
 static X_BOX: Rectangle = Rectangle {
 	x: units::Game(6.0), y: units::Game(10.0), 
@@ -32,6 +39,7 @@ static Y_BOX: Rectangle = Rectangle {
 
 pub trait Powerup {
 	fn draw(&self, display: &graphics::Graphics);
+	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map);
 	fn damage_rectangle(&self) -> Rectangle;
 	fn get_type(&self) -> int;
 	fn toggle_debuff(&mut self);
@@ -119,6 +127,10 @@ impl Powerup for CricketBat {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 	}
 
+	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
+		;
+	}
+
 	fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
 			x: self.character.x + X_BOX.left(),
@@ -193,6 +205,10 @@ impl Powerup for KillZombie {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 	}
 
+	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
+		;
+	}
+
 	fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
 			x: self.character.x + X_BOX.left(),
@@ -265,12 +281,31 @@ impl WipeOut {
 				asset_path
 			) as Box<sprite::Updatable<_>>
 		});
+
+		let asset_path = "assets/base/explosion.bmp".to_string();
+		let motion_frame = WIPEOUT_ANIMATION_FRAME;
+		let facing_frame = units::Tile(7);
+		let animation_sprite = box sprite::AnimatedSprite::new(
+			display, asset_path,
+			(motion_frame, facing_frame),
+			(units::Tile(5), units::Tile(5)),
+			SPRITE_NUM_FRAMES, SPRITE_FPS
+		).unwrap() as Box<sprite::Updatable<_>>;
+		self.animation_sprite.push(animation_sprite);
 	}
 }
 
 impl Powerup for WipeOut {
 	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		if self.animation_timer > 0 {
+			self.animation_sprite.get(0).draw(display, (self.character.x - units::Game(60.0), self.character.y - units::Game(60.0)));
+		} else {
+			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		}
+	}
+
+	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
+		self.animation_sprite.get_mut(0).update(elapsed_time);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -302,7 +337,7 @@ impl Powerup for WipeOut {
 	}
 
 	fn set_timer(&mut self) {
-		self.animation_timer = 2;
+		self.animation_timer = 5;
 	}
 }
 
@@ -347,6 +382,10 @@ impl Freeze {
 impl Powerup for Freeze {
 	fn draw(&self, display: &graphics::Graphics) {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+	}
+
+	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
+		;
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -422,6 +461,10 @@ impl Powerup for StickyFeet {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 	}
 
+	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
+		;
+	}
+
 	fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
 			x: self.character.x + X_BOX.left(),
@@ -492,20 +535,36 @@ impl Nuke {
 				asset_path
 			) as Box<sprite::Updatable<_>>
 		});
-
 		self.alternate_sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = BAD_FRAME;
+            let asset_path = "assets/base/powerups.bmp".to_string();
+           	let motion_frame = BAD_FRAME;
+            let asset_path = "assets/base/powerups.bmp".to_string();
+            let motion_frame = BAD_FRAME;
+ 
+            let facing_frame = units::Tile(0);
+            let facing_frame = units::Tile(0);
+ 
+            box sprite::Sprite::new(
+                   display,
+                   (motion_frame, facing_frame),
+                   (units::Tile(1), units::Tile(1)),
+                   asset_path
+            ) as Box<sprite::Updatable<_>>
+        });
 
-			let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
+		let asset_path = "assets/base/explosion.bmp".to_string();
+		let motion_frame = BAD_FRAME;
+
+		let facing_frame = units::Tile(0);
+
+		let animation_sprite = box sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) as Box<sprite::Updatable<_>>;
+		self.animation_sprite.push(animation_sprite);
 	}
 }
 
@@ -516,6 +575,10 @@ impl Powerup for Nuke {
 		} else {
 			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 		}
+	}
+
+	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
+		self.animation_sprite.get_mut(0).update(elapsed_time);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
