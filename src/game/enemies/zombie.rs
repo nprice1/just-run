@@ -143,8 +143,8 @@ impl Zombie for SlowZombie {
 		}
 
 		// run physics sim
-		self.character.update_x(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY, false);
-		self.character.update_y(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY, false);
+		self.character.update_x(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
+		self.character.update_y(map, SLOW_WALKING_ACCEL, SLOW_MAX_VELOCITY);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
@@ -269,8 +269,8 @@ impl Zombie for CrazyZombie {
 		};
 
 		// run physics sim
-		self.character.update_x(map, acceleration, CRAZY_MAX_VELOCITY, false);
-		self.character.update_y(map, acceleration, CRAZY_MAX_VELOCITY, false);
+		self.character.update_x(map, acceleration, CRAZY_MAX_VELOCITY);
+		self.character.update_y(map, acceleration, CRAZY_MAX_VELOCITY);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
@@ -402,8 +402,8 @@ impl Zombie for RandomZombie {
 		}
 
 		// run physics sim
-		self.character.update_x(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY, false);
-		self.character.update_y(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY, false);
+		self.character.update_x(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
+		self.character.update_y(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
 	}
 
 	#[allow(unused_variable)]
@@ -525,8 +525,8 @@ impl Zombie for CloudZombie {
 		}
 
 		// run physics sim
-		self.character.update_x(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY, false);
-		self.character.update_y(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY, false);
+		self.character.update_x(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY);
+		self.character.update_y(map, CLOUD_WALKING_ACCEL, CLOUD_MAX_VELOCITY);
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {

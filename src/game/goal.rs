@@ -10,8 +10,8 @@ static X_OFFSET: units::Tile = units::Tile(0);
 static Y_OFFSET: units::Tile = units::Tile(0);
 
 pub struct Goal {
-	x: units::Game,
-	y: units::Game,
+	pub x: units::Game,
+	pub y: units::Game,
 
 	sprites:  HashMap<sprite::Facing, Box<sprite::Updatable<units::Game>>>,
 }

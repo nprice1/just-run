@@ -188,7 +188,7 @@ impl Game {
 					self.powerups.push(powerup as Box<powerups::Powerup>);
 				}
 				5 => {
-					let powerup = box powerups::StickyFeet::new(
+					let powerup = box powerups::Teleport::new(
 									&mut self.display, 
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
 									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
@@ -454,7 +454,7 @@ impl Game {
 		let mut collidedWithZombie = false;
 		for i in range(0, self.enemies.len()) { 
 			if self.enemies.get(i).damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
-				if self.player.has_bat() {
+				if self.player.has_bat() || self.player.is_teleporting() {
 					match self.enemies.remove(i) {
 						Some(enemy) => {
 							let mut mut_enemy = enemy;
@@ -573,7 +573,16 @@ impl Game {
 					},
 					// freeze all zombies
 					4 => { println!("FREEZE"); self.freeze_counter = 300; },
-					5 => { println!("STICKY FEET"); self.player.give_sticky_feet(); },
+					5 => { 
+						println!("TELEPORT"); 
+						// teleport player to goal
+						self.player.character.x = self.goal.x; 
+						self.player.character.y = self.goal.y; 
+						self.player.start_teleport_timer();
+						let mut mut_powerup = powerup;
+						mut_powerup.set_timer();
+						self.activated.push(mut_powerup);
+					},
 					_ => { 
 						if powerup.is_debuff() {
 							println!("SUCKS TO BE YOU"); 

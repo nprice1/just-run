@@ -21,7 +21,8 @@ static CRICKET_FRAME: units::Tile = units::Tile(1);
 static KILLZOMBIE_FRAME: units::Tile = units::Tile(2);
 static WIPEOUT_FRAME: units::Tile = units::Tile(3);
 static FREEZE_FRAME: units::Tile = units::Tile(7);
-static STICKY_FRAME: units::Tile = units::Tile(8);
+static TELEPORT_FRAME: units::Tile = units::Tile(8);
+static TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(0);
 static NUKE_FRAME: units::Tile = units::Tile(9);
 static BAD_FRAME: units::Tile = units::Tile(10);
 
@@ -71,8 +72,10 @@ pub struct Freeze {
 	is_debuff: bool
 }
 
-pub struct StickyFeet {
+pub struct Teleport {
 	character: Character, 
+	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	animation_timer: int,
 	is_debuff: bool
 }
 
@@ -127,6 +130,7 @@ impl Powerup for CricketBat {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 	}
 
+	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		;
 	}
@@ -205,6 +209,7 @@ impl Powerup for KillZombie {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 	}
 
+	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		;
 	}
@@ -304,6 +309,7 @@ impl Powerup for WipeOut {
 		}
 	}
 
+	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		self.animation_sprite.get_mut(0).update(elapsed_time);
 	}
@@ -384,6 +390,7 @@ impl Powerup for Freeze {
 		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 	}
 
+	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		;
 	}
@@ -418,12 +425,16 @@ impl Powerup for Freeze {
 	}
 }
 
-impl StickyFeet {
+impl Teleport {
 	pub fn new(graphics: &mut graphics::Graphics,
-	           x: units::Game, y: units::Game) -> StickyFeet {
+	           x: units::Game, y: units::Game) -> Teleport {
 
-		let mut new_powerup = StickyFeet { 
+		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+
+		let mut new_powerup = Teleport { 
 			character: common::Character::new(x, y), 
+			animation_sprite: animation,
+			animation_timer: 0,
 			is_debuff: false
 		};
 
@@ -442,7 +453,7 @@ impl StickyFeet {
 
 		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
 			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = STICKY_FRAME;
+			let motion_frame = TELEPORT_FRAME;
 
 			let facing_frame = units::Tile(0);
 
@@ -453,16 +464,32 @@ impl StickyFeet {
 				asset_path
 			) as Box<sprite::Updatable<_>>
 		});
+
+		let asset_path = "assets/base/teleport.bmp".to_string();
+		let motion_frame = TELEPORT_ANIMATION_FRAME;
+		let facing_frame = units::Tile(0);
+		let animation_sprite = box sprite::Sprite::new(
+			display, 
+			(motion_frame, facing_frame),
+			(units::Tile(3), units::Tile(3)),
+			asset_path
+		) as Box<sprite::Updatable<_>>;
+		self.animation_sprite.push(animation_sprite);
 	}
 }
 
-impl Powerup for StickyFeet {
+impl Powerup for Teleport {
 	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		if self.animation_timer > 0 {
+			self.animation_sprite.get(0).draw(display, (self.character.x - units::Game(60.0), self.character.y - units::Game(60.0)));
+		} else {
+			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		}
 	}
 
+	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		;
+		self.animation_sprite.get_mut(0).update(elapsed_time);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -487,11 +514,14 @@ impl Powerup for StickyFeet {
 	}
 
 	fn is_finished(&mut self) -> bool {
-		true	
+		match self.animation_timer {
+			0 => { true },
+			_ => { self.animation_timer = self.animation_timer - 1; false }
+		}
 	}
 
 	fn set_timer(&mut self) {
-		;
+		self.animation_timer = 4;
 	}
 }
 
@@ -538,10 +568,7 @@ impl Nuke {
 		self.alternate_sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
             let asset_path = "assets/base/powerups.bmp".to_string();
            	let motion_frame = BAD_FRAME;
-            let asset_path = "assets/base/powerups.bmp".to_string();
-            let motion_frame = BAD_FRAME;
  
-            let facing_frame = units::Tile(0);
             let facing_frame = units::Tile(0);
  
             box sprite::Sprite::new(
@@ -577,6 +604,7 @@ impl Powerup for Nuke {
 		}
 	}
 
+	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		self.animation_sprite.get_mut(0).update(elapsed_time);
 	}
