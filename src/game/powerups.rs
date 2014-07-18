@@ -622,8 +622,7 @@ impl Powerup for Nuke {
 	}
 
 	fn toggle_debuff(&mut self) {
-		// self.is_debuff = !self.is_debuff;
-		self.is_debuff = false;
+		self.is_debuff = !self.is_debuff;
 	}
 
 	fn is_debuff(&self) -> bool {
