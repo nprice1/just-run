@@ -50,7 +50,6 @@ impl Tile {
 
 pub struct Map {
 	background:  backdrop::FixedBackdrop,
-	sprites:     Vec<Box<Vec<Box<Tile>>>>,
 	tiles:       Vec<Box<Vec<Box<Tile>>>>,
 }
 
@@ -72,28 +71,22 @@ impl Map {
 
 		let blank_tile = Tile::new();
 		let wall_tile = Tile::from_sprite(sprite, Wall);
-		let mut sprite_vec: Vec<Box<Vec<Box<Tile>>>> = Vec::new();
 		let mut tile_vec: Vec<Box<Vec<Box<Tile>>>> = Vec::new();
 		for i in range(0, rows) {
 			let mut vec = box Vec::new();
-			let mut vec2 = box Vec::new();
 			for j in range(0, cols) {
 				// make the border
 				if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 {
 					vec.push(box wall_tile.clone());
-					vec2.push(box wall_tile.clone());
 				}
 				else {
 					vec.push(box blank_tile.clone());
-					vec2.push(box blank_tile.clone());
 				}
 			}
-			sprite_vec.push(vec);
-			tile_vec.push(vec2);
+			tile_vec.push(vec);
 		}
 		let map = Map {
 			background: backdrop::FixedBackdrop::new("assets/base/bkBlue.bmp".to_string(), graphics),
-			sprites: sprite_vec,
 			tiles: tile_vec
 		};
 	
@@ -102,21 +95,6 @@ impl Map {
 
 	pub fn draw_background(&self, graphics: &graphics::Graphics) {
 		self.background.draw(graphics);
-	}
-
-	pub fn draw_sprites(&self, graphics: &graphics::Graphics) {
-		for a in range(0, self.sprites.len()) {
-			for b in range(0, self.sprites.get(a).len()) {
-				match self.sprites.get(a).get(b).sprite {
-					Some(ref sprite) => {
-						sprite.draw(graphics, 
-						            (units::Tile(b).to_game(),
-						             units::Tile(a).to_game()));
-					}
-					_ => {}
-				};
-			}
-		}
 	}
 
 	/// Draws current state to `display`

@@ -224,6 +224,11 @@ impl Game {
 		self.display.draw_text("PRESS ENTER AND START RUNNING...", rect!(160, 500, 300, 50));
 	}
 
+	pub fn draw_status_bar(&mut self) {
+		let score_string = String::from_str("SCORE: ").append(self.level.to_str().as_slice());
+		self.display.draw_text(score_string.as_slice(), rect!(500, 0, 100, 30));
+	}
+
 	pub fn draw_game_over_screen(&mut self) {
 		self.display.draw_text("GAME OVER MAN!", rect!(45, 50, 550, 200));
 		let score_string = String::from_str("YOUR SCORE: ").append(self.level.to_str().as_slice());
@@ -311,9 +316,10 @@ impl Game {
 			}
 
 			// Handle player movement
-			if self.controller.is_key_held(keycode::LeftKey)
-				&& self.controller.is_key_held(keycode::RightKey) {
-
+			if self.controller.was_key_released(keycode::LeftKey) || self.controller.was_key_released(keycode::RightKey) {
+				self.player.stop_moving_horizontally();
+			} 
+			if self.controller.is_key_held(keycode::LeftKey) && self.controller.is_key_held(keycode::RightKey) {
 				self.player.stop_moving_horizontally();
 			} else if self.controller.is_key_held(keycode::LeftKey) {
 				self.player.start_moving_left();
@@ -324,16 +330,15 @@ impl Game {
 			}
 
 			// Handle player looking
-			if self.controller.is_key_held(keycode::UpKey)
-				&& self.controller.is_key_held(keycode::DownKey) {
-
+			if self.controller.was_key_released(keycode::UpKey) || self.controller.was_key_released(keycode::DownKey) {
+				self.player.stop_moving_vertically();
+			} 
+			if self.controller.is_key_held(keycode::UpKey) && self.controller.is_key_held(keycode::DownKey) {
 				self.player.stop_moving_vertically();
 			} else if self.controller.is_key_held(keycode::UpKey) {
 				self.player.start_moving_up();
 			} else if self.controller.is_key_held(keycode::DownKey) {
 				self.player.start_moving_down();
-			} else {
-				self.player.stop_moving_vertically();
 			}
 
 			// inform actors of how much time has passed since last frame
@@ -349,6 +354,7 @@ impl Game {
 				if self.updates != 0 {
 					self.display.clear_buffer(); // clear back-buffer
 					self.draw();
+					self.draw_status_bar();
 					self.display.switch_buffers();
 				}
 			}
@@ -380,7 +386,6 @@ impl Game {
 	fn draw(&mut self) {
 		// background
 		self.map.draw_background(&self.display);
-		self.map.draw_sprites(&self.display);
 
 		// foreground
 		self.goal.draw(&mut self.display);
@@ -429,7 +434,6 @@ impl Game {
 	/// Passes the current time in milliseconds to our underlying actors.
 	fn update(&mut self, elapsed_time: units::Millis) {
 		self.map.update(elapsed_time);
-		self.player.update(elapsed_time, &self.map);
 		if self.freeze_counter == 0 {
 			for i in range(0u, self.enemies.len()) { 
 				let enemy = self.enemies.get_mut(i);
@@ -440,6 +444,7 @@ impl Game {
 		else {
 			self.freeze_counter = self.freeze_counter - 1;
 		}
+		self.player.update(elapsed_time, &self.map);
 		for i in range(0, self.killed.len()) { self.killed.get_mut(i).update(elapsed_time, &self.map) }
 		for i in range(0, self.activated.len()) { self.activated.get_mut(i).update(elapsed_time, &self.map) }
 		for i in range(0, self.powerups.len()) {

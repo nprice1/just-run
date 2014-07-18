@@ -84,8 +84,12 @@ impl Player {
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
 		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
-		self.cricket_sprites.get_mut(&self.character.movement).update(elapsed_time);
-		self.teleport_sprites.get_mut(&self.character.movement).update(elapsed_time);
+		if self.has_bat() {
+			self.cricket_sprites.get_mut(&self.character.movement).update(elapsed_time);
+		}
+		if self.teleport_timer > 0 {
+			self.teleport_sprites.get_mut(&self.character.movement).update(elapsed_time);
+		}
 		if self.character.is_killed() {
 			self.character.killed_sprite.get_mut(0).update(elapsed_time);
 		}
@@ -257,6 +261,18 @@ impl Player {
 
 	pub fn stop_moving_vertically(&mut self) {
 		self.character.accel_y = 0;
+	}
+
+	/// The player will immediately cease acceleration and velocity will be reset.
+	/// They will still be facing the same direction as before this call.
+	pub fn hard_stop_moving_horizontally(&mut self) {
+		self.character.accel_x = 0;
+		self.character.velocity_x = units::Velocity(0.0);
+	}
+
+	pub fn hard_stop_moving_vertically(&mut self) {
+		self.character.accel_y = 0;
+		self.character.velocity_y = units::Velocity(0.0);
 	}
 
 	pub fn give_bat(&mut self) {
