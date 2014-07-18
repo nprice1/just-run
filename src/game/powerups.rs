@@ -28,6 +28,7 @@ static BAD_FRAME: units::Tile = units::Tile(10);
 
 // Animation frames 
 static WIPEOUT_ANIMATION_FRAME: units::Tile = units::Tile(1);
+static NUKE_ANIMATION_FRAME: units::Tile = units::Tile(1);
 
 static X_BOX: Rectangle = Rectangle {
 	x: units::Game(6.0), y: units::Game(10.0), 
@@ -580,24 +581,26 @@ impl Nuke {
         });
 
 
-		let asset_path = "assets/base/explosion.bmp".to_string();
-		let motion_frame = BAD_FRAME;
+		let asset_path = "assets/base/nuke.bmp".to_string();
+		let motion_frame = NUKE_ANIMATION_FRAME;
 
-		let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(10);
 
-		let animation_sprite = box sprite::Sprite::new(
-			display,
+		let animation_sprite = box sprite::AnimatedSprite::new(
+			display, asset_path,
 			(motion_frame, facing_frame),
-			(units::Tile(1), units::Tile(1)),
-			asset_path
-		) as Box<sprite::Updatable<_>>;
+			(units::Tile(20), units::Tile(20)),
+			SPRITE_NUM_FRAMES, 60
+		).unwrap() as Box<sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
 	}
 }
 
 impl Powerup for Nuke {
 	fn draw(&self, display: &graphics::Graphics) {
-		if self.is_debuff {
+		if self.animation_timer > 0 {
+			self.animation_sprite.get(0).draw(display, (self.character.x - units::Game(250.0), self.character.y - units::Game(250.0)));
+		} else if self.is_debuff {
 			self.alternate_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 		} else {
 			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
@@ -619,7 +622,8 @@ impl Powerup for Nuke {
 	}
 
 	fn toggle_debuff(&mut self) {
-		self.is_debuff = !self.is_debuff;
+		// self.is_debuff = !self.is_debuff;
+		self.is_debuff = false;
 	}
 
 	fn is_debuff(&self) -> bool {
@@ -638,7 +642,7 @@ impl Powerup for Nuke {
 	}
 
 	fn set_timer(&mut self) {
-		self.animation_timer = 2;
+		self.animation_timer = 5;
 	}
 }
 

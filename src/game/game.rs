@@ -619,7 +619,9 @@ impl Game {
 									None => {}
 								};
 							}
-							self.activated.push(powerup);
+							let mut mut_powerup = powerup;
+							mut_powerup.set_timer();
+							self.activated.push(mut_powerup);
 						} 
 					}
 				};
