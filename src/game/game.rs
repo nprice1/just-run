@@ -16,6 +16,7 @@ pub use game::units::{AsGame};
 pub use game::units;
 pub use game::enemies;
 pub use game::powerups;
+pub use game::traps;
 pub use game::map;
 pub use game::input;
 pub use game::goal;
@@ -44,8 +45,10 @@ pub struct Game {
 	player:    player::Player,
 	enemies:   Vec<Box<enemies::Zombie>>,
 	powerups:  Vec<Box<powerups::Powerup>>,
+	traps:     Vec<Box<traps::Trap>>,
 	killed:    Vec<Box<enemies::Zombie>>,
 	activated: Vec<Box<powerups::Powerup>>,
+	tripped:   Vec<Box<traps::Trap>>,
 	goal:      goal::Goal,
 	map:       map::Map,
 
@@ -73,8 +76,10 @@ impl Game {
 		let mut rng = task_rng();
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let powerups_vector: Vec<Box<powerups::Powerup>> = Vec::new();
+		let traps_vector: Vec<Box<traps::Trap>> = Vec::new();
 		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
+		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
 
 		let mut game = Game {
 			map: map::Map::create_test_map(&mut display),
@@ -86,8 +91,10 @@ impl Game {
 
 			enemies: enemies_vector,
 			powerups: powerups_vector,
+			traps: traps_vector,
 			killed: killed_vector,
 			activated: activated_vector,
+			tripped: tripped_vector,
 
 			goal: goal::Goal::new(
 				&mut display, 
@@ -105,6 +112,7 @@ impl Game {
 		};
 		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 		game.spawn_powerup(rng.gen_range(1u, 7u));
+		game.spawn_trap(1);
 
 		game
 	}
@@ -207,6 +215,20 @@ impl Game {
 		}
 	}
 
+	pub fn spawn_trap(&mut self, kind: uint) {
+		let mut rng = task_rng();
+		match kind {
+			_ => {
+				let trap = box traps::BearTrap::new(
+								&mut self.display, 
+								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+							);
+				self.traps.push(trap as Box<traps::Trap>);
+			}
+		};
+	}
+
 	pub fn start(&mut self) {
 		self.display.play_music();
 		self.draw_start_screen();
@@ -245,7 +267,10 @@ impl Game {
 		let mut rng = task_rng();
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let powerup_vector: Vec<Box<powerups::Powerup>> = Vec::new();
+		let traps_vector: Vec<Box<traps::Trap>> = Vec::new();
 		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
+		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
+		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
 
 		self.player = player::Player::new(
 				&mut self.display,
@@ -255,7 +280,10 @@ impl Game {
 
 		self.enemies = enemies_vector;
 		self.powerups = powerup_vector;
+		self.traps = traps_vector;
 		self.killed = killed_vector;
+		self.activated = activated_vector;
+		self.tripped = tripped_vector;
 		self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 		self.spawn_powerup(rng.gen_range(1u, 7u));
 
@@ -329,7 +357,6 @@ impl Game {
 				self.player.stop_moving_horizontally();
 			}
 
-			// Handle player looking
 			if self.controller.was_key_released(keycode::UpKey) || self.controller.was_key_released(keycode::DownKey) {
 				self.player.stop_moving_vertically();
 			} 
@@ -390,10 +417,12 @@ impl Game {
 		// foreground
 		self.goal.draw(&mut self.display);
 		for powerup in self.powerups.iter() { powerup.draw(&mut self.display); }
+		for trap in self.traps.iter() { trap.draw(&mut self.display); }
 		for enemy in self.enemies.iter() { enemy.draw(&mut self.display); }
 		self.player.draw(&mut self.display);
 		let mut kill_list: Vec<Box<enemies::Zombie>> = Vec::new();
 		let mut active_list: Vec<Box<powerups::Powerup>> = Vec::new();
+		let mut tripped_list: Vec<Box<traps::Trap>> = Vec::new();
 		for _ in range(0, self.activated.len()) { 
 			match self.activated.pop() {
 				Some(activated) => {
@@ -414,6 +443,18 @@ impl Game {
 				None => {}
 			}; 
 		}
+		for _ in range(0, self.tripped.len()) { 
+			match self.tripped.pop() {
+				Some(tripped) => {
+					let mut mut_tripped = tripped;
+					mut_tripped.draw(&mut self.display);
+					if !mut_tripped.is_finished() {
+						tripped_list.push(mut_tripped);
+					}
+				},
+				None => {}
+			}; 
+		}
 		for _ in range(0, self.killed.len()) { 
 			match self.killed.pop() {
 				Some(killed) => {
@@ -428,6 +469,7 @@ impl Game {
 		}
 		self.killed = kill_list;
 		self.activated = active_list;
+		self.tripped = tripped_list;
 		self.map.draw(&self.display);
 	}
 
@@ -447,6 +489,7 @@ impl Game {
 		self.player.update(elapsed_time, &self.map);
 		for i in range(0, self.killed.len()) { self.killed.get_mut(i).update(elapsed_time, &self.map) }
 		for i in range(0, self.activated.len()) { self.activated.get_mut(i).update(elapsed_time, &self.map) }
+		for i in range(0, self.tripped.len()) { self.tripped.get_mut(i).update(elapsed_time, &self.map) }
 		for i in range(0, self.powerups.len()) {
 			let powerup = self.powerups.get_mut(i);
 		    // change debuff status every 10 updates
@@ -480,16 +523,47 @@ impl Game {
 
 		// Apply powerup
 		let mut counter = 0;
-		let mut powerup_type = 0;
+		let mut hit_powerup = false;
 		for powerup in self.powerups.mut_iter() { 
 			if powerup.damage_rectangle().collides_with(&self.player.character.damage_rectangle()) {
-				powerup_type = 1;
+				hit_powerup = true;
 			 	break;
 			}
 			counter = counter + 1;
 		}
-		if powerup_type > 0 {
+		if hit_powerup {
 			self.apply_powerup(counter);
+		}
+
+		// Activate traps
+		let mut counter = 0;
+		let mut player_hit_trap = false;
+		let mut zombie_hit_trap = false;
+		for trap in self.traps.mut_iter() { 
+			// check if player hit trap
+			if trap.damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
+				player_hit_trap = true;
+			 	break;
+			}
+			// check if zombies hit trap
+			for i in range(0, self.enemies.len()) {
+				if self.enemies.get(i).damage_rectangle().collides_with(&trap.damage_rectangle()) {
+					match self.enemies.remove(i) {
+						Some(enemy) => {
+							let mut mut_enemy = enemy;
+							mut_enemy.kill_zombie();
+							self.killed.push(mut_enemy);
+							zombie_hit_trap = true;
+							break;
+						}, 
+						None => {}
+					};
+				}
+			}
+			counter = counter + 1;
+		}
+		if player_hit_trap || zombie_hit_trap {
+			self.activate_trap(counter);
 		}
 
 		if enteredGoal {
@@ -628,6 +702,24 @@ impl Game {
 							mut_powerup.set_timer();
 							self.activated.push(mut_powerup);
 						} 
+					}
+				};
+			},
+			_  => { () }
+	    };
+	}
+
+	fn activate_trap(&mut self, index: uint) {
+		match self.traps.remove(index) {
+			Some(trap) => { 
+				let kind = trap.get_type();
+				match kind {
+					// Activate bear trap
+					_ => { 
+						println!("BEAR TRAP");
+						let mut mut_trap = trap;
+						mut_trap.set_timer();
+						self.tripped.push(mut_trap);
 					}
 				};
 			},
