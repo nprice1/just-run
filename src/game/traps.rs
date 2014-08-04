@@ -50,7 +50,7 @@ impl BearTrap {
 
 		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
 
-		let mut new_powerup = BearTrap { 
+		let mut new_trap = BearTrap { 
 			character: common::Character::new(x, y), 
 			animation_sprite: animation,
 			animation_timer: 0
@@ -58,11 +58,11 @@ impl BearTrap {
 
 		for motion in sprite::MOTIONS.iter() {
 			for facing in sprite::FACINGS.iter() {
-				new_powerup.load_sprite(graphics, (*motion, *facing));
+				new_trap.load_sprite(graphics, (*motion, *facing));
 			}
 		}
 
-		new_powerup
+		new_trap
 	}
 
 	pub fn load_sprite(&mut self, 
@@ -131,6 +131,6 @@ impl Trap for BearTrap {
 	}
 
 	fn set_timer(&mut self) {
-		self.animation_timer = 2;
+		self.animation_timer = 1;
 	}
 }

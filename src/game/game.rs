@@ -286,6 +286,7 @@ impl Game {
 		self.tripped = tripped_vector;
 		self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 		self.spawn_powerup(rng.gen_range(1u, 7u));
+		self.spawn_trap(1);
 
 		self.goal = goal::Goal::new(
 				&mut self.display, 
@@ -543,7 +544,7 @@ impl Game {
 			// check if player hit trap
 			if trap.damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
 				player_hit_trap = true;
-			 	break;
+				break;
 			}
 			// check if zombies hit trap
 			for i in range(0, self.enemies.len()) {
@@ -560,6 +561,9 @@ impl Game {
 					};
 				}
 			}
+			if zombie_hit_trap {
+				break;
+			}
 			counter = counter + 1;
 		}
 		if player_hit_trap || zombie_hit_trap {
@@ -575,9 +579,10 @@ impl Game {
 			);
 			self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 			self.spawn_powerup(rng.gen_range(1u, 7u));
+			self.spawn_trap(1);
 			self.level = self.level + 1;
 		}
-		if collidedWithZombie {
+		if collidedWithZombie || player_hit_trap {
 			self.player.character.kill_character();
 			self.draw();
 			// draw game over screen store score and start a new game
