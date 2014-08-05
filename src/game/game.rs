@@ -58,7 +58,8 @@ pub struct Game {
 	updates:        int,
 	level:          int, 
 	highscore:      int,
-	freeze_counter: int
+	freeze_counter: int, 
+	alt_control:    bool
 }
 
 impl Game {
@@ -108,7 +109,8 @@ impl Game {
 			updates:        0,
 			level:          0,
 			highscore:      Game::get_highscore(),
-			freeze_counter: 0
+			freeze_counter: 0, 
+			alt_control:    false
 		};
 		game.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
 		game.spawn_powerup(rng.gen_range(1u, 7u));
@@ -217,16 +219,19 @@ impl Game {
 
 	pub fn spawn_trap(&mut self, kind: uint) {
 		let mut rng = task_rng();
-		match kind {
-			_ => {
-				let trap = box traps::BearTrap::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.traps.push(trap as Box<traps::Trap>);
-			}
-		};
+		// 30% chance of spawning a trap
+		if rng.gen_range(1u, 11u) > 7 {
+			match kind {
+				_ => {
+					let trap = box traps::BearTrap::new(
+									&mut self.display, 
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+									(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+								);
+					self.traps.push(trap as Box<traps::Trap>);
+				}
+			};
+		}
 	}
 
 	pub fn start(&mut self) {
@@ -344,25 +349,30 @@ impl Game {
 				}
 			}
 
+			// Handle alternate control method
+			if self.controller.was_key_released(keycode::LShiftKey) {
+				self.alt_control = !self.alt_control;
+			}
+
 			// Handle player movement
 			if self.controller.was_key_released(keycode::LeftKey) || self.controller.was_key_released(keycode::RightKey) {
-				self.player.stop_moving_horizontally();
+				self.player.stop_moving_horizontally(self.alt_control);
 			} 
 			if self.controller.is_key_held(keycode::LeftKey) && self.controller.is_key_held(keycode::RightKey) {
-				self.player.stop_moving_horizontally();
+				self.player.stop_moving_horizontally(self.alt_control);
 			} else if self.controller.is_key_held(keycode::LeftKey) {
 				self.player.start_moving_left();
 			} else if self.controller.is_key_held(keycode::RightKey) {
 				self.player.start_moving_right();
 			} else {
-				self.player.stop_moving_horizontally();
+				self.player.stop_moving_horizontally(self.alt_control);
 			}
 
 			if self.controller.was_key_released(keycode::UpKey) || self.controller.was_key_released(keycode::DownKey) {
-				self.player.stop_moving_vertically();
+				self.player.stop_moving_vertically(self.alt_control);
 			} 
 			if self.controller.is_key_held(keycode::UpKey) && self.controller.is_key_held(keycode::DownKey) {
-				self.player.stop_moving_vertically();
+				self.player.stop_moving_vertically(self.alt_control);
 			} else if self.controller.is_key_held(keycode::UpKey) {
 				self.player.start_moving_up();
 			} else if self.controller.is_key_held(keycode::DownKey) {

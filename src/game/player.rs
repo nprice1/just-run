@@ -255,24 +255,18 @@ impl Player {
 
 	/// The player will immediately cease acceleration.
 	/// They will still be facing the same direction as before this call.
-	pub fn stop_moving_horizontally(&mut self) {
+	pub fn stop_moving_horizontally(&mut self, hard_stop: bool) {
 		self.character.accel_x = 0;
+		if hard_stop {
+			self.character.velocity_x = units::Velocity(0.0);
+		}		
 	}
 
-	pub fn stop_moving_vertically(&mut self) {
+	pub fn stop_moving_vertically(&mut self, hard_stop: bool) {
 		self.character.accel_y = 0;
-	}
-
-	/// The player will immediately cease acceleration and velocity will be reset.
-	/// They will still be facing the same direction as before this call.
-	pub fn hard_stop_moving_horizontally(&mut self) {
-		self.character.accel_x = 0;
-		self.character.velocity_x = units::Velocity(0.0);
-	}
-
-	pub fn hard_stop_moving_vertically(&mut self) {
-		self.character.accel_y = 0;
-		self.character.velocity_y = units::Velocity(0.0);
+		if hard_stop {
+			self.character.velocity_y = units::Velocity(0.0);
+		}
 	}
 
 	pub fn give_bat(&mut self) {
