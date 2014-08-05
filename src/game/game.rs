@@ -350,7 +350,7 @@ impl Game {
 			}
 
 			// Handle alternate control method
-			if self.controller.was_key_released(keycode::LShiftKey) {
+			if self.controller.was_key_released(keycode::LAltKey) {
 				self.alt_control = !self.alt_control;
 			}
 
