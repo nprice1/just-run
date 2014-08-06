@@ -350,7 +350,7 @@ impl Game {
 			}
 
 			// Handle alternate control method
-			if self.controller.was_key_released(keycode::LAltKey) {
+			if self.controller.was_key_released(keycode::LShiftKey) {
 				self.alt_control = !self.alt_control;
 			}
 
@@ -626,10 +626,15 @@ impl Game {
 				let length = self.enemies.len();
 				match kind {
 					// kill next zombie you touch without dying
-					1 => { println!("CRICKET BAT"); self.player.give_bat(); },
+					1 => { 
+						println!("CRICKET BAT"); 
+						self.display.play_sound_effect(3); 
+						self.player.give_bat(); 
+					},
 					// kill random zombie
 					2 => { 
 						println!("KILL ZOMBIE"); 
+						self.display.play_sound_effect(0);
 						let mut rng = task_rng(); 
 						match self.enemies.remove( rng.gen_range(0u, length) ) {
 							Some(killed) => {
@@ -644,6 +649,7 @@ impl Game {
 					// wipe out all zombies in given range
 					3 => { 
 						println!("WIPE OUT");
+						self.display.play_sound_effect(1); 
 						let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
 						for _ in range(0, self.enemies.len()) { 
 							let enemy = self.enemies.pop();
@@ -666,9 +672,14 @@ impl Game {
 						self.activated.push(mut_powerup);
 					},
 					// freeze all zombies
-					4 => { println!("FREEZE"); self.freeze_counter = 300; },
+					4 => { 
+						println!("FREEZE"); 
+						self.display.play_sound_effect(3);
+						self.freeze_counter = 300; 
+					},
 					5 => { 
 						println!("TELEPORT"); 
+						self.display.play_sound_effect(3); 
 						// teleport player to goal
 						self.player.character.x = self.goal.x; 
 						self.player.character.y = self.goal.y; 
@@ -703,6 +714,7 @@ impl Game {
 							self.enemies = new_enemies;
 						} else {
 							println!("NUKE"); 
+							self.display.play_sound_effect(2);
 							for _ in range(0, self.enemies.len()) {
 								match self.enemies.pop() {
 									Some(enemy) => {

@@ -26,6 +26,7 @@ macro_rules! trying(
 pub struct Graphics {
 	screen:   Box<render::Renderer<video::Window>>,
 	music:    sdl2_mixer::Music,
+	pub sound_effects: Vec<sdl2_mixer::Chunk>,
 	pub sprite_cache:  HashMap<string::String, Rc<Box<render::Texture>>>,
 }
 
@@ -54,18 +55,30 @@ impl Graphics {
 			render::Accelerated,
 		);
 
-		// setup audio
+		// setup background music
 		sdl2_mixer::open_audio(sdl2_mixer::DEFAULT_FREQUENCY, 0x8010u16, 2, 1024);
-		sdl2_mixer::allocate_channels(0);
+		sdl2_mixer::allocate_channels(2);
 		sdl2_mixer::init(sdl2_mixer::InitMp3 | sdl2_mixer::InitFlac | sdl2_mixer::InitMod | sdl2_mixer::InitFluidSynth | sdl2_mixer::InitModPlug | sdl2_mixer::InitOgg);
-		let music = sdl2_mixer::Music::from_file( &Path::new("assets/background.wav") ).unwrap();
+		let music = sdl2_mixer::Music::from_file( &Path::new("assets/background2.wav") ).unwrap();
+
+		// setup sound effects
+		let mut sound_effect_vec: Vec<sdl2_mixer::Chunk> = Vec::new();
+		let bullet = sdl2_mixer::Chunk::from_file( &Path::new("assets/bullet.wav") ).unwrap();
+		sound_effect_vec.push(bullet);
+		let wipeout = sdl2_mixer::Chunk::from_file( &Path::new("assets/wipeout.wav") ).unwrap();
+		sound_effect_vec.push(wipeout);
+		let nuke = sdl2_mixer::Chunk::from_file( &Path::new("assets/nuke.wav") ).unwrap();
+		sound_effect_vec.push(nuke);
+		let powerup = sdl2_mixer::Chunk::from_file( &Path::new("assets/powerup.wav") ).unwrap();
+		sound_effect_vec.push(powerup);
 
 		let graphics: Graphics = match render_context {
 			Ok(renderer) => {
 				Graphics{
 					screen:        box renderer,
 					sprite_cache:  HashMap::<string::String, Rc<Box<render::Texture>>>::new(),
-					music:         music
+					music:         music, 
+					sound_effects: sound_effect_vec
 				}
 			},
 			Err(msg) => {fail!(msg)},
@@ -136,13 +149,19 @@ impl Graphics {
 
 	#[allow(unused_must_use)]
 	pub fn play_music(&self) {
-		self.music.play(100000);
+		self.music.play(-1);
 	}
 	pub fn pause_music(&self) {
 		sdl2_mixer::Music::pause();
 	}
 	pub fn resume_music(&self) {
 		sdl2_mixer::Music::resume();
+	}
+	#[allow(unused_must_use)]
+	pub fn play_sound_effect(&self, index: uint) {
+		let channel = sdl2_mixer::Channel::all();
+		let chunk = self.sound_effects.get(index);
+		channel.play(chunk, 0);
 	}
 
 	#[allow(unused_must_use)]
