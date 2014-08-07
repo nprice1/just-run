@@ -71,6 +71,12 @@ impl Graphics {
 		sound_effect_vec.push(nuke);
 		let powerup = sdl2_mixer::Chunk::from_file( &Path::new("assets/powerup.wav") ).unwrap();
 		sound_effect_vec.push(powerup);
+		let debuff = sdl2_mixer::Chunk::from_file( &Path::new("assets/debuff.wav") ).unwrap();
+		sound_effect_vec.push(debuff);
+		let trap = sdl2_mixer::Chunk::from_file( &Path::new("assets/trap.wav") ).unwrap();
+		sound_effect_vec.push(trap);
+		let hit = sdl2_mixer::Chunk::from_file( &Path::new("assets/hit.wav") ).unwrap();
+		sound_effect_vec.push(hit);
 
 		let graphics: Graphics = match render_context {
 			Ok(renderer) => {

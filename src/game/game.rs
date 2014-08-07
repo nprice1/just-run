@@ -516,6 +516,7 @@ impl Game {
 				if self.player.has_bat() || self.player.is_teleporting() {
 					match self.enemies.remove(i) {
 						Some(enemy) => {
+							self.display.play_sound_effect(6);
 							let mut mut_enemy = enemy;
 							mut_enemy.kill_zombie();
 							self.killed.push(mut_enemy);
@@ -691,6 +692,7 @@ impl Game {
 					_ => { 
 						if powerup.is_debuff() {
 							println!("SUCKS TO BE YOU"); 
+							self.display.play_sound_effect(4);
 							let mut rng = task_rng();
 							let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
 							for _ in range(0, self.enemies.len()) { 
@@ -744,6 +746,7 @@ impl Game {
 					// Activate bear trap
 					_ => { 
 						println!("BEAR TRAP");
+						self.display.play_sound_effect(5);
 						let mut mut_trap = trap;
 						mut_trap.set_timer();
 						self.tripped.push(mut_trap);
