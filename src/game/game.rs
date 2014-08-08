@@ -583,6 +583,7 @@ impl Game {
 
 		if enteredGoal {
 			let mut rng = task_rng();
+			self.display.play_sound_effect(7);
 			self.goal = goal::Goal::new(
 				&mut self.display, 
 				(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(), 

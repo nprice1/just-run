@@ -77,6 +77,8 @@ impl Graphics {
 		sound_effect_vec.push(trap);
 		let hit = sdl2_mixer::Chunk::from_file( &Path::new("assets/hit.wav") ).unwrap();
 		sound_effect_vec.push(hit);
+		let goal = sdl2_mixer::Chunk::from_file( &Path::new("assets/goal.wav") ).unwrap();
+		sound_effect_vec.push(goal);
 
 		let graphics: Graphics = match render_context {
 			Ok(renderer) => {
