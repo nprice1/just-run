@@ -17,6 +17,8 @@ use sdl2::pixels;
 use sdl2_mixer;
 use sdl2_ttf;
 
+static MAX_HP: uint = 3;
+
 // fail when error
 macro_rules! trying(
     ($e:expr) => (match $e { Ok(e) => e, Err(e) => fail!("failed: {}", e) })
@@ -179,7 +181,6 @@ impl Graphics {
 	    let surface = trying!(font.render_str_blended(text, pixels::RGBA(255, 0, 0, 255)));
 	    let texture = trying!(self.screen.create_texture_from_surface(&surface));
     	self.screen.copy(&texture, None, Some(dest_rect));
-    	self.switch_buffers();
 	}
 
 	#[allow(unused_must_use)]
@@ -190,5 +191,21 @@ impl Graphics {
 		let dest_point = rect::Point::new(x2, y2);
 		self.screen.set_draw_color(pixels::RGB(255, 255, 255));
 		self.screen.draw_line(source_point, dest_point);
+	}
+
+	#[allow(unused_must_use)]
+	pub fn draw_health(&mut self, hp: uint) {
+		let heart_sprites = self.load_image("assets/base/heart.bmp".to_string(), true); 
+		let full_source = rect::Rect::new(0, 0, 22, 22);
+		let empty_source = rect::Rect::new(25, 0, 22, 22);
+		for i in range(0, MAX_HP) {
+			let x = i * 25;
+			let dest = rect::Rect::new(x as i32, 0, 25, 25);
+			if i < hp {
+				self.blit_surface(*heart_sprites, &full_source, &dest);
+			} else {
+				self.blit_surface(*heart_sprites, &empty_source, &dest);
+			}
+		}
 	}
 }

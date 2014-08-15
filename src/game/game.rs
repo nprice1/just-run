@@ -249,11 +249,13 @@ impl Game {
 		let score_string = String::from_str("CURRENT HIGHSCORE: ").append(self.highscore.to_str().as_slice());
 		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
 		self.display.draw_text("PRESS ENTER AND START RUNNING...", rect!(160, 500, 300, 50));
+		self.display.switch_buffers();
 	}
 
 	pub fn draw_status_bar(&mut self) {
 		let score_string = String::from_str("SCORE: ").append(self.level.to_str().as_slice());
 		self.display.draw_text(score_string.as_slice(), rect!(500, 0, 100, 30));
+		self.display.draw_health(self.player.get_health());
 	}
 
 	pub fn draw_game_over_screen(&mut self) {
@@ -264,6 +266,7 @@ impl Game {
 			self.display.draw_text("NEW HIGHSCORE!!", rect!(120, 400, 400, 60));
 		}
 		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
+		self.display.switch_buffers();
 	}
 
 	pub fn restart(&mut self) {
@@ -511,24 +514,26 @@ impl Game {
 		self.goal.update(elapsed_time);
 
 		let mut collidedWithZombie = false;
-		for i in range(0, self.enemies.len()) { 
-			if self.enemies.get(i).damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
-				if self.player.has_bat() || self.player.is_teleporting() {
-					match self.enemies.remove(i) {
-						Some(enemy) => {
-							self.display.play_sound_effect(6);
-							let mut mut_enemy = enemy;
-							mut_enemy.kill_zombie();
-							self.killed.push(mut_enemy);
-							self.player.take_bat();
-						}, 
-						None => {}
-					};
+		if !self.player.is_immune() {
+			for i in range(0, self.enemies.len()) { 
+				if self.enemies.get(i).damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
+					if self.player.has_bat() || self.player.is_teleporting() {
+						match self.enemies.remove(i) {
+							Some(enemy) => {
+								self.display.play_sound_effect(6);
+								let mut mut_enemy = enemy;
+								mut_enemy.kill_zombie();
+								self.killed.push(mut_enemy);
+								self.player.take_bat();
+							}, 
+							None => {}
+						};
+					}
+				 	else {
+				 		collidedWithZombie = true;
+				 	}
+				 	break;
 				}
-			 	else {
-			 		collidedWithZombie = true;
-			 	}
-			 	break;
 			}
 		}
 		let enteredGoal = self.goal.damage_rectangle().collides_with(&self.player.character.damage_rectangle());
@@ -595,13 +600,21 @@ impl Game {
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie || player_hit_trap {
-			self.player.character.kill_character();
-			self.draw();
-			// draw game over screen store score and start a new game
-			self.draw_game_over_screen();
-			let level = self.level;
-			self.store_highscore(level);
-			self.restart();
+			match self.player.get_health() {
+				health if health > 1 => {
+					self.player.hit_player();
+					self.player.start_immunity();
+				},
+				_ => {
+					self.player.character.kill_character();
+					self.draw();
+					// draw game over screen store score and start a new game
+					self.draw_game_over_screen();
+					let level = self.level;
+					self.store_highscore(level);
+					self.restart();
+				}
+			}
 		}
 
 		// populate cloud zombies

@@ -13,10 +13,13 @@ use game::common::Character;
 pub type MotionTup = (sprite::Motion, sprite::Facing);
 
 // player sprite animation
-static CHAR_OFFSET:        uint          = 12;
-static CRICKET_OFFSET:     uint          = 10;
-static SPRITE_NUM_FRAMES:  units::Frame  = 3;
-static SPRITE_FPS:         units::Fps    = 20;
+static CHAR_OFFSET:         uint          = 12;
+static CRICKET_OFFSET:      uint          = 10;
+static SPRITE_NUM_FRAMES:   units::Frame  = 3;
+static SPRITE_FPS:          units::Fps    = 20;
+static STANDING_HIT_FRAMES: units::Frame  = 2;
+static WALKING_HIT_FRAMES:  units::Frame  = 4;
+static HIT_FPS:             units::Fps    = 10;
 
 static WALKING_ACCEL:  units::Acceleration  = units::Acceleration(0.00083007812);
 static MAX_VELOCITY: units::Velocity      = units::Velocity(0.17859375);
@@ -25,6 +28,7 @@ static MAX_VELOCITY: units::Velocity      = units::Velocity(0.17859375);
 static STAND_FRAME: units::Tile   = units::Tile(0);
 static TELEPORT_FRAME: units::Tile = units::Tile(3);
 static TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(0);
+static HIT_FRAME: units::Tile = units::Tile(3);
 
 // horizontal facing (Facing)
 static FACING_WEST: units::Tile  = units::Tile(0 + CHAR_OFFSET);
@@ -36,8 +40,11 @@ pub struct Player {
 	pub character: common::Character,
 	cricket_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
 	teleport_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
+	hit_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
 	cricket_bat: bool,
-	teleport_timer: int
+	teleport_timer: int, 
+	immunity_timer: int,
+	health: uint
 }
 
 impl Player {
@@ -50,13 +57,17 @@ impl Player {
 	pub fn new(graphics: &mut graphics::Graphics, x: units::Game, y: units::Game) -> Player {
 		let cricket = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
 		let teleport = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
+		let hit = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
 		// construct new player
 		let mut new_player = Player{
 			character: common::Character::new(x, y),
 			cricket_sprites: cricket,
 			teleport_sprites: teleport,
+			hit_sprites: hit,
 			cricket_bat: false,
-			teleport_timer: 0
+			teleport_timer: 0, 
+			immunity_timer: 0,
+			health: 3
 		};
 
 		// load sprites for every possible movement tuple.
@@ -76,9 +87,12 @@ impl Player {
 		// calculate current position
 		self.character.elapsed_time = elapsed_time;
 
-		// update teleportation timer
+		// update timers
 		if self.teleport_timer > 0 {
 			self.teleport_timer = self.teleport_timer - 1;
+		}
+		if self.immunity_timer > 0 {
+			self.immunity_timer = self.immunity_timer - 1;
 		}
 
 		// update sprite
@@ -89,6 +103,9 @@ impl Player {
 		}
 		if self.teleport_timer > 0 {
 			self.teleport_sprites.get_mut(&self.character.movement).update(elapsed_time);
+		}
+		if self.immunity_timer > 0 {
+			self.hit_sprites.get_mut(&self.character.movement).update(elapsed_time);
 		}
 		if self.character.is_killed() {
 			self.character.killed_sprite.get_mut(0).update(elapsed_time);
@@ -172,6 +189,38 @@ impl Player {
 				}
 			}
 		});
+		self.hit_sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+			let file_path = "assets/MyChar.bmp".to_string();
+			let (_, facing) = *key;
+			let motion_frame = HIT_FRAME;
+
+			let facing_frame = match facing {
+				sprite::West => FACING_WEST,
+				sprite::East => FACING_EAST
+			};
+
+			match movement {
+				// static: standing in place
+				(sprite::Standing, _) => {
+					box sprite::AnimatedSprite::new(
+						graphics, file_path,
+						(motion_frame, facing_frame),
+						(units::Tile(1), units::Tile(1)),
+						STANDING_HIT_FRAMES, HIT_FPS
+					).unwrap() as Box<sprite::Updatable<_>>
+				}
+
+				// dynamic: 
+				(sprite::Walking, _) => {
+					box sprite::AnimatedSprite::new(
+						graphics, file_path,
+						(motion_frame, facing_frame),
+						(units::Tile(1), units::Tile(1)),
+						WALKING_HIT_FRAMES, HIT_FPS
+					).unwrap() as Box<sprite::Updatable<_>>
+				}
+			}
+		});
 		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
 			let file_path = "assets/MyChar.bmp".to_string();
 			let (_, facing) = *key;
@@ -226,6 +275,8 @@ impl Player {
 				},
 				_ => { self.teleport_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y)); }
 			}
+		} else if self.immunity_timer > 0 {
+			self.hit_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
 		} else {
 			self.character.draw(display);
 		}
@@ -287,5 +338,21 @@ impl Player {
 
 	pub fn is_teleporting(&mut self) -> bool {
 		self.teleport_timer > 0
+	}
+
+	pub fn start_immunity(&mut self) {
+		self.immunity_timer = 40;
+	}
+
+	pub fn is_immune(&mut self) -> bool {
+		self.immunity_timer > 0
+	}
+
+	pub fn hit_player(&mut self) {
+		self.health = self.health - 1;
+	}
+
+	pub fn get_health(&mut self) -> uint {
+		self.health
 	}
 }
