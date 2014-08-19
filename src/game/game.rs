@@ -493,7 +493,8 @@ impl Game {
 		if self.freeze_counter == 0 {
 			for i in range(0u, self.enemies.len()) { 
 				let enemy = self.enemies.get_mut(i);
-				enemy.set_acceleration(self.player.character.center_x(), self.player.character.center_y()); 
+				let (player_x, player_y) = self.player.get_follow_coords();
+				enemy.set_acceleration(player_x, player_y); 
 				enemy.update(elapsed_time, &self.map); 
 			}
 		}
@@ -600,6 +601,7 @@ impl Game {
 			self.level = self.level + 1;
 		}
 		if collidedWithZombie || player_hit_trap {
+			self.display.play_sound_effect(6);
 			match self.player.get_health() {
 				health if health > 1 => {
 					self.player.hit_player();

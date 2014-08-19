@@ -44,7 +44,10 @@ pub struct Player {
 	cricket_bat: bool,
 	teleport_timer: int, 
 	immunity_timer: int,
-	health: uint
+	health: uint,
+	follow_x: units::Game,
+	follow_y: units::Game,
+	update_count: int
 }
 
 impl Player {
@@ -67,7 +70,10 @@ impl Player {
 			cricket_bat: false,
 			teleport_timer: 0, 
 			immunity_timer: 0,
-			health: 3
+			health: 3, 
+			follow_x: units::Game(0 as f64),
+			follow_y: units::Game(0 as f64),
+			update_count: 0
 		};
 
 		// load sprites for every possible movement tuple.
@@ -93,6 +99,15 @@ impl Player {
 		}
 		if self.immunity_timer > 0 {
 			self.immunity_timer = self.immunity_timer - 1;
+		}
+
+		// update the last know location of player for enemies that chase
+		if self.update_count == 10 {
+			self.follow_x = self.character.center_x();
+			self.follow_y = self.character.center_y();
+			self.update_count = 0;
+		} else {
+			self.update_count = self.update_count + 1;
 		}
 
 		// update sprite
@@ -341,7 +356,7 @@ impl Player {
 	}
 
 	pub fn start_immunity(&mut self) {
-		self.immunity_timer = 40;
+		self.immunity_timer = 60;
 	}
 
 	pub fn is_immune(&mut self) -> bool {
@@ -354,5 +369,9 @@ impl Player {
 
 	pub fn get_health(&mut self) -> uint {
 		self.health
+	}
+
+	pub fn get_follow_coords(&self) -> (units::Game, units::Game) {
+		(self.follow_x, self.follow_y)
 	}
 }
