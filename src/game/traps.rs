@@ -20,15 +20,6 @@ static BEAR_TRAP_FRAME: units::Tile = units::Tile(0);
 // Animation frames 
 static BEAR_TRAP_CLOSED_FRAME: units::Tile = units::Tile(1);
 
-static X_BOX: Rectangle = Rectangle {
-	x: units::Game(6.0), y: units::Game(10.0), 
-	width: units::Game(20.0), height: units::Game(12.0)
-};
-static Y_BOX: Rectangle = Rectangle {
-	x: units::Game(10.0), y: units::Game(6.0), 
-	width: units::Game(12.0), height: units::Game(30.0)
-};
-
 pub trait Trap {
 	fn draw(&self, display: &graphics::Graphics);
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map);
@@ -36,6 +27,8 @@ pub trait Trap {
 	fn get_type(&self) -> int;
 	fn is_finished(&mut self) -> bool;
 	fn set_timer(&mut self);
+	fn get_map_x(&self) -> units::Game;
+	fn get_map_y(&self) -> units::Game;
 }
 
 pub struct BearTrap {
@@ -98,10 +91,12 @@ impl BearTrap {
 
 impl Trap for BearTrap {
 	fn draw(&self, display: &graphics::Graphics) {
+		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
+		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (self.character.x, self.character.y));
+			self.animation_sprite.get(0).draw(display, (correction_x, correction_y));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 		}
 	}
 
@@ -111,12 +106,7 @@ impl Trap for BearTrap {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn get_type(&self) -> int {
@@ -132,5 +122,13 @@ impl Trap for BearTrap {
 
 	fn set_timer(&mut self) {
 		self.animation_timer = 1;
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 }

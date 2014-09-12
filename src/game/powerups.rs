@@ -30,15 +30,6 @@ static BAD_FRAME: units::Tile = units::Tile(10);
 static WIPEOUT_ANIMATION_FRAME: units::Tile = units::Tile(1);
 static NUKE_ANIMATION_FRAME: units::Tile = units::Tile(1);
 
-static X_BOX: Rectangle = Rectangle {
-	x: units::Game(6.0), y: units::Game(10.0), 
-	width: units::Game(20.0), height: units::Game(12.0)
-};
-static Y_BOX: Rectangle = Rectangle {
-	x: units::Game(10.0), y: units::Game(6.0), 
-	width: units::Game(12.0), height: units::Game(30.0)
-};
-
 pub trait Powerup {
 	fn draw(&self, display: &graphics::Graphics);
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map);
@@ -48,6 +39,8 @@ pub trait Powerup {
 	fn is_debuff(&self) -> bool;
 	fn is_finished(&mut self) -> bool;
 	fn set_timer(&mut self);
+	fn get_map_x(&self) -> units::Game;
+	fn get_map_y(&self) -> units::Game;
 }
 
 pub struct CricketBat {
@@ -128,7 +121,9 @@ impl CricketBat {
 
 impl Powerup for CricketBat {
 	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
+		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
+		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 	}
 
 	#[allow(unused_variable)]
@@ -137,12 +132,7 @@ impl Powerup for CricketBat {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn toggle_debuff(&mut self) {
@@ -163,6 +153,14 @@ impl Powerup for CricketBat {
 
 	fn set_timer(&mut self) {
 		;
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 }
 
@@ -207,7 +205,9 @@ impl KillZombie {
 
 impl Powerup for KillZombie {
 	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
+		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
+		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 	}
 
 	#[allow(unused_variable)]
@@ -216,12 +216,7 @@ impl Powerup for KillZombie {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn toggle_debuff(&mut self) {
@@ -245,6 +240,14 @@ impl Powerup for KillZombie {
 
 	fn set_timer(&mut self) {
 		self.animation_timer = 1;
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 }
 
@@ -303,10 +306,12 @@ impl WipeOut {
 
 impl Powerup for WipeOut {
 	fn draw(&self, display: &graphics::Graphics) {
+		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
+		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (self.character.x - units::Game(60.0), self.character.y - units::Game(60.0)));
+			self.animation_sprite.get(0).draw(display, (correction_x - units::Game(60.0), correction_y - units::Game(60.0)));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 		}
 	}
 
@@ -316,12 +321,7 @@ impl Powerup for WipeOut {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn toggle_debuff(&mut self) {
@@ -345,6 +345,14 @@ impl Powerup for WipeOut {
 
 	fn set_timer(&mut self) {
 		self.animation_timer = 5;
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 }
 
@@ -388,7 +396,9 @@ impl Freeze {
 
 impl Powerup for Freeze {
 	fn draw(&self, display: &graphics::Graphics) {
-		self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
+		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
+		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 	}
 
 	#[allow(unused_variable)]
@@ -397,12 +407,7 @@ impl Powerup for Freeze {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn toggle_debuff(&mut self) {
@@ -423,6 +428,14 @@ impl Powerup for Freeze {
 
 	fn set_timer(&mut self) {
 		;
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 }
 
@@ -481,10 +494,12 @@ impl Teleport {
 
 impl Powerup for Teleport {
 	fn draw(&self, display: &graphics::Graphics) {
+		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
+		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (self.character.x - units::Game(60.0), self.character.y - units::Game(60.0)));
+			self.animation_sprite.get(0).draw(display, (correction_x - units::Game(60.0), correction_y - units::Game(60.0)));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 		}
 	}
 
@@ -494,12 +509,7 @@ impl Powerup for Teleport {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn toggle_debuff(&mut self) {
@@ -523,6 +533,14 @@ impl Powerup for Teleport {
 
 	fn set_timer(&mut self) {
 		self.animation_timer = 4;
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 }
 
@@ -598,12 +616,14 @@ impl Nuke {
 
 impl Powerup for Nuke {
 	fn draw(&self, display: &graphics::Graphics) {
+		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
+		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (self.character.x - units::Game(250.0), self.character.y - units::Game(250.0)));
+			self.animation_sprite.get(0).draw(display, (correction_x - units::Game(250.0), correction_y - units::Game(250.0)));
 		} else if self.is_debuff {
-			self.alternate_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+			self.alternate_sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
 		}
 	}
 
@@ -613,12 +633,7 @@ impl Powerup for Nuke {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn toggle_debuff(&mut self) {
@@ -643,6 +658,12 @@ impl Powerup for Nuke {
 	fn set_timer(&mut self) {
 		self.animation_timer = 5;
 	}
-}
 
-// TODO: Add trap powerup with benefits(?)
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
+	}
+}

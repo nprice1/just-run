@@ -65,6 +65,15 @@ impl <T: AsGame> Div<T, Game> for Game {
 	}
 }
 
+// Allow `%` operator for anything which can be converted `#to_game()`
+impl <T: AsGame> Rem<T, Game> for Game {
+	#[inline]
+	fn rem(&self, rhs: &T) -> Game {
+		let (Game(a), Game(b)) = (*self, rhs.to_game());
+		Game(a % b)
+	}
+}
+
 /// A `Pixel` represents an absolute coordinate on a surface.
 #[deriving(PartialEq,PartialOrd)]
 pub struct Pixel(pub i32);

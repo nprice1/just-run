@@ -29,8 +29,8 @@ impl FixedBackdrop {
 		let (mut x, mut y) = (0i32,0i32);
 		let units::Pixel(tile_size) = BACKGROUND_SIZE.to_pixel();
 
-		while units::Pixel(x) < game::SCREEN_WIDTH.to_pixel() {
-			while units::Pixel(y) < game::SCREEN_HEIGHT.to_pixel() {
+		while units::Pixel(x) < game::LEVEL_WIDTH.to_pixel() {
+			while units::Pixel(y) < game::LEVEL_HEIGHT.to_pixel() {
 				let src  = Rect::new(0, 0, tile_size, tile_size);
 				let dest = Rect::new(x, y, tile_size, tile_size);
 

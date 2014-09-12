@@ -42,15 +42,6 @@ static CLOUD_MAX_VELOCITY: units::Velocity      = units::Velocity(0.05859375);
 static WEST_OFFSET: units::Tile = units::Tile(2);
 static EAST_OFFSET: units::Tile = units::Tile(3);
 
-static X_BOX: Rectangle = Rectangle {
-	x: units::Game(6.0), y: units::Game(10.0), 
-	width: units::Game(20.0), height: units::Game(12.0)
-};
-static Y_BOX: Rectangle = Rectangle {
-	x: units::Game(10.0), y: units::Game(6.0), 
-	width: units::Game(12.0), height: units::Game(30.0)
-};
-
 pub trait Zombie {
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map);
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game);
@@ -60,6 +51,8 @@ pub trait Zombie {
 	fn get_target(&self) -> (units::Game, units::Game);
 	fn get_x(&self) -> units::Game;
 	fn get_y(&self) -> units::Game;
+	fn get_map_x(&self) -> units::Game;
+	fn get_map_y(&self) -> units::Game;
 	fn kill_zombie(&mut self);
 	fn is_killed(&mut self) -> bool;
 }
@@ -148,12 +141,12 @@ impl Zombie for SlowZombie {
 	}
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
-		self.character.accel_x = match self.character.center_x() {
+		self.character.accel_x = match self.character.map_center_x() {
 			center if center < player_x => 1,
 			center if center > player_x => -1,
 			_				            => 0
 		};
-		self.character.accel_y = match self.character.center_y() {
+		self.character.accel_y = match self.character.map_center_y() {
 			center if center < player_y => 1, 
 			center if center > player_y => -1, 
 			_				            => 0
@@ -165,12 +158,7 @@ impl Zombie for SlowZombie {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn zombie_type(&self) -> int {
@@ -187,6 +175,14 @@ impl Zombie for SlowZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 
 	fn kill_zombie(&mut self) {
@@ -288,12 +284,12 @@ impl Zombie for CrazyZombie {
 			self.character.target_y = player_y;
 		}
 
-		self.character.accel_x = match self.character.center_x() {
+		self.character.accel_x = match self.character.map_center_x() {
 			center if center < self.character.target_x => 1,
 			center if center > self.character.target_x => -1,
 			_				            	 		   => 0
 		};
-		self.character.accel_y = match self.character.center_y() {
+		self.character.accel_y = match self.character.map_center_y() {
 			center if center < self.character.target_y => 1, 
 			center if center > self.character.target_y => -1, 
 			_				            	 		   => 0
@@ -305,12 +301,7 @@ impl Zombie for CrazyZombie {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn zombie_type(&self) -> int {
@@ -327,6 +318,14 @@ impl Zombie for CrazyZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 
 	fn kill_zombie(&mut self) {
@@ -410,12 +409,12 @@ impl Zombie for RandomZombie {
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
 		self.character.set_new_random_target();
 
-		self.character.accel_x = match self.character.center_x() {
+		self.character.accel_x = match self.character.map_center_x() {
 			center if center < self.character.target_x => 1,
 			center if center > self.character.target_x => -1,
 			_				            	 		   => 0
 		};
-		self.character.accel_y = match self.character.center_y() {
+		self.character.accel_y = match self.character.map_center_y() {
 			center if center < self.character.target_y => 1, 
 			center if center > self.character.target_y => -1, 
 			_				            	 		   => 0
@@ -427,12 +426,7 @@ impl Zombie for RandomZombie {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn zombie_type(&self) -> int {
@@ -449,6 +443,14 @@ impl Zombie for RandomZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 
 	fn kill_zombie(&mut self) {
@@ -544,12 +546,12 @@ impl Zombie for CloudZombie {
 			self.character.target_y = player_y;
 		}
 
-		self.character.accel_x = match self.character.center_x() {
+		self.character.accel_x = match self.character.map_center_x() {
 			center if center < self.character.target_x => 1,
 			center if center > self.character.target_x => -1,
 			_				            	 		   => 0
 		};
-		self.character.accel_y = match self.character.center_y() {
+		self.character.accel_y = match self.character.map_center_y() {
 			center if center < self.character.target_y => 1, 
 			center if center > self.character.target_y => -1, 
 			_				            	 		   => 0
@@ -561,12 +563,7 @@ impl Zombie for CloudZombie {
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
-		Rectangle {
-			x: self.character.x + X_BOX.left(),
-			y: self.character.y + Y_BOX.top(),
-			width: X_BOX.width(),
-			height: Y_BOX.height(),
-		}
+		self.character.damage_rectangle()
 	}
 
 	fn zombie_type(&self) -> int {
@@ -583,6 +580,14 @@ impl Zombie for CloudZombie {
 
 	fn get_y(&self) -> units::Game {
 		self.character.center_y()
+	}
+
+	fn get_map_x(&self) -> units::Game {
+		self.character.map_center_x()
+	}
+
+	fn get_map_y(&self) -> units::Game {
+		self.character.map_center_y()
 	}
 
 	fn kill_zombie(&mut self) {

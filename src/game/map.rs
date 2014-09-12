@@ -1,6 +1,7 @@
 use std::vec::Vec;
 use std::rc::Rc;
 
+use game;
 use game::backdrop;
 use game::graphics;
 use game::sprite;
@@ -49,15 +50,17 @@ impl Tile {
 }
 
 pub struct Map {
-	background:  backdrop::FixedBackdrop,
-	tiles:       Vec<Box<Vec<Box<Tile>>>>,
+	background:    backdrop::FixedBackdrop,
+	tiles:         Vec<Box<Vec<Box<Tile>>>>, 
+	page_x:        uint,
+	page_y:        uint
 }
 
 impl Map {
-	/// Will initialize a map (20 * 20) tiles:
+	/// Will initialize a map (60 * 60) tiles:
 	pub fn create_test_map(graphics: &mut graphics::Graphics) -> Map {
-		static rows: uint = 20; // 480
-		static cols: uint = 20; // 640
+		static rows: uint = 60;
+		static cols: uint = 60; 
 
 		let map_path =  "assets/base/Stage/PrtCave.bmp".to_string();
 		let sprite   =  Rc::new(
@@ -87,7 +90,9 @@ impl Map {
 		}
 		let map = Map {
 			background: backdrop::FixedBackdrop::new("assets/base/bkBlue.bmp".to_string(), graphics),
-			tiles: tile_vec
+			tiles: tile_vec, 
+			page_x: 0,
+			page_y: 0
 		};
 	
 		map
@@ -98,14 +103,14 @@ impl Map {
 	}
 
 	/// Draws current state to `display`
-	pub fn draw(&self, graphics: &graphics::Graphics) {
-		for a in range(0, self.tiles.len()) {
-			for b in range(0, self.tiles.get(a).len()) {
-				match self.tiles.get(a).get(b).sprite {
+	pub fn draw(&mut self, graphics: &graphics::Graphics) {
+		for a in range(self.page_y * 20, (self.page_y * 20) + 20) {
+			for b in range(self.page_x * 20, (self.page_x * 20) + 20) {
+				match self.tiles.get(a as uint).get(b as uint).sprite {
 					Some(ref sprite) => {
 						sprite.draw(graphics,
-						            (units::Tile(b).to_game(),
-						             units::Tile(a).to_game()));
+						            (units::Tile(b as uint).to_game() % game::game::SCREEN_WIDTH.to_game(),
+						             units::Tile(a as uint).to_game() % game::game::SCREEN_HEIGHT.to_game()));
 					}
 					_ => {}
 				};
@@ -113,6 +118,42 @@ impl Map {
 		}
 	}
 
+	pub fn set_page(&mut self, player_x: units::Game, player_y: units::Game) {
+		if player_x < units::Tile(20).to_game() {
+			self.page_x = 0;
+		} else if player_x > units::Tile(20).to_game() && player_x < units::Tile(40).to_game() {
+			self.page_x = 1;
+		} else {
+			self.page_x = 2;
+		}	
+		if player_y < units::Tile(20).to_game() {
+			self.page_y = 0;
+		} else if player_y > units::Tile(20).to_game() && player_y < units::Tile(40).to_game() {
+			self.page_y = 1;
+		} else {
+			self.page_y = 2;
+		}	
+	}
+
+	pub fn get_page_x(&self) -> uint {
+		self.page_x
+	}
+
+	pub fn get_page_y(&self) -> uint {
+		self.page_y
+	}
+
+	pub fn on_screen(&self, map_x: units::Game, map_y: units::Game) -> bool {
+		let lower_limit_x = units::Tile(self.page_x * 20).to_game();
+		let upper_limit_x = lower_limit_x + units::Tile(20).to_game();
+		let lower_limit_y = units::Tile(self.page_y * 20).to_game();
+		let upper_limit_y = lower_limit_y + units::Tile(20).to_game();
+		if map_x <= upper_limit_x && map_x >= lower_limit_x && map_y <= upper_limit_y && map_y >= lower_limit_y {
+			true
+		} else {
+			false
+		}
+	}
 
 	/// no-op for demo map
 	#[allow(unused_variable)]

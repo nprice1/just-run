@@ -1,5 +1,5 @@
 pub use game::game::Game;
-pub use game::game::{SCREEN_WIDTH, SCREEN_HEIGHT};
+pub use game::game::{SCREEN_WIDTH, LEVEL_WIDTH, SCREEN_HEIGHT, LEVEL_HEIGHT};
 
 pub mod game;
 pub mod units;
@@ -12,6 +12,6 @@ pub mod input;
 pub mod map;
 pub mod player;
 pub mod sprite;
-pub mod goal;
+pub mod heli;
 pub mod powerups;
 pub mod traps;

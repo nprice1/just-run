@@ -103,8 +103,8 @@ impl Player {
 
 		// update the last know location of player for enemies that chase
 		if self.update_count == 10 {
-			self.follow_x = self.character.center_x();
-			self.follow_y = self.character.center_y();
+			self.follow_x = self.character.map_center_x();
+			self.follow_y = self.character.map_center_y();
 			self.update_count = 0;
 		} else {
 			self.update_count = self.update_count + 1;

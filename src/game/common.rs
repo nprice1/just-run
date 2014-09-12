@@ -29,14 +29,20 @@ static Y_BOX: Rectangle = Rectangle {
 	width: units::Game(12.0), height: units::Game(30.0)
 };
 
+// Screen correction for changing pages
+pub static SCREEN_CORRECTION: units::Tile = units::Tile(20);
+
 pub struct Character {
 	// assets
 	pub sprites:   HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
 	pub killed_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
 
-	// positioning
+	// positioning on screen
 	pub x: units::Game, 
 	pub y: units::Game,
+	// positioning on map
+	pub map_x: units::Game,
+	pub map_y: units::Game,
 	pub movement:  MotionTup,
 
 	// physics
@@ -71,6 +77,8 @@ impl Character {
 
 			x: x,
 			y: y,
+			map_x: x,
+			map_y: y,
 			movement: (sprite::Standing, sprite::East),
 			
 			velocity_x: units::Velocity(0.0),
@@ -156,17 +164,20 @@ impl Character {
 			let mut info = self.get_collision_info(&self.right_collision(delta), map);
 			self.x = if info.collided {
 				self.velocity_x = units::Velocity(0.0);
-				(info.col.to_game() - X_BOX.right())
+				self.map_x = info.col.to_game() - X_BOX.right();
+				(info.col.to_game() - X_BOX.right()) % SCREEN_CORRECTION.to_game()
 			} else {
-				(self.x + delta)
+				self.map_x = self.map_x + delta;
+				self.map_x % SCREEN_CORRECTION.to_game()
 			};
 
 			// collisions left-side
 			info = self.get_collision_info(&self.left_collision(units::Game(0.0)), map);
 			self.x = if info.collided {
-				(info.col.to_game() + X_BOX.right())
+				self.map_x = info.col.to_game() + X_BOX.right();
+				(info.col.to_game() + X_BOX.right()) % SCREEN_CORRECTION.to_game()
 			} else {
-				self.x
+				self.map_x % SCREEN_CORRECTION.to_game()
 			};
 
 		} else { // moving left
@@ -174,17 +185,20 @@ impl Character {
 			let mut info = self.get_collision_info(&self.left_collision(delta), map);
 			self.x = if info.collided {
 				self.velocity_x = units::Velocity(0.0);
-				(info.col.to_game() + X_BOX.right())
+				self.map_x = info.col.to_game() + X_BOX.right();
+				(info.col.to_game() + X_BOX.right()) % SCREEN_CORRECTION.to_game()
 			} else {
-				(self.x + delta) 
+				self.map_x = self.map_x + delta;
+				self.map_x % SCREEN_CORRECTION.to_game()
 			};
 
 			// collisions right-side
 			info = self.get_collision_info(&self.right_collision(units::Game(0.0)), map);
 			self.x = if info.collided {
-				(info.col.to_game() - X_BOX.right()) 
+				self.map_x = info.col.to_game() - X_BOX.right();
+				(info.col.to_game() - X_BOX.right()) % SCREEN_CORRECTION.to_game()
 			} else {
-				self.x
+				self.map_x % SCREEN_CORRECTION.to_game()
 			};
 		}
 	}
@@ -209,39 +223,44 @@ impl Character {
 		let delta = self.velocity_y * self.elapsed_time;
 
 		// check collision in direction of delta
-		if delta > units::Game(0.0) {
+		if delta > units::Game(0.0) { // moving up
 			// react to collision
 			let mut info = self.get_collision_info(&self.bottom_collision(delta), map);
 			self.y = if info.collided {
 				self.velocity_y = units::Velocity(0.0);
-
-				(info.row.to_game() - Y_BOX.bottom())
+				self.map_y = info.row.to_game() - Y_BOX.bottom();
+				(info.row.to_game() - Y_BOX.bottom()) % SCREEN_CORRECTION.to_game()
 			} else {
-				(self.y + delta)
+				self.map_y = self.map_y + delta;
+				self.map_y % SCREEN_CORRECTION.to_game()
 			};
 
 			info = self.get_collision_info(&self.top_collision(units::Game(0.0)), map);
 			self.y = if info.collided {
-				(info.row.to_game() + Y_BOX.height())
+				self.map_y = info.row.to_game() + Y_BOX.height();
+				(info.row.to_game() + Y_BOX.height()) % SCREEN_CORRECTION.to_game()
 			} else {
-				self.y
+				self.map_y % SCREEN_CORRECTION.to_game()
 			};
 
-		} else {
+		} else { // moving down
 			// react to collision
 			let mut info = self.get_collision_info(&self.top_collision(delta), map);
 			self.y = if info.collided {
 				self.velocity_y = units::Velocity(0.0);
-				(info.row.to_game() + Y_BOX.height())
+				self.map_y = info.row.to_game() + Y_BOX.height();
+				(info.row.to_game() + Y_BOX.height()) % SCREEN_CORRECTION.to_game()
 			} else {
-				(self.y + delta)
+				self.map_y = self.map_y + delta;
+				self.map_y % SCREEN_CORRECTION.to_game()
 			};
 
 			info = self.get_collision_info(&self.bottom_collision(units::Game(0.0)), map);
 			self.y = if info.collided {
-				(info.row.to_game() - Y_BOX.bottom())
+				self.map_y = info.row.to_game() - Y_BOX.bottom();
+				(info.row.to_game() - Y_BOX.bottom()) % SCREEN_CORRECTION.to_game()
 			} else {
-				self.y
+				self.map_y % SCREEN_CORRECTION.to_game()
 			};
 		}
 	}
@@ -264,8 +283,8 @@ impl Character {
 	/// A player's damage rectangle encompasses the whole player.
 	pub fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
-			x: self.x + X_BOX.left(),
-			y: self.y + Y_BOX.top(),
+			x: self.map_x + X_BOX.left(),
+			y: self.map_y + Y_BOX.top(),
 			width: X_BOX.width(),
 			height: Y_BOX.height(),
 		}
@@ -279,13 +298,21 @@ impl Character {
 		self.y + units::HalfTile(1)
 	}
 
+	pub fn map_center_x(&self) -> units::Game {
+		self.map_x + units::HalfTile(1)
+	}
+
+	pub fn map_center_y(&self) -> units::Game {
+		self.map_y + units::HalfTile(1)
+	}
+
 	// x-axis collision detection
 	fn left_collision(&self, delta: units::Game) -> Rectangle {
 		assert!(delta <= units::Game(0.0));
 
 		Rectangle {
-			x: self.x + (X_BOX.left() + delta),
-			y: self.y + X_BOX.top(),
+			x: self.map_x + (X_BOX.left() + delta),
+			y: self.map_y + X_BOX.top(),
 			width: (X_BOX.width() / units::Game(2.0)) - delta,
 			height: X_BOX.height()
 		}
@@ -296,8 +323,8 @@ impl Character {
 		assert!(delta >= units::Game(0.0));
 		
 		Rectangle {
-			x: self.x + X_BOX.left() + (X_BOX.width() / units::Game(2.0)),
-			y: self.y + X_BOX.top(),
+			x: self.map_x + X_BOX.left() + (X_BOX.width() / units::Game(2.0)),
+			y: self.map_y + X_BOX.top(),
 			width: 	(X_BOX.width() / units::Game(2.0)) + delta,
 			height: X_BOX.height()
 		}
@@ -308,8 +335,8 @@ impl Character {
 		assert!(delta <= units::Game(0.0));
 
 		Rectangle {
-			x: self.x + Y_BOX.left(),
-			y: self.y + (Y_BOX.top() + delta),
+			x: self.map_x + Y_BOX.left(),
+			y: self.map_y + (Y_BOX.top() + delta),
 			width: Y_BOX.width(),
 			height: (Y_BOX.height() / units::Game(2.0)) - delta
 		}
@@ -319,16 +346,16 @@ impl Character {
 		assert!(delta >= units::Game(0.0));
 		
 		Rectangle {
-			x: self.x + Y_BOX.left(),
-			y: self.y + Y_BOX.top() + (Y_BOX.height() / units::Game(2.0)),
+			x: self.map_x + Y_BOX.left(),
+			y: self.map_y + Y_BOX.top() + (Y_BOX.height() / units::Game(2.0)),
 			width:  Y_BOX.width(),
 			height: (Y_BOX.height() / units::Game(2.0)) + delta
 		}
 	}
 
 	pub fn distance(&self, other_x: units::Game, other_y: units::Game) -> f64 {
-		let units::Game(xs) = (other_x - self.x) * (other_x - self.x);
-		let units::Game(ys) = (other_y - self.y) * (other_y - self.y);
+		let units::Game(xs) = (other_x - self.map_x) * (other_x - self.map_x);
+		let units::Game(ys) = (other_y - self.map_y) * (other_y - self.map_y);
 
 		(xs + ys).sqrt()
 	}
@@ -341,32 +368,32 @@ impl Character {
 			let chance_x = rng.gen_range(1u, 3u);
 			let chance_y = rng.gen_range(1u, 3u);
 			let plus_or_minus = rng.gen_range(1u, 3u);
-			self.target_x = match self.center_x() {
+			self.target_x = match self.map_center_x() {
 				center if plus_or_minus == 1 => {
-						if center > units::Tile(1).to_game() && center < units::Tile(16).to_game() {
+						if center > units::Tile(1).to_game() && center < units::Tile(56).to_game() {
 							center + units::Tile(chance_x).to_game()
 						} else {
 							center - units::Tile(chance_x).to_game()
 						}
 					}
 				center => {
-						if center > units::Tile(3).to_game() && center < units::Tile(18).to_game() {
+						if center > units::Tile(3).to_game() && center < units::Tile(58).to_game() {
 							center - units::Tile(chance_x).to_game()
 						} else {
 							center + units::Tile(chance_x).to_game()
 						}
 					}
 			};
-			self.target_y = match self.center_y() {
+			self.target_y = match self.map_center_y() {
 				center if plus_or_minus == 1 => {
-						if center > units::Tile(1).to_game() && center < units::Tile(16).to_game() {
+						if center > units::Tile(1).to_game() && center < units::Tile(56).to_game() {
 							center + units::Tile(chance_y).to_game()
 						} else {
 							center - units::Tile(chance_y).to_game()
 						}
 					}
 				center => {
-						if center > units::Tile(3).to_game() && center < units::Tile(18).to_game() {
+						if center > units::Tile(3).to_game() && center < units::Tile(58).to_game() {
 							center - units::Tile(chance_y).to_game()
 						} else {
 							center + units::Tile(chance_y).to_game()
@@ -381,8 +408,8 @@ impl Character {
 		let distance_to_target = self.distance( self.target_x, self.target_y );
 
 		if distance_to_target < 20.0 {
-			self.target_x = units::Tile(rng.gen_range(1u, 18u)).to_game();
-			self.target_y = units::Tile(rng.gen_range(1u, 18u)).to_game();
+			self.target_x = units::Tile(rng.gen_range(1u, 58u)).to_game();
+			self.target_y = units::Tile(rng.gen_range(1u, 58u)).to_game();
 		}
 	}
 
