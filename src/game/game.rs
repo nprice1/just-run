@@ -39,12 +39,13 @@ pub static MAX_TRAPS:                uint = 5;
 
 pub static POSSIBLE_PART_RANGE: (uint, uint) = (20, 55);
 pub static LEVEL_1_PARTS:               uint = 3;
+pub static LEVEL_1_SCORE:                int = 5000;
 
 pub static PLAYER_STARTING_X: units::Tile = units::Tile(1);
 pub static PLAYER_STARTING_Y: units::Tile = units::Tile(4);
 
 pub static HELI_STARTING_X: units::Tile = units::Tile(1);
-pub static HELI_STARTING_Y: units::Tile = units::Tile(0);
+pub static HELI_STARTING_Y: units::Tile = units::Tile(1);
 
 // hadle the annoying Rect i32
 macro_rules! rect(
@@ -55,16 +56,17 @@ macro_rules! rect(
 
 /// An instance of the `just-run` game with its own event loop.
 pub struct Game {
-	player:    player::Player,
-	enemies:   Vec<Box<enemies::Zombie>>,
-	powerups:  Vec<Box<powerups::Powerup>>,
-	traps:     Vec<Box<traps::Trap>>,
-	killed:    Vec<Box<enemies::Zombie>>,
-	activated: Vec<Box<powerups::Powerup>>,
-	tripped:   Vec<Box<traps::Trap>>,
-	parts:     Vec<Box<heli::Part>>,
-	heli:      heli::Helicopter,
-	map:       map::Map,
+	player:     player::Player,
+	enemies:    Vec<Box<enemies::Zombie>>,
+	powerups:   Vec<Box<powerups::Powerup>>,
+	traps:      Vec<Box<traps::Trap>>,
+	killed:     Vec<Box<enemies::Zombie>>,
+	activated:  Vec<Box<powerups::Powerup>>,
+	tripped:    Vec<Box<traps::Trap>>,
+	parts:      Vec<Box<heli::Part>>,
+	coll_parts: Vec<Box<heli::Part>>,
+	heli:       heli::Helicopter,
+	map:        map::Map,
 
 	display:        graphics::Graphics,
 	controller:     input::Input,
@@ -72,6 +74,8 @@ pub struct Game {
 	updates:        int,
 	level:          int, 
 	highscore:      int,
+	score:          int,
+	completed_lvl:  bool,
 	freeze_counter: int, 
 	alt_control:    bool
 }
@@ -96,6 +100,7 @@ impl Game {
 		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
 		let part_vector: Vec<Box<heli::Part>> = Vec::new();
+		let coll_part_vector: Vec<Box<heli::Part>> = Vec::new();
 
 		let mut game = Game {
 			map: map::Map::create_test_map(&mut display),
@@ -112,6 +117,7 @@ impl Game {
 			activated: activated_vector,
 			tripped: tripped_vector,
 			parts: part_vector,
+			coll_parts: coll_part_vector,
 
 			heli: heli::Helicopter::new(
 				&mut display, 
@@ -125,6 +131,8 @@ impl Game {
 			updates:        0,
 			level:          0,
 			highscore:      Game::get_highscore(),
+			score:          LEVEL_1_SCORE,
+			completed_lvl:  false,
 			freeze_counter: 0, 
 			alt_control:    false
 		};
@@ -259,43 +267,35 @@ impl Game {
 	pub fn spawn_part(&mut self, kind: uint) {
 		let mut rng = task_rng();
 		let (min, max) = POSSIBLE_PART_RANGE;
+		let mut x = rng.gen_range(0, max);
+		let mut y = rng.gen_range(0, max);
+		if x < 20 {
+			y = rng.gen_range(min, max);
+		} else if y < 20 {
+			x = rng.gen_range(min, max);
+		}
 		match kind {
 			0 => {
-				// let part = box heli::Prop::new(
-				// 				&mut self.display, 
-				// 				(units::Tile(rng.gen_range(min, max))).to_game(),
-				// 				(units::Tile(rng.gen_range(min, max))).to_game()
-				// 			);
 				let part = box heli::Prop::new(
 								&mut self.display, 
-								units::Tile(3).to_game(),
-								units::Tile(5).to_game()
+								units::Tile(x).to_game(),
+								units::Tile(y).to_game()
 							);
 				self.parts.push(part as Box<heli::Part>);
 			},
 			1 => {
-				// let part = box heli::Windshield::new(
-				// 				&mut self.display, 
-				// 				(units::Tile(rng.gen_range(min, max))).to_game(),
-				// 				(units::Tile(rng.gen_range(min, max))).to_game()
-				// 			);
 				let part = box heli::Windshield::new(
 								&mut self.display, 
-								units::Tile(9).to_game(),
-								units::Tile(5).to_game()
+								units::Tile(x).to_game(),
+								units::Tile(y).to_game()
 							);
 				self.parts.push(part as Box<heli::Part>);
 			},
 			_ => {
-				// let part = box heli::Bar::new(
-				// 				&mut self.display, 
-				// 				(units::Tile(rng.gen_range(min, max))).to_game(),
-				// 				(units::Tile(rng.gen_range(min, max))).to_game()
-				// 			);
 				let part = box heli::Bar::new(
 								&mut self.display, 
-								units::Tile(15).to_game(),
-								units::Tile(5).to_game()
+								units::Tile(x).to_game(),
+								units::Tile(y).to_game()
 							);
 				self.parts.push(part as Box<heli::Part>);
 			}
@@ -321,18 +321,13 @@ impl Game {
 	}
 
 	pub fn draw_status_bar(&mut self) {
-		let score_string = String::from_str("SCORE: ").append(self.level.to_str().as_slice());
+		let score_string = String::from_str("SCORE: ").append(self.score.to_str().as_slice());
 		self.display.draw_text(score_string.as_slice(), rect!(500, 0, 100, 30));
 		self.display.draw_health(self.player.get_health());
 	}
 
 	pub fn draw_game_over_screen(&mut self) {
-		self.display.draw_text("GAME OVER MAN!", rect!(45, 50, 550, 200));
-		let score_string = String::from_str("YOUR SCORE: ").append(self.level.to_str().as_slice());
-		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
-		if self.level > self.highscore {
-			self.display.draw_text("NEW HIGHSCORE!!", rect!(120, 400, 400, 60));
-		}
+		self.display.draw_text("GAME OVER MAN!", rect!(45, 200, 550, 200));
 		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
 		self.display.switch_buffers();
 	}
@@ -347,6 +342,7 @@ impl Game {
 		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
+		let coll_part_vector: Vec<Box<heli::Part>> = Vec::new();
 
 		self.player = player::Player::new(
 				&mut self.display,
@@ -360,6 +356,7 @@ impl Game {
 		self.killed = killed_vector;
 		self.activated = activated_vector;
 		self.tripped = tripped_vector;
+		self.coll_parts = coll_part_vector;
 		let number_of_zombies = rng.gen_range(20u, MAX_ENEMIES);
 		for _ in range(0, number_of_zombies) {
 		  	self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
@@ -386,6 +383,7 @@ impl Game {
 		self.paused = true;
 		self.updates = 0;
 		self.level = 0;
+		self.score = LEVEL_1_SCORE;
 		self.freeze_counter = 0;
 	}
 
@@ -401,7 +399,7 @@ impl Game {
 		let mut running = true;
 		let mut timer   = Timer::new().unwrap();
 		
-		while running {
+		while running && !self.completed_lvl {
 			let start_time_ms = units::Millis(sdl::get_ticks() as int);
 			self.controller.begin_new_frame();
 
@@ -492,6 +490,9 @@ impl Game {
 
 			timer.sleep(next_frame_time);
 
+			// decrement score
+			self.score = self.score - 1;
+
 			/* Print current FPS to stdout
 			let units::Millis(start_time) = start_time_ms;
 			let seconds_per_frame =  (sdl::get_ticks() as int - start_time) as f64 / 1000.0;
@@ -500,6 +501,30 @@ impl Game {
 			println!("fps: {}", fps);
 			*/
 			
+		}
+		while self.completed_lvl {
+			let start_time_ms = units::Millis(sdl::get_ticks() as int);
+			// inform actors of how much time has passed since last frame
+			let current_time_ms = units::Millis(sdl::get_ticks() as int);
+			let elapsed_time    = current_time_ms - last_update_time;
+		
+			// only update if not in paused state
+			self.update_cinematic(cmp::min(elapsed_time, MAX_FRAME_TIME));
+			last_update_time = current_time_ms;
+
+			self.display.clear_buffer(); // clear back-buffer
+			self.draw_cinematic();
+			self.draw_zombies();
+			self.display.switch_buffers();
+
+			// throttle event-loop based on iteration time vs frame deadline
+			let iter_time = units::Millis(sdl::get_ticks() as int) - start_time_ms;
+			let next_frame_time: u64 = if frame_delay > iter_time { 
+				let (units::Millis(fd), units::Millis(it)) = (frame_delay, iter_time);
+				(fd - it) as u64
+			} else { 0 as u64 };
+			
+			timer.sleep(next_frame_time);
 		}
 
 	}
@@ -528,11 +553,7 @@ impl Game {
 				trap.draw(&mut self.display); 
 			} 
 		}
-		for enemy in self.enemies.iter() { 
-			if self.map.on_screen(enemy.get_map_x(), enemy.get_map_y()) {
-			 	enemy.draw(&mut self.display); 
-			} 
-		}
+		self.draw_zombies();
 		self.player.draw(&mut self.display);
 		let mut kill_list: Vec<Box<enemies::Zombie>> = Vec::new();
 		let mut active_list: Vec<Box<powerups::Powerup>> = Vec::new();
@@ -589,6 +610,21 @@ impl Game {
 		self.map.draw(&self.display);
 	}
 
+	fn draw_zombies(&mut self) {
+		for enemy in self.enemies.iter() { 
+			if self.map.on_screen(enemy.get_map_x(), enemy.get_map_y()) {
+			 	enemy.draw(&mut self.display); 
+			} 
+		}
+	}
+
+	fn draw_cinematic(&mut self) {
+		// background
+		self.map.draw_background(&self.display);
+		self.heli.draw(&self.display);
+		self.map.draw(&self.display);
+	}
+
 	/// Passes the current time in milliseconds to our underlying actors.
 	fn update(&mut self, elapsed_time: units::Millis) {
 		self.map.update(elapsed_time);
@@ -632,6 +668,7 @@ impl Game {
 							}, 
 							None => {}
 						};
+						self.score = self.score + 100;
 					}
 				 	else {
 				 		collidedWithZombie = true;
@@ -639,6 +676,30 @@ impl Game {
 				 	break;
 				}
 			}
+		}
+
+		// Collect part
+		if self.coll_parts.len() == 0 {
+			for i in range(0, self.parts.len()) { 
+				if self.parts.get(i).damage_rectangle().collides_with(&self.player.character.damage_rectangle()) {
+					match self.parts.remove(i) {
+						Some(part) => {
+							self.display.play_sound_effect(7);
+							self.coll_parts.push(part);
+						}, 
+						None => {}
+					};
+					break;
+				}
+			}
+		}
+
+		// Apply parts to vehicle
+		if self.heli.damage_rectangle().collides_with(&self.player.character.damage_rectangle()) {
+			match self.coll_parts.pop() {
+				Some(part) => { self.heli.add_part(part.part_type()); },
+				None       => {}
+			};
 		}
 
 		// Apply powerup
@@ -689,19 +750,19 @@ impl Game {
 			self.activate_trap(counter);
 		}
 
-		// if enteredGoal {
-		// 	let mut rng = task_rng();
-		// 	self.display.play_sound_effect(7);
-		// 	self.goal = goal::Goal::new(
-		// 		&mut self.display, 
-		// 		(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(), 
-		// 		(units::Tile(rng.gen_range(1u, POSSIBLE_GOAL_TILES))).to_game()
-		// 	);
-		// 	self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
-		// 	self.spawn_powerup(rng.gen_range(1u, 7u));
-		// 	self.spawn_trap(1);
-		// 	self.level = self.level + 1;
-		// }
+		if self.heli.isBuilt() {
+			self.level = self.level + 1;
+			let score = self.score;
+			self.store_highscore(score);
+			self.completed_lvl = true;
+		}
+
+		// ran out of time
+		if self.score == 0 {
+			self.draw_game_over_screen();
+			self.restart();
+		}
+
 		if collidedWithZombie || player_hit_trap {
 			self.display.play_sound_effect(6);
 			match self.player.get_health() {
@@ -714,8 +775,6 @@ impl Game {
 					self.draw();
 					// draw game over screen store score and start a new game
 					self.draw_game_over_screen();
-					let level = self.level;
-					self.store_highscore(level);
 					self.restart();
 				}
 			}
@@ -736,6 +795,17 @@ impl Game {
 				self.spawn_zombie(4, zombie_location);
 			}
 		}
+	}
+
+	fn update_cinematic(&mut self, elapsed_time: units::Millis) {
+		self.map.update(elapsed_time);
+		for i in range(0u, self.enemies.len()) { 
+			let enemy = self.enemies.get_mut(i);
+			let (player_x, player_y) = self.player.get_follow_coords();
+			enemy.set_acceleration(player_x, player_y); 
+			enemy.update(elapsed_time, &self.map); 
+		}
+		self.heli.update(elapsed_time);
 	}
 
 	fn apply_powerup(&mut self, index: uint) {
@@ -766,6 +836,7 @@ impl Game {
 								None => {}
 							};
 						}
+						self.score = self.score + 100;
 					},
 					// wipe out all zombies in given range
 					3 => { 
@@ -787,6 +858,7 @@ impl Game {
 								None => {}
 							}
 						}
+						self.score = self.score + (self.enemies.len() as int - new_enemies.len() as int) * 50;
 						self.enemies = new_enemies;
 						let mut mut_powerup = powerup;
 						mut_powerup.set_timer();
@@ -855,6 +927,7 @@ impl Game {
 							let mut mut_powerup = powerup;
 							mut_powerup.set_timer();
 							self.activated.push(mut_powerup);
+							self.score = self.score + (self.enemies.len() as int - new_enemies.len() as int) * 10;
 							self.enemies = new_enemies;
 						} 
 					}
@@ -881,22 +954,6 @@ impl Game {
 			},
 			_  => { () }
 	    };
-	}
-
-	fn get_enemies_on_screen(&mut self) -> Vec<Box<enemies::Zombie>> {
-		let mut on_screen_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
-		for _ in range(0, self.enemies.len()) { 
-			let enemy = self.enemies.pop();
-			match enemy {
-				Some(enemy) => {
-					if self.map.on_screen(enemy.get_map_x(), enemy.get_map_y()) {
-					  on_screen_enemies.push(enemy);
-					}
-				},
-				None => {}
-			}
-		}
-		on_screen_enemies
 	}
 
 	fn get_highscore() -> int {
