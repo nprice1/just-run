@@ -254,7 +254,7 @@ impl Helicopter {
 		self.parts.insert(part_num, 1);
 	}
 
-	pub fn isBuilt(&self) -> bool {
+	pub fn is_built(&self) -> bool {
 		if self.parts.len() == NUM_PARTS {
 			true
 		} else {

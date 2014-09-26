@@ -40,6 +40,7 @@ pub static MAX_TRAPS:                uint = 5;
 pub static POSSIBLE_PART_RANGE: (uint, uint) = (20, 55);
 pub static LEVEL_1_PARTS:               uint = 3;
 pub static LEVEL_1_SCORE:                int = 5000;
+pub static LEVEL_1_CINEMATIC_FRAMES:     int = 300;
 
 pub static PLAYER_STARTING_X: units::Tile = units::Tile(1);
 pub static PLAYER_STARTING_Y: units::Tile = units::Tile(4);
@@ -144,10 +145,10 @@ impl Game {
 		for _ in range(0, number_of_powerups) {
 			game.spawn_powerup(rng.gen_range(1u, 7u));
 		}
-		let number_of_traps = rng.gen_range(0u, MAX_TRAPS);
-		for _ in range(0, number_of_traps) {
-			game.spawn_trap(1);
-		}
+		// let number_of_traps = rng.gen_range(0u, MAX_TRAPS);
+		// for _ in range(0, number_of_traps) {
+		// 	game.spawn_trap(1);
+		// }
 		for i in range(0, LEVEL_1_PARTS) {
 			game.spawn_part(i);
 		}
@@ -250,19 +251,19 @@ impl Game {
 		};
 	}
 
-	pub fn spawn_trap(&mut self, kind: uint) {
-		let mut rng = task_rng();
-		match kind {
-			_ => {
-				let trap = box traps::BearTrap::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.traps.push(trap as Box<traps::Trap>);
-			}
-		};
-	}
+	// pub fn spawn_trap(&mut self, kind: uint) {
+	// 	let mut rng = task_rng();
+	// 	match kind {
+	// 		_ => {
+	// 			let trap = box traps::BearTrap::new(
+	// 							&mut self.display, 
+	// 							(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+	// 							(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+	// 						);
+	// 			self.traps.push(trap as Box<traps::Trap>);
+	// 		}
+	// 	};
+	// }
 
 	pub fn spawn_part(&mut self, kind: uint) {
 		let mut rng = task_rng();
@@ -291,14 +292,15 @@ impl Game {
 							);
 				self.parts.push(part as Box<heli::Part>);
 			},
-			_ => {
+			2 => {
 				let part = box heli::Bar::new(
 								&mut self.display, 
 								units::Tile(x).to_game(),
 								units::Tile(y).to_game()
 							);
 				self.parts.push(part as Box<heli::Part>);
-			}
+			},
+			_ => {}
 		};
 	}
 
@@ -328,6 +330,18 @@ impl Game {
 
 	pub fn draw_game_over_screen(&mut self) {
 		self.display.draw_text("GAME OVER MAN!", rect!(45, 200, 550, 200));
+		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
+		self.display.switch_buffers();
+	}
+
+	pub fn draw_completion_screen(&mut self) {
+		let level_string = String::from_str("YOU BEAT LEVEL ").append(self.level.to_str().as_slice()).append("!");
+		self.display.draw_text(level_string.as_slice(), rect!(45, 100, 550, 200));
+		let score_string = String::from_str("YOUR SCORE: ").append(self.score.to_str().as_slice());
+		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
+		if self.score > self.highscore {
+			self.display.draw_text("NEW HIGHSCORE!!", rect!(120, 400, 400, 60));
+		}
 		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
 		self.display.switch_buffers();
 	}
@@ -365,10 +379,10 @@ impl Game {
 		for _ in range(0, number_of_powerups) {
 			self.spawn_powerup(rng.gen_range(1u, 7u));
 		}
-		let number_of_traps = rng.gen_range(0u, MAX_TRAPS);
-		for _ in range(0, number_of_traps) {
-			self.spawn_trap(1);
-		}
+		// let number_of_traps = rng.gen_range(0u, MAX_TRAPS);
+		// for _ in range(0, number_of_traps) {
+		// 	self.spawn_trap(1);
+		// }
 
 		self.heli = heli::Helicopter::new(
 				&mut self.display, 
@@ -376,7 +390,7 @@ impl Game {
 				HELI_STARTING_Y.to_game()
 			);
 
-		for i in range(0, LEVEL_1_PARTS + 1) {
+		for i in range(0, LEVEL_1_PARTS) {
 			self.spawn_part(i);
 		}
 
@@ -502,20 +516,55 @@ impl Game {
 			*/
 			
 		}
-		while self.completed_lvl {
+		let mut cinematic_counter = LEVEL_1_CINEMATIC_FRAMES;
+		while self.completed_lvl && running {
 			let start_time_ms = units::Millis(sdl::get_ticks() as int);
 			// inform actors of how much time has passed since last frame
 			let current_time_ms = units::Millis(sdl::get_ticks() as int);
 			let elapsed_time    = current_time_ms - last_update_time;
+
+			self.controller.begin_new_frame();
+
+			// drain event queue once per frame
+			// ideally should do in separate task
+			match event::poll_event() {
+				event::KeyDownEvent(_,_,key_cap,_,_) => {
+					self.controller.key_down_event(key_cap);
+				},
+				event::KeyUpEvent(_,_,key_cap,_,_) => {
+					self.controller.key_up_event(key_cap);
+				},
+				_ => {},
+			}
+
+			// Handle exit game
+			if self.controller.was_key_released(keycode::EscapeKey) {
+				self.completed_lvl = false;
+			}
+
+			// Handle paused game
+			if self.controller.was_key_released(keycode::ReturnKey) {
+				if cinematic_counter < 0 {
+					self.completed_lvl = false;
+					self.restart();
+					self.paused = false;
+					self.event_loop();
+				} 
+			}
 		
 			// only update if not in paused state
 			self.update_cinematic(cmp::min(elapsed_time, MAX_FRAME_TIME));
 			last_update_time = current_time_ms;
 
-			self.display.clear_buffer(); // clear back-buffer
-			self.draw_cinematic();
-			self.draw_zombies();
-			self.display.switch_buffers();
+			if cinematic_counter > 0 {
+				self.display.clear_buffer(); // clear back-buffer
+				self.draw_cinematic(cinematic_counter);
+				self.draw_zombies();
+				self.display.switch_buffers();
+			} else {
+				self.draw_completion_screen();
+				self.display.switch_buffers();
+			}
 
 			// throttle event-loop based on iteration time vs frame deadline
 			let iter_time = units::Millis(sdl::get_ticks() as int) - start_time_ms;
@@ -525,6 +574,8 @@ impl Game {
 			} else { 0 as u64 };
 			
 			timer.sleep(next_frame_time);
+
+			cinematic_counter = cinematic_counter - 1;
 		}
 
 	}
@@ -618,11 +669,12 @@ impl Game {
 		}
 	}
 
-	fn draw_cinematic(&mut self) {
+	fn draw_cinematic(&mut self, counter: int) {
 		// background
 		self.map.draw_background(&self.display);
-		self.heli.draw(&self.display);
 		self.map.draw(&self.display);
+		self.heli.y = self.heli.y - units::Game(1.0);
+		self.heli.draw(&self.display);
 	}
 
 	/// Passes the current time in milliseconds to our underlying actors.
@@ -750,7 +802,7 @@ impl Game {
 			self.activate_trap(counter);
 		}
 
-		if self.heli.isBuilt() {
+		if self.heli.is_built() {
 			self.level = self.level + 1;
 			let score = self.score;
 			self.store_highscore(score);
