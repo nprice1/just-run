@@ -19,6 +19,8 @@ pub use game::powerups;
 pub use game::traps;
 pub use game::map;
 pub use game::input;
+pub use game::vehicle;
+pub use game::car;
 pub use game::heli;
 pub use game::player;
 pub use game::graphics;
@@ -35,18 +37,21 @@ pub static SCREEN_HEIGHT: units::Tile = units::Tile(20);
 pub static POSSIBLE_CHARACTER_TILES: uint = 58;
 pub static MAX_ENEMIES:              uint = 30;
 pub static MAX_POWERUPS:             uint = 20;
-pub static MAX_TRAPS:                uint = 5;
+// pub static MAX_TRAPS:                uint = 5;
 
 pub static POSSIBLE_PART_RANGE: (uint, uint) = (20, 55);
 pub static LEVEL_1_PARTS:               uint = 3;
-pub static LEVEL_1_SCORE:                int = 5000;
+pub static LEVEL_1_TIME:                 int = 5000;
 pub static LEVEL_1_CINEMATIC_FRAMES:     int = 300;
+pub static LEVEL_2_PARTS:               uint = 3;
+pub static LEVEL_2_TIME:                 int = 2000;
+pub static LEVEL_2_CINEMATIC_FRAMES:     int = 300;
 
 pub static PLAYER_STARTING_X: units::Tile = units::Tile(1);
 pub static PLAYER_STARTING_Y: units::Tile = units::Tile(4);
 
-pub static HELI_STARTING_X: units::Tile = units::Tile(1);
-pub static HELI_STARTING_Y: units::Tile = units::Tile(1);
+pub static VEHICLE_STARTING_X: units::Tile = units::Tile(1);
+pub static VEHICLE_STARTING_Y: units::Tile = units::Tile(1);
 
 // hadle the annoying Rect i32
 macro_rules! rect(
@@ -64,9 +69,9 @@ pub struct Game {
 	killed:     Vec<Box<enemies::Zombie>>,
 	activated:  Vec<Box<powerups::Powerup>>,
 	tripped:    Vec<Box<traps::Trap>>,
-	parts:      Vec<Box<heli::Part>>,
-	coll_parts: Vec<Box<heli::Part>>,
-	heli:       heli::Helicopter,
+	parts:      Vec<Box<vehicle::Part>>,
+	coll_parts: Vec<Box<vehicle::Part>>,
+	vehicle:    Box<vehicle::Vehicle>,
 	map:        map::Map,
 
 	display:        graphics::Graphics,
@@ -76,6 +81,7 @@ pub struct Game {
 	level:          int, 
 	highscore:      int,
 	score:          int,
+	timer:          int,
 	completed_lvl:  bool,
 	freeze_counter: int, 
 	alt_control:    bool
@@ -100,11 +106,11 @@ impl Game {
 		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
-		let part_vector: Vec<Box<heli::Part>> = Vec::new();
-		let coll_part_vector: Vec<Box<heli::Part>> = Vec::new();
+		let part_vector: Vec<Box<vehicle::Part>> = Vec::new();
+		let coll_part_vector: Vec<Box<vehicle::Part>> = Vec::new();
 
 		let mut game = Game {
-			map: map::Map::create_test_map(&mut display),
+			map: map::Map::load_map(&mut display, 1 as int),
 			player: player::Player::new(
 				&mut display,
 				PLAYER_STARTING_X.to_game(),
@@ -120,19 +126,20 @@ impl Game {
 			parts: part_vector,
 			coll_parts: coll_part_vector,
 
-			heli: heli::Helicopter::new(
+			vehicle: box heli::Helicopter::new(
 				&mut display, 
-				HELI_STARTING_X.to_game(), 
-				HELI_STARTING_Y.to_game()
-			),
+				VEHICLE_STARTING_X.to_game(), 
+				VEHICLE_STARTING_Y.to_game()
+			) as Box<vehicle::Vehicle>,
 
 			display:        display,
 			controller:     controller, 
 			paused:         true,
 			updates:        0,
-			level:          0,
+			level:          1,
 			highscore:      Game::get_highscore(),
-			score:          LEVEL_1_SCORE,
+			score:          0,
+			timer:          LEVEL_1_TIME,
 			completed_lvl:  false,
 			freeze_counter: 0, 
 			alt_control:    false
@@ -275,32 +282,65 @@ impl Game {
 		} else if y < 20 {
 			x = rng.gen_range(min, max);
 		}
-		match kind {
-			0 => {
-				let part = box heli::Prop::new(
-								&mut self.display, 
-								units::Tile(x).to_game(),
-								units::Tile(y).to_game()
-							);
-				self.parts.push(part as Box<heli::Part>);
-			},
+		match self.level {
 			1 => {
-				let part = box heli::Windshield::new(
-								&mut self.display, 
-								units::Tile(x).to_game(),
-								units::Tile(y).to_game()
-							);
-				self.parts.push(part as Box<heli::Part>);
+				match kind {
+					0 => {
+						let part = box heli::Prop::new(
+										&mut self.display, 
+										units::Tile(x).to_game(),
+										units::Tile(y).to_game()
+									);
+						self.parts.push(part as Box<vehicle::Part>);
+					},
+					1 => {
+						let part = box heli::Windshield::new(
+										&mut self.display, 
+										units::Tile(x).to_game(),
+										units::Tile(y).to_game()
+									);
+						self.parts.push(part as Box<vehicle::Part>);
+					},
+					2 => {
+						let part = box heli::Bar::new(
+										&mut self.display, 
+										units::Tile(x).to_game(),
+										units::Tile(y).to_game()
+									);
+						self.parts.push(part as Box<vehicle::Part>);
+					},
+					_ => {}
+				};
 			},
-			2 => {
-				let part = box heli::Bar::new(
-								&mut self.display, 
-								units::Tile(x).to_game(),
-								units::Tile(y).to_game()
-							);
-				self.parts.push(part as Box<heli::Part>);
-			},
-			_ => {}
+			_ => {
+				match kind {
+					0 => {
+						let part = box car::Tire::new(
+										&mut self.display, 
+										units::Tile(x).to_game(),
+										units::Tile(y).to_game()
+									);
+						self.parts.push(part as Box<vehicle::Part>);
+					},
+					1 => {
+						let part = box car::Door::new(
+										&mut self.display, 
+										units::Tile(x).to_game(),
+										units::Tile(y).to_game()
+									);
+						self.parts.push(part as Box<vehicle::Part>);
+					},
+					2 => {
+						let part = box car::Engine::new(
+										&mut self.display, 
+										units::Tile(x).to_game(),
+										units::Tile(y).to_game()
+									);
+						self.parts.push(part as Box<vehicle::Part>);
+					},
+					_ => {}
+				};
+			}
 		};
 	}
 
@@ -323,13 +363,15 @@ impl Game {
 	}
 
 	pub fn draw_status_bar(&mut self) {
-		let score_string = String::from_str("SCORE: ").append(self.score.to_str().as_slice());
+		let score_string = String::from_str("TIMER: ").append(self.timer.to_str().as_slice());
 		self.display.draw_text(score_string.as_slice(), rect!(500, 0, 100, 30));
 		self.display.draw_health(self.player.get_health());
 	}
 
 	pub fn draw_game_over_screen(&mut self) {
-		self.display.draw_text("GAME OVER MAN!", rect!(45, 200, 550, 200));
+		self.display.draw_text("GAME OVER MAN!", rect!(45, 100, 550, 200));
+		let score_string = String::from_str("YOUR SCORE: ").append(self.score.to_str().as_slice());
+		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
 		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
 		self.display.switch_buffers();
 	}
@@ -341,13 +383,31 @@ impl Game {
 		self.display.draw_text(score_string.as_slice(), rect!(120, 300, 400, 100));
 		if self.score > self.highscore {
 			self.display.draw_text("NEW HIGHSCORE!!", rect!(120, 400, 400, 60));
+			let score = self.score;
+			self.store_highscore(score);
 		}
 		self.display.draw_text("PRESS ENTER TO RUN SOME MORE...", rect!(160, 500, 300, 50));
 		self.display.switch_buffers();
 	}
 
+	pub fn set_score_and_timer(&mut self) {
+		self.score = self.score + (self.level * 1000) + (self.player.get_health() as int * 1000) + self.timer;
+		self.timer = self.timer + LEVEL_2_TIME;
+	}
+
 	pub fn restart(&mut self) {
 		println!("Restarting game...");
+		self.level = 0;
+		self.new_level(true);
+		self.paused = true;
+		self.score = 0;
+		self.timer = LEVEL_1_TIME;
+		self.load_map();
+	}
+
+	pub fn new_level(&mut self, restart: bool) {
+		println!("Starting new level...");
+		self.level = self.level + 1;
 
 		let mut rng = task_rng();
 		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
@@ -356,7 +416,8 @@ impl Game {
 		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
 		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
 		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
-		let coll_part_vector: Vec<Box<heli::Part>> = Vec::new();
+		let coll_part_vector: Vec<Box<vehicle::Part>> = Vec::new();
+		let part_vector: Vec<Box<vehicle::Part>> = Vec::new();
 
 		self.player = player::Player::new(
 				&mut self.display,
@@ -371,6 +432,7 @@ impl Game {
 		self.activated = activated_vector;
 		self.tripped = tripped_vector;
 		self.coll_parts = coll_part_vector;
+		self.parts = part_vector;
 		let number_of_zombies = rng.gen_range(20u, MAX_ENEMIES);
 		for _ in range(0, number_of_zombies) {
 		  	self.spawn_zombie(rng.gen_range(1u, 5u), (units::Game(0.0), units::Game(0.0)));
@@ -384,20 +446,18 @@ impl Game {
 		// 	self.spawn_trap(1);
 		// }
 
-		self.heli = heli::Helicopter::new(
-				&mut self.display, 
-				HELI_STARTING_X.to_game(), 
-				HELI_STARTING_Y.to_game()
-			);
-
-		for i in range(0, LEVEL_1_PARTS) {
-			self.spawn_part(i);
+		if restart {
+			for i in range(0, LEVEL_1_PARTS) {
+				self.spawn_part(i);
+			}
+		} else {
+			for i in range(0, LEVEL_2_PARTS) {
+				self.spawn_part(i);
+			}
 		}
 
-		self.paused = true;
+		self.paused = false;
 		self.updates = 0;
-		self.level = 0;
-		self.score = LEVEL_1_SCORE;
 		self.freeze_counter = 0;
 	}
 
@@ -491,6 +551,9 @@ impl Game {
 					self.draw_status_bar();
 					self.display.switch_buffers();
 				}
+
+				// decrement timer
+				self.timer = self.timer - 1;	
 			}
 
 			// throttle event-loop based on iteration time vs frame deadline
@@ -503,9 +566,6 @@ impl Game {
 			self.updates = self.updates + 1;
 
 			timer.sleep(next_frame_time);
-
-			// decrement score
-			self.score = self.score - 1;
 
 			/* Print current FPS to stdout
 			let units::Millis(start_time) = start_time_ms;
@@ -546,8 +606,8 @@ impl Game {
 			if self.controller.was_key_released(keycode::ReturnKey) {
 				if cinematic_counter < 0 {
 					self.completed_lvl = false;
-					self.restart();
-					self.paused = false;
+					self.new_level(false);
+					self.load_map();
 					self.event_loop();
 				} 
 			}
@@ -580,14 +640,36 @@ impl Game {
 
 	}
 
+	// update level map
+	fn load_map(&mut self) {
+		let new_map = map::Map::load_map(&mut self.display, self.level);
+		self.map = new_map;
+		self.vehicle = match self.level {
+			1 => {
+				box heli::Helicopter::new(
+					&mut self.display, 
+					VEHICLE_STARTING_X.to_game(), 
+					VEHICLE_STARTING_Y.to_game()
+				) as Box<vehicle::Vehicle>
+			}, 
+			_ => {
+				box car::Car::new(
+					&mut self.display, 
+					VEHICLE_STARTING_X.to_game(), 
+					VEHICLE_STARTING_Y.to_game()
+				) as Box<vehicle::Vehicle>
+			}
+		};
+	}
+
 	// Instructs our actors to draw their current state to the screen.
 	fn draw(&mut self) {
 		// background
 		self.map.draw_background(&self.display);
 
 		// foreground
-		if self.map.on_screen(self.heli.map_x, self.heli.map_y) {
-			self.heli.draw(&mut self.display);
+		if self.map.on_screen(self.vehicle.get_map_x(), self.vehicle.get_map_y()) {
+			self.vehicle.draw(&mut self.display);
 		}
 		for part in self.parts.iter() {
 			if self.map.on_screen(part.get_map_x(), part.get_map_y()) { 
@@ -673,8 +755,17 @@ impl Game {
 		// background
 		self.map.draw_background(&self.display);
 		self.map.draw(&self.display);
-		self.heli.y = self.heli.y - units::Game(1.0);
-		self.heli.draw(&self.display);
+		match self.level {
+			1 => {
+				let vehicle_y = self.vehicle.get_y();
+				self.vehicle.set_y( vehicle_y - units::Game(1.0) );
+			},
+			_ => {
+				let vehicle_x = self.vehicle.get_x();
+				self.vehicle.set_x( vehicle_x + units::Game(4.0) );
+			}
+		}
+		self.vehicle.draw(&self.display);
 	}
 
 	/// Passes the current time in milliseconds to our underlying actors.
@@ -703,7 +794,7 @@ impl Game {
 				powerup.toggle_debuff();
 			}
 		}
-		self.heli.update(elapsed_time);
+		self.vehicle.update(elapsed_time);
 
 		let mut collidedWithZombie = false;
 		if !self.player.is_immune() {
@@ -720,7 +811,7 @@ impl Game {
 							}, 
 							None => {}
 						};
-						self.score = self.score + 100;
+						self.timer = self.timer + 100;
 					}
 				 	else {
 				 		collidedWithZombie = true;
@@ -747,9 +838,9 @@ impl Game {
 		}
 
 		// Apply parts to vehicle
-		if self.heli.damage_rectangle().collides_with(&self.player.character.damage_rectangle()) {
+		if self.vehicle.damage_rectangle().collides_with(&self.player.character.damage_rectangle()) {
 			match self.coll_parts.pop() {
-				Some(part) => { self.heli.add_part(part.part_type()); },
+				Some(part) => { self.vehicle.add_part(part.part_type()); },
 				None       => {}
 			};
 		}
@@ -802,15 +893,13 @@ impl Game {
 			self.activate_trap(counter);
 		}
 
-		if self.heli.is_built() {
-			self.level = self.level + 1;
-			let score = self.score;
-			self.store_highscore(score);
+		if self.vehicle.is_built() {
+			self.set_score_and_timer();
 			self.completed_lvl = true;
 		}
 
 		// ran out of time
-		if self.score == 0 {
+		if self.timer == 0 {
 			self.draw_game_over_screen();
 			self.restart();
 		}
@@ -857,7 +946,7 @@ impl Game {
 			enemy.set_acceleration(player_x, player_y); 
 			enemy.update(elapsed_time, &self.map); 
 		}
-		self.heli.update(elapsed_time);
+		self.vehicle.update(elapsed_time);
 	}
 
 	fn apply_powerup(&mut self, index: uint) {
@@ -888,7 +977,7 @@ impl Game {
 								None => {}
 							};
 						}
-						self.score = self.score + 100;
+						self.timer = self.timer + 100;
 					},
 					// wipe out all zombies in given range
 					3 => { 
@@ -910,7 +999,7 @@ impl Game {
 								None => {}
 							}
 						}
-						self.score = self.score + (self.enemies.len() as int - new_enemies.len() as int) * 50;
+						self.timer = self.timer + (self.killed.len() as int * 500);
 						self.enemies = new_enemies;
 						let mut mut_powerup = powerup;
 						mut_powerup.set_timer();
@@ -926,8 +1015,8 @@ impl Game {
 						println!("TELEPORT"); 
 						self.display.play_sound_effect(3); 
 						// teleport player to helicopter
-						self.player.character.map_x = self.heli.map_x; 
-						self.player.character.map_y = self.heli.map_y + units::Tile(2).to_game(); 
+						self.player.character.map_x = self.vehicle.get_map_x(); 
+						self.player.character.map_y = self.vehicle.get_map_y() + units::Tile(2).to_game(); 
 						self.player.start_teleport_timer();
 						let mut mut_powerup = powerup;
 						mut_powerup.set_timer();
@@ -979,7 +1068,7 @@ impl Game {
 							let mut mut_powerup = powerup;
 							mut_powerup.set_timer();
 							self.activated.push(mut_powerup);
-							self.score = self.score + (self.enemies.len() as int - new_enemies.len() as int) * 10;
+							self.timer = self.timer + (self.killed.len() as int * 100);
 							self.enemies = new_enemies;
 						} 
 					}

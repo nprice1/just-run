@@ -1,5 +1,6 @@
 use std::vec::Vec;
 use std::rc::Rc;
+use std::rand::{task_rng, Rng};
 
 use game;
 use game::backdrop;
@@ -58,7 +59,7 @@ pub struct Map {
 
 impl Map {
 	/// Will initialize a map (60 * 60) tiles:
-	pub fn create_test_map(graphics: &mut graphics::Graphics) -> Map {
+	pub fn load_map(graphics: &mut graphics::Graphics, level: int) -> Map {
 		static rows: uint = 60;
 		static cols: uint = 60; 
 
@@ -75,21 +76,61 @@ impl Map {
 		let blank_tile = Tile::new();
 		let wall_tile = Tile::from_sprite(sprite, Wall);
 		let mut tile_vec: Vec<Box<Vec<Box<Tile>>>> = Vec::new();
-		for i in range(0, rows) {
-			let mut vec = box Vec::new();
-			for j in range(0, cols) {
-				// make the border
-				if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 {
-					vec.push(box wall_tile.clone());
+		match level { 
+			1 => { 
+				for i in range(0, rows) {
+					let mut vec = box Vec::new();
+					for j in range(0, cols) {
+						// make the border
+						if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 {
+							vec.push(box wall_tile.clone());
+						}
+						else {
+							vec.push(box blank_tile.clone());
+						}
+					}
+					tile_vec.push(vec);
 				}
-				else {
-					vec.push(box blank_tile.clone());
+			},
+			_ => {
+				let mut rng = task_rng();
+				let rand_num_cols = rng.gen_range(1, 30);
+				let rand_num_rows = rng.gen_range(1, 30);
+				let mut rand_cols: Vec<int> = Vec::new();
+				let mut rand_rows: Vec<int> = Vec::new();
+				for _ in range(0, rand_num_cols) {
+					let mut rng = task_rng();
+					rand_cols.push( rng.gen_range(1, 60) );
+				}
+				for _ in range(0, rand_num_rows) {
+					let mut rng = task_rng();
+					rand_rows.push( rng.gen_range(1, 60) );
+				}
+				for i in range(0, rows) {
+					let mut vec = box Vec::new();
+					for j in range(0, cols) {
+						// make the border
+						if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 || ( rand_rows.contains(&(i as int)) && rand_cols.contains(&(j as int)) ) {
+							if (i > 0 && i < 9) && (j > 0 && j < 9) {
+								vec.push(box blank_tile.clone());
+							} else {
+								vec.push(box wall_tile.clone());
+							}
+						}
+						else {
+							vec.push(box blank_tile.clone());
+						}
+					}
+					tile_vec.push(vec);
 				}
 			}
-			tile_vec.push(vec);
 		}
+		let background: backdrop::FixedBackdrop = match level {
+			1 => { backdrop::FixedBackdrop::new("assets/base/bkBlue.bmp".to_string(), graphics) },
+			_ => { backdrop::FixedBackdrop::new("assets/base/bkRed.bmp".to_string(), graphics) },
+		};
 		let map = Map {
-			background: backdrop::FixedBackdrop::new("assets/base/bkBlue.bmp".to_string(), graphics),
+			background: background,
 			tiles: tile_vec, 
 			page_x: 0,
 			page_y: 0

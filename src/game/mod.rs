@@ -13,5 +13,7 @@ pub mod map;
 pub mod player;
 pub mod sprite;
 pub mod heli;
+pub mod car;
+pub mod vehicle;
 pub mod powerups;
 pub mod traps;
