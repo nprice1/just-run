@@ -197,6 +197,15 @@ impl Game {
 				}
 			}
 		};
+		let colliding_tiles = self.map.get_colliding_tiles(&zombie.damage_rectangle());
+		let (old_x, old_y) = location;
+		let new_location = (old_x + units::Game(1.0), old_y + units::Game(1.0));
+		for tile in colliding_tiles.iter() {
+			if tile.tile_type == map::Wall {
+				self.spawn_zombie(kind, new_location);
+				return;
+			}
+		}
 
 		self.enemies.push(zombie);
 	}
@@ -247,6 +256,13 @@ impl Game {
 				) as Box<powerups::Powerup>
 			}
 		};
+		let colliding_tiles = self.map.get_colliding_tiles(&powerup.damage_rectangle());
+		for tile in colliding_tiles.iter() {
+			if tile.tile_type == map::Wall {
+				self.spawn_powerup(kind);
+				return;
+			}
+		}
 
 		self.powerups.push(powerup);
 	}
@@ -327,6 +343,13 @@ impl Game {
 				}
 			}
 		};
+		let colliding_tiles = self.map.get_colliding_tiles(&part.damage_rectangle());
+		for tile in colliding_tiles.iter() {
+			if tile.tile_type == map::Wall {
+				self.spawn_part(kind);
+				return;
+			}
+		}
 		self.parts.push(part);
 	}
 
