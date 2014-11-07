@@ -266,8 +266,7 @@ impl Character {
 	}
 
 	fn get_collision_info(&self, hitbox: &Rectangle, tile_map: &map::Map) -> Info {
-		let tiles = 
-			tile_map.get_colliding_tiles(hitbox);
+		let tiles = tile_map.get_colliding_tiles(hitbox);
 
 		let mut info = Info { collided: false, row: units::Tile(0), col: units::Tile(0) };
 		for tile in tiles.iter() {

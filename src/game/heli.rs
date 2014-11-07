@@ -225,6 +225,10 @@ impl Vehicle for Helicopter {
 		sprite_ref.update(elapsed_time);
 	}
 
+	fn update_for_cinematic(&mut self) {
+		self.y = self.y - units::Game(1.0);
+	}
+
 	fn draw(&self, display: &graphics::Graphics) {
 		let mut config = 0u;
 		if self.parts.len() == NUM_PARTS {
@@ -265,20 +269,16 @@ impl Vehicle for Helicopter {
 		self.y
 	}
 
-	fn set_x(&mut self, x: units::Game) {
-		self.x = x;
-	}
-
-	fn set_y(&mut self, y: units::Game) {
-		self.y = y;
-	}
-
 	fn get_map_x(&self) -> units::Game {
 		self.map_x
 	}
 
 	fn get_map_y(&self) -> units::Game {
 		self.map_y
+	}
+
+	fn get_type(&self) -> int{
+		1
 	}
 }
 

@@ -40,10 +40,9 @@ pub static MAX_POWERUPS:             uint = 20;
 // pub static MAX_TRAPS:                uint = 5;
 
 pub static POSSIBLE_PART_RANGE: (uint, uint) = (20, 55);
-pub static LEVEL_1_PARTS:               uint = 3;
+pub static LEVEL_PARTS:                 uint = 3;
 pub static LEVEL_1_TIME:                 int = 5000;
 pub static LEVEL_1_CINEMATIC_FRAMES:     int = 300;
-pub static LEVEL_2_PARTS:               uint = 3;
 pub static LEVEL_2_TIME:                 int = 2000;
 pub static LEVEL_2_CINEMATIC_FRAMES:     int = 300;
 
@@ -156,7 +155,7 @@ impl Game {
 		// for _ in range(0, number_of_traps) {
 		// 	game.spawn_trap(1);
 		// }
-		for i in range(0, LEVEL_1_PARTS) {
+		for i in range(0, LEVEL_PARTS) {
 			game.spawn_part(i);
 		}
 
@@ -165,97 +164,91 @@ impl Game {
 
 	pub fn spawn_zombie(&mut self, kind: uint, location: (units::Game, units::Game)) {
 		let mut rng = task_rng();
-		match kind {
+		let zombie = match kind {
 			1 => {
-				let zombie = box enemies::SlowZombie::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.enemies.push(zombie as Box<enemies::Zombie>);
+				box enemies::SlowZombie::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<enemies::Zombie>
 			}
 			2 => {
-				let zombie = box enemies::CrazyZombie::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.enemies.push(zombie as Box<enemies::Zombie>);
+				box enemies::CrazyZombie::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<enemies::Zombie>
 			}
 			3 => {
-				let zombie = box enemies::RandomZombie::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.enemies.push(zombie as Box<enemies::Zombie>);
+				box enemies::RandomZombie::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<enemies::Zombie>
 			}
 			_ => {
-				let zombie = match location {
+				match location {
 					(units::Game(0.0), units::Game(0.0)) => box enemies::CloudZombie::new(
 																&mut self.display, 
 																(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
 																(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-															),
-					(x, y) => box enemies::CloudZombie::new(&mut self.display, x, y),
-				};
-				self.enemies.push(zombie as Box<enemies::Zombie>);
+															) as Box<enemies::Zombie>,
+					(x, y) => box enemies::CloudZombie::new(&mut self.display, x, y) as Box<enemies::Zombie>,
+				}
 			}
 		};
+
+		self.enemies.push(zombie);
 	}
 
 	pub fn spawn_powerup(&mut self, kind: uint) {
 		let mut rng = task_rng();
-		match kind {
+		let powerup = match kind {
 			1 => {
-				let powerup = box powerups::CricketBat::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.powerups.push(powerup as Box<powerups::Powerup>);
+				box powerups::CricketBat::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<powerups::Powerup>
 			}
 			2 => {
-				let powerup = box powerups::KillZombie::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.powerups.push(powerup as Box<powerups::Powerup>);
+				box powerups::KillZombie::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<powerups::Powerup>
 			}
 			3 => {
-				let powerup = box powerups::WipeOut::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.powerups.push(powerup as Box<powerups::Powerup>);
+				box powerups::WipeOut::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<powerups::Powerup>
 			}
 			4 => {
-				let powerup = box powerups::Freeze::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.powerups.push(powerup as Box<powerups::Powerup>);
+				box powerups::Freeze::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<powerups::Powerup>
 			}
 			5 => {
-				let powerup = box powerups::Teleport::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.powerups.push(powerup as Box<powerups::Powerup>);
-			}
+				box powerups::Teleport::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<powerups::Powerup>
+			} 
 			_ => {
-				let powerup = box powerups::Nuke::new(
-								&mut self.display, 
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
-								(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
-							);
-				self.powerups.push(powerup as Box<powerups::Powerup>);
+				box powerups::Nuke::new(
+					&mut self.display, 
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u, POSSIBLE_CHARACTER_TILES))).to_game()
+				) as Box<powerups::Powerup>
 			}
 		};
+
+		self.powerups.push(powerup);
 	}
 
 	// pub fn spawn_trap(&mut self, kind: uint) {
@@ -282,66 +275,59 @@ impl Game {
 		} else if y < 20 {
 			x = rng.gen_range(min, max);
 		}
-		match self.level {
+		let part = match self.vehicle.get_type() {
 			1 => {
 				match kind {
 					0 => {
-						let part = box heli::Prop::new(
-										&mut self.display, 
-										units::Tile(x).to_game(),
-										units::Tile(y).to_game()
-									);
-						self.parts.push(part as Box<vehicle::Part>);
+						box heli::Prop::new(
+							&mut self.display, 
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
+						) as Box<vehicle::Part>
 					},
 					1 => {
-						let part = box heli::Windshield::new(
-										&mut self.display, 
-										units::Tile(x).to_game(),
-										units::Tile(y).to_game()
-									);
-						self.parts.push(part as Box<vehicle::Part>);
+						box heli::Windshield::new(
+							&mut self.display, 
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
+						) as Box<vehicle::Part>
 					},
-					2 => {
-						let part = box heli::Bar::new(
-										&mut self.display, 
-										units::Tile(x).to_game(),
-										units::Tile(y).to_game()
-									);
-						self.parts.push(part as Box<vehicle::Part>);
-					},
-					_ => {}
-				};
+					_ => {
+						box heli::Bar::new(
+							&mut self.display, 
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
+						) as Box<vehicle::Part>
+					}
+				}
 			},
 			_ => {
 				match kind {
 					0 => {
-						let part = box car::Tire::new(
-										&mut self.display, 
-										units::Tile(x).to_game(),
-										units::Tile(y).to_game()
-									);
-						self.parts.push(part as Box<vehicle::Part>);
+						box car::Tire::new(
+							&mut self.display, 
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
+						) as Box<vehicle::Part>
 					},
 					1 => {
-						let part = box car::Door::new(
-										&mut self.display, 
-										units::Tile(x).to_game(),
-										units::Tile(y).to_game()
-									);
-						self.parts.push(part as Box<vehicle::Part>);
+						box car::Door::new(
+							&mut self.display, 
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
+						) as Box<vehicle::Part>
 					},
-					2 => {
-						let part = box car::Engine::new(
-										&mut self.display, 
-										units::Tile(x).to_game(),
-										units::Tile(y).to_game()
-									);
-						self.parts.push(part as Box<vehicle::Part>);
-					},
-					_ => {}
-				};
+					_ => {
+						box car::Engine::new(
+							&mut self.display, 
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
+						) as Box<vehicle::Part>
+					}
+				}
 			}
 		};
+		self.parts.push(part);
 	}
 
 	pub fn start(&mut self) {
@@ -402,7 +388,6 @@ impl Game {
 		self.paused = true;
 		self.score = 0;
 		self.timer = LEVEL_1_TIME;
-		self.load_map();
 	}
 
 	pub fn new_level(&mut self, restart: bool) {
@@ -425,6 +410,24 @@ impl Game {
 				PLAYER_STARTING_Y.to_game()
 			);
 
+		let vehicle_num = rng.gen_range(0, 2);
+		self.vehicle = match vehicle_num {
+			0 => {
+				box heli::Helicopter::new(
+					&mut self.display, 
+					VEHICLE_STARTING_X.to_game(), 
+					VEHICLE_STARTING_Y.to_game()
+				) as Box<vehicle::Vehicle>
+			}, 
+			_ => {
+				box car::Car::new(
+					&mut self.display, 
+					VEHICLE_STARTING_X.to_game(), 
+					VEHICLE_STARTING_Y.to_game()
+				) as Box<vehicle::Vehicle>
+			}
+		};
+
 		self.enemies = enemies_vector;
 		self.powerups = powerup_vector;
 		self.traps = traps_vector;
@@ -446,19 +449,17 @@ impl Game {
 		// 	self.spawn_trap(1);
 		// }
 
-		if restart {
-			for i in range(0, LEVEL_1_PARTS) {
-				self.spawn_part(i);
-			}
-		} else {
-			for i in range(0, LEVEL_2_PARTS) {
-				self.spawn_part(i);
-			}
+		for i in range(0, LEVEL_PARTS) {
+			self.spawn_part(i);
 		}
 
 		self.paused = false;
 		self.updates = 0;
 		self.freeze_counter = 0;
+
+		// create new level map
+		let new_map = map::Map::load_map(&mut self.display, self.level);
+		self.map = new_map;
 	}
 
 	/// Polls current input events & dispatches them to the engine.
@@ -607,7 +608,6 @@ impl Game {
 				if cinematic_counter < 0 {
 					self.completed_lvl = false;
 					self.new_level(false);
-					self.load_map();
 					self.event_loop();
 				} 
 			}
@@ -638,28 +638,6 @@ impl Game {
 			cinematic_counter = cinematic_counter - 1;
 		}
 
-	}
-
-	// update level map
-	fn load_map(&mut self) {
-		let new_map = map::Map::load_map(&mut self.display, self.level);
-		self.map = new_map;
-		self.vehicle = match self.level {
-			1 => {
-				box heli::Helicopter::new(
-					&mut self.display, 
-					VEHICLE_STARTING_X.to_game(), 
-					VEHICLE_STARTING_Y.to_game()
-				) as Box<vehicle::Vehicle>
-			}, 
-			_ => {
-				box car::Car::new(
-					&mut self.display, 
-					VEHICLE_STARTING_X.to_game(), 
-					VEHICLE_STARTING_Y.to_game()
-				) as Box<vehicle::Vehicle>
-			}
-		};
 	}
 
 	// Instructs our actors to draw their current state to the screen.
@@ -755,16 +733,7 @@ impl Game {
 		// background
 		self.map.draw_background(&self.display);
 		self.map.draw(&self.display);
-		match self.level {
-			1 => {
-				let vehicle_y = self.vehicle.get_y();
-				self.vehicle.set_y( vehicle_y - units::Game(1.0) );
-			},
-			_ => {
-				let vehicle_x = self.vehicle.get_x();
-				self.vehicle.set_x( vehicle_x + units::Game(4.0) );
-			}
-		}
+		self.vehicle.update_for_cinematic();
 		self.vehicle.draw(&self.display);
 	}
 
