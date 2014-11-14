@@ -215,8 +215,8 @@ impl Vehicle for Helicopter {
 
 	fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
-			x: self.x + units::Tile(2), y: self.y + units::Tile(2),
-			width: units::Game(10.0), height: units::Game(10.0),
+			x: self.x + units::Tile(2), y: self.y + units::Tile(1) + units::HalfTile(1),
+			width: units::Game(32.0), height: units::Game(16.0),
 		}
 	}
 
@@ -322,8 +322,8 @@ impl Prop {
 impl Part for Prop {
     fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
-			x: self.character.x + units::HalfTile(1), y: self.character.y + units::HalfTile(2),
-			width: units::Game(5.0), height: units::Game(5.0),
+			x: self.character.x + units::Tile(1) + units::HalfTile(1), y: self.character.y + units::HalfTile(1),
+			width: units::Game(32.0 * 2.0), height: units::Game(16.0),
 		}
 	}
 
@@ -394,8 +394,8 @@ impl Windshield {
 impl Part for Windshield {
 	fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
-			x: self.character.x + units::HalfTile(1), y: self.character.y + units::HalfTile(2),
-			width: units::Game(5.0), height: units::Game(5.0),
+			x: self.character.x + units::HalfTile(1), y: self.character.y + units::HalfTile(1),
+			width: units::Game(16.0), height: units::Game(16.0),
 		}
 	}
 
@@ -466,8 +466,8 @@ impl Bar {
 impl Part for Bar {
 	fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
-			x: self.character.x + units::HalfTile(1), y: self.character.y + units::HalfTile(2),
-			width: units::Game(5.0), height: units::Game(5.0),
+			x: self.character.x + units::Tile(1), y: self.character.y + units::HalfTile(1),
+			width: units::Game(32.0), height: units::Game(16.0),
 		}
 	}
 
