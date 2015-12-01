@@ -1,4 +1,4 @@
-use std::collections::hashmap::HashMap;
+use std::collections::HashMap;
 
 use game::collisions::Rectangle;
 use game::sprite;
@@ -17,24 +17,24 @@ static SPRITE_NUM_FRAMES:  units::Frame  = 3;
 static SPRITE_FPS:         units::Fps    = 20;
 
 // Sprite locations
-static CRICKET_FRAME: units::Tile = units::Tile(1);
-static KILLZOMBIE_FRAME: units::Tile = units::Tile(2);
-static WIPEOUT_FRAME: units::Tile = units::Tile(3);
-static FREEZE_FRAME: units::Tile = units::Tile(7);
-static TELEPORT_FRAME: units::Tile = units::Tile(8);
-static TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(0);
-static NUKE_FRAME: units::Tile = units::Tile(9);
-static BAD_FRAME: units::Tile = units::Tile(10);
+const CRICKET_FRAME: units::Tile = units::Tile(1);
+const KILLZOMBIE_FRAME: units::Tile = units::Tile(2);
+const WIPEOUT_FRAME: units::Tile = units::Tile(3);
+const FREEZE_FRAME: units::Tile = units::Tile(7);
+const TELEPORT_FRAME: units::Tile = units::Tile(8);
+const TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(0);
+const NUKE_FRAME: units::Tile = units::Tile(9);
+const BAD_FRAME: units::Tile = units::Tile(10);
 
 // Animation frames 
-static WIPEOUT_ANIMATION_FRAME: units::Tile = units::Tile(1);
-static NUKE_ANIMATION_FRAME: units::Tile = units::Tile(1);
+const WIPEOUT_ANIMATION_FRAME: units::Tile = units::Tile(1);
+const NUKE_ANIMATION_FRAME: units::Tile = units::Tile(1);
 
 pub trait Powerup {
-	fn draw(&self, display: &graphics::Graphics);
+	fn draw(&self, display: &mut graphics::Graphics);
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map);
 	fn damage_rectangle(&self) -> Rectangle;
-	fn get_type(&self) -> int;
+	fn get_type(&self) -> i32;
 	fn toggle_debuff(&mut self);
 	fn is_debuff(&self) -> bool;
 	fn is_finished(&mut self) -> bool;
@@ -50,14 +50,14 @@ pub struct CricketBat {
 
 pub struct KillZombie {
 	character: Character, 
-	animation_timer: int,
+	animation_timer: i32,
 	is_debuff: bool
 }
 
 pub struct WipeOut {
 	character: Character, 
 	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
-	animation_timer: int,
+	animation_timer: i32,
 	is_debuff: bool
 }
 
@@ -69,7 +69,7 @@ pub struct Freeze {
 pub struct Teleport {
 	character: Character, 
 	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
-	animation_timer: int,
+	animation_timer: i32,
 	is_debuff: bool
 }
 
@@ -77,7 +77,7 @@ pub struct Nuke {
 	character: Character, 
 	alternate_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
 	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
-	animation_timer: int,
+	animation_timer: i32,
 	is_debuff: bool
 }
 
@@ -103,27 +103,27 @@ impl CricketBat {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = CRICKET_FRAME;
+		let asset_path = "assets/base/powerups.bmp".to_string();
+		let motion_frame = CRICKET_FRAME;
 
-			let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
+		let loaded_sprite = Box::new( sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) ) as Box<sprite::Updatable<_>>;
+
+		self.character.sprites.insert(movement, loaded_sprite);
 	}
 }
 
 impl Powerup for CricketBat {
-	fn draw(&self, display: &graphics::Graphics) {
-		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
-		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
-		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let correction_x = self.character.get_map_x() % common::SCREEN_CORRECTION;
+		let correction_y = self.character.get_map_y() % common::SCREEN_CORRECTION;
+		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
 	#[allow(unused_variable)]
@@ -143,7 +143,7 @@ impl Powerup for CricketBat {
 		self.is_debuff
 	}
 
-	fn get_type(&self) -> int {
+	fn get_type(&self) -> i32 {
 		1
 	}
 
@@ -187,27 +187,27 @@ impl KillZombie {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = KILLZOMBIE_FRAME;
+		let asset_path = "assets/base/powerups.bmp".to_string();
+		let motion_frame = KILLZOMBIE_FRAME;
 
-			let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
+		let loaded_sprite = Box::new( sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) ) as Box<sprite::Updatable<_>>;
+
+		self.character.sprites.insert(movement, loaded_sprite);
 	}
 }
 
 impl Powerup for KillZombie {
-	fn draw(&self, display: &graphics::Graphics) {
-		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
-		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
-		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let correction_x = self.character.get_map_x() % common::SCREEN_CORRECTION;
+		let correction_y = self.character.get_map_y() % common::SCREEN_CORRECTION;
+		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
 	#[allow(unused_variable)]
@@ -227,7 +227,7 @@ impl Powerup for KillZombie {
 		self.is_debuff
 	}
 
-	fn get_type(&self) -> int {
+	fn get_type(&self) -> i32 {
 		2
 	}
 
@@ -277,47 +277,47 @@ impl WipeOut {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = WIPEOUT_FRAME;
+		let asset_path = "assets/base/powerups.bmp".to_string();
+		let motion_frame = WIPEOUT_FRAME;
 
-			let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
+		let loaded_sprite = Box::new( sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) ) as Box<sprite::Updatable<_>>;
+
+		self.character.sprites.insert(movement, loaded_sprite);
 
 		let asset_path = "assets/base/explosion.bmp".to_string();
 		let motion_frame = WIPEOUT_ANIMATION_FRAME;
 		let facing_frame = units::Tile(7);
-		let animation_sprite = box sprite::AnimatedSprite::new(
+		let animation_sprite = Box::new( sprite::AnimatedSprite::new(
 			display, asset_path,
 			(motion_frame, facing_frame),
 			(units::Tile(5), units::Tile(5)),
 			SPRITE_NUM_FRAMES, SPRITE_FPS
-		).unwrap() as Box<sprite::Updatable<_>>;
+		).unwrap() ) as Box<sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
 	}
 }
 
 impl Powerup for WipeOut {
-	fn draw(&self, display: &graphics::Graphics) {
-		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
-		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let correction_x = self.character.get_map_x() % common::SCREEN_CORRECTION;
+		let correction_y = self.character.get_map_y() % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (correction_x - units::Game(60.0), correction_y - units::Game(60.0)));
+			self.animation_sprite.get(0).unwrap().draw(display, (correction_x - units::Game(60.0), correction_y - units::Game(60.0)));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+			self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 		}
 	}
 
 	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		self.animation_sprite.get_mut(0).update(elapsed_time);
+		self.animation_sprite.get_mut(0).unwrap().update(elapsed_time);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -332,7 +332,7 @@ impl Powerup for WipeOut {
 		self.is_debuff
 	}
 
-	fn get_type(&self) -> int {
+	fn get_type(&self) -> i32 {
 		3
 	}
 
@@ -378,27 +378,27 @@ impl Freeze {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = FREEZE_FRAME;
+		let asset_path = "assets/base/powerups.bmp".to_string();
+		let motion_frame = FREEZE_FRAME;
 
-			let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
+		let loaded_sprite = Box::new( sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) ) as Box<sprite::Updatable<_>>;
+
+		self.character.sprites.insert(movement, loaded_sprite);
 	}
 }
 
 impl Powerup for Freeze {
-	fn draw(&self, display: &graphics::Graphics) {
-		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
-		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
-		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let correction_x = self.character.get_map_x() % common::SCREEN_CORRECTION;
+		let correction_y = self.character.get_map_y() % common::SCREEN_CORRECTION;
+		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
 	#[allow(unused_variable)]
@@ -418,7 +418,7 @@ impl Powerup for Freeze {
 		self.is_debuff
 	}
 
-	fn get_type(&self) -> int {
+	fn get_type(&self) -> i32 {
 		4
 	}
 
@@ -465,47 +465,47 @@ impl Teleport {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = TELEPORT_FRAME;
+		let asset_path = "assets/base/powerups.bmp".to_string();
+		let motion_frame = TELEPORT_FRAME;
 
-			let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
+		let loaded_sprite = Box::new( sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) ) as Box<sprite::Updatable<_>>;
+
+		self.character.sprites.insert(movement, loaded_sprite);
 
 		let asset_path = "assets/base/teleport.bmp".to_string();
 		let motion_frame = TELEPORT_ANIMATION_FRAME;
 		let facing_frame = units::Tile(0);
-		let animation_sprite = box sprite::Sprite::new(
+		let animation_sprite = Box::new( sprite::Sprite::new(
 			display, 
 			(motion_frame, facing_frame),
 			(units::Tile(3), units::Tile(3)),
 			asset_path
-		) as Box<sprite::Updatable<_>>;
+		) ) as Box<sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
 	}
 }
 
 impl Powerup for Teleport {
-	fn draw(&self, display: &graphics::Graphics) {
-		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
-		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let correction_x = self.character.get_map_x() % common::SCREEN_CORRECTION;
+		let correction_y = self.character.get_map_y() % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (correction_x - units::Game(60.0), correction_y - units::Game(60.0)));
+			self.animation_sprite.get(0).unwrap().draw(display, (correction_x - units::Game(60.0), correction_y - units::Game(60.0)));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+			self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 		}
 	}
 
 	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		self.animation_sprite.get_mut(0).update(elapsed_time);
+		self.animation_sprite.get_mut(0).unwrap().update(elapsed_time);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -520,7 +520,7 @@ impl Powerup for Teleport {
 		self.is_debuff
 	}
 
-	fn get_type(&self) -> int {
+	fn get_type(&self) -> i32 {
 		5
 	}
 
@@ -571,32 +571,34 @@ impl Nuke {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/powerups.bmp".to_string();
-			let motion_frame = NUKE_FRAME;
+		let asset_path = "assets/base/powerups.bmp".to_string();
+		let motion_frame = NUKE_FRAME;
 
-			let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
-		self.alternate_sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-            let asset_path = "assets/base/powerups.bmp".to_string();
-           	let motion_frame = BAD_FRAME;
- 
-            let facing_frame = units::Tile(0);
- 
-            box sprite::Sprite::new(
-                   display,
-                   (motion_frame, facing_frame),
-                   (units::Tile(1), units::Tile(1)),
-                   asset_path
-            ) as Box<sprite::Updatable<_>>
-        });
+		let loaded_sprite = Box::new( sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) ) as Box<sprite::Updatable<_>>;
+
+		self.character.sprites.insert(movement, loaded_sprite);
+
+
+        let asset_path = "assets/base/powerups.bmp".to_string();
+       	let motion_frame = BAD_FRAME;
+
+        let facing_frame = units::Tile(0);
+
+        let alternate_sprite = Box::new( sprite::Sprite::new(
+               display,
+               (motion_frame, facing_frame),
+               (units::Tile(1), units::Tile(1)),
+               asset_path
+        ) ) as Box<sprite::Updatable<_>>;
+
+        self.alternate_sprites.insert(movement, alternate_sprite);
 
 
 		let asset_path = "assets/base/nuke.bmp".to_string();
@@ -604,32 +606,33 @@ impl Nuke {
 
 		let facing_frame = units::Tile(10);
 
-		let animation_sprite = box sprite::AnimatedSprite::new(
+		let animation_sprite = Box::new( sprite::AnimatedSprite::new(
 			display, asset_path,
 			(motion_frame, facing_frame),
 			(units::Tile(20), units::Tile(20)),
 			SPRITE_NUM_FRAMES, 60
-		).unwrap() as Box<sprite::Updatable<_>>;
+		).unwrap() ) as Box<sprite::Updatable<_>>;
+
 		self.animation_sprite.push(animation_sprite);
 	}
 }
 
 impl Powerup for Nuke {
-	fn draw(&self, display: &graphics::Graphics) {
-		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
-		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let correction_x = self.character.get_map_x() % common::SCREEN_CORRECTION;
+		let correction_y = self.character.get_map_y() % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (correction_x - units::Game(250.0), correction_y - units::Game(250.0)));
+			self.animation_sprite.get(0).unwrap().draw(display, (correction_x - units::Game(250.0), correction_y - units::Game(250.0)));
 		} else if self.is_debuff {
-			self.alternate_sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+			self.alternate_sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+			self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 		}
 	}
 
 	#[allow(unused_variable)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		self.animation_sprite.get_mut(0).update(elapsed_time);
+		self.animation_sprite.get_mut(0).unwrap().update(elapsed_time);
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -644,7 +647,7 @@ impl Powerup for Nuke {
 		self.is_debuff
 	}
 
-	fn get_type(&self) -> int {
+	fn get_type(&self) -> i32 {
 		6
 	}
 

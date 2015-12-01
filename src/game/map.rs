@@ -1,6 +1,7 @@
 use std::vec::Vec;
 use std::rc::Rc;
-use std::rand::{task_rng, Rng};
+use rand;
+use rand::Rng;
 
 use game;
 use game::backdrop;
@@ -11,13 +12,13 @@ use game::units;
 use game::collisions::Rectangle;
 use game::units::{AsGame,AsTile};
 
-#[deriving(PartialEq,Eq,Clone)]
+#[derive(PartialEq,Eq,Clone)]
 pub enum TileType {
 	Air,
 	Wall
 }
 
-struct CollisionTile {
+pub struct CollisionTile {
 	pub tile_type:  TileType,
 	pub row:        units::Tile,
 	pub col:        units::Tile
@@ -31,7 +32,7 @@ impl CollisionTile {
 }
 
 // TODO: Conflicts w/ units::Tile, should probably have a different name.
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct Tile {
 	tile_type:  TileType,
 	sprite:     Option<Rc<Box<sprite::Updatable<units::Game>>>>
@@ -40,7 +41,7 @@ pub struct Tile {
 impl Tile {
 	/// Creates n air tile w/ no sprite.
 	fn new() -> Tile {
-		Tile { tile_type: Air, sprite: None }
+		Tile { tile_type: TileType::Air, sprite: None }
 	}
 
 	/// Creates a tile of `tile_type` initialized w/ its optional sprite.
@@ -50,75 +51,76 @@ impl Tile {
 	}
 }
 
+#[derive(Clone)]
 pub struct Map {
 	background:    backdrop::FixedBackdrop,
 	tiles:         Vec<Box<Vec<Box<Tile>>>>, 
-	page_x:        uint,
-	page_y:        uint
+	page_x:        u32,
+	page_y:        u32
 }
 
 impl Map {
 	/// Will initialize a map (60 * 60) tiles:
-	pub fn load_map(graphics: &mut graphics::Graphics, level: int) -> Map {
-		static rows: uint = 60;
-		static cols: uint = 60; 
+	pub fn load_map(graphics: &mut graphics::Graphics, level: i32) -> Map {
+		static rows: u32 = 60;
+		static cols: u32 = 60; 
 
 		let map_path =  "assets/base/Stage/PrtCave.bmp".to_string();
 		let sprite   =  Rc::new(
-			box sprite::Sprite::new(
+			Box::new( sprite::Sprite::new(
 				graphics,
 				(units::Tile(1) , units::Tile(0)),
 				(units::Tile(1), units::Tile(1)),
 				map_path.clone()
-			) as Box<sprite::Updatable<_>>
+			) ) as Box<sprite::Updatable<_>>
 		);
 
 		let blank_tile = Tile::new();
-		let wall_tile = Tile::from_sprite(sprite, Wall);
+		let wall_tile = Tile::from_sprite(sprite, TileType::Wall);
 		let mut tile_vec: Vec<Box<Vec<Box<Tile>>>> = Vec::new();
 		match level { 
 			1 => { 
-				for i in range(0, rows) {
-					let mut vec = box Vec::new();
-					for j in range(0, cols) {
+				for i in 0.. rows {
+					let mut vec = Box::new( Vec::new() );
+					for j in 0.. cols {
 						// make the border
 						if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 {
-							vec.push(box wall_tile.clone());
+							vec.push( Box::new(wall_tile.clone()) );
 						}
 						else {
-							vec.push(box blank_tile.clone());
+							vec.push( Box::new(blank_tile.clone()) );
 						}
 					}
 					tile_vec.push(vec);
 				}
 			},
 			_ => {
-				let mut rng = task_rng();
+				let mut rng = rand::thread_rng();
 				let rand_num_cols = rng.gen_range(1, 30);
 				let rand_num_rows = rng.gen_range(1, 30);
-				let mut rand_cols: Vec<int> = Vec::new();
-				let mut rand_rows: Vec<int> = Vec::new();
-				for _ in range(0, rand_num_cols) {
-					let mut rng = task_rng();
+				let mut rand_cols: Vec<i32> = Vec::new();
+				let mut rand_rows: Vec<i32> = Vec::new();
+				for _ in 0.. rand_num_cols {
+					let mut rng = rand::thread_rng();
 					rand_cols.push( rng.gen_range(1, 60) );
 				}
-				for _ in range(0, rand_num_rows) {
-					let mut rng = task_rng();
+				for _ in 0.. rand_num_rows {
+					let mut rng = rand::thread_rng();
 					rand_rows.push( rng.gen_range(1, 60) );
 				}
-				for i in range(0, rows) {
-					let mut vec = box Vec::new();
-					for j in range(0, cols) {
+				for i in 0.. rows {
+					let mut vec = Box::new( Vec::new() );
+					for j in 0.. cols {
 						// make the border
-						if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 || ( rand_rows.contains(&(i as int)) && rand_cols.contains(&(j as int)) ) {
+						if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 || ( rand_rows.contains(&(i as i32)) && rand_cols.contains(&(j as i32)) ) {
 							if (i > 0 && i < 9) && (j > 0 && j < 9) {
-								vec.push(box blank_tile.clone());
+								vec.push( Box::new(blank_tile.clone()) );
 							} else {
-								vec.push(box wall_tile.clone());
+								vec.push( Box::new(wall_tile.clone()) );
 							}
 						}
 						else {
-							vec.push(box blank_tile.clone());
+							vec.push( Box::new(blank_tile.clone()) );
 						}
 					}
 					tile_vec.push(vec);
@@ -139,19 +141,19 @@ impl Map {
 		map
 	}
 
-	pub fn draw_background(&self, graphics: &graphics::Graphics) {
+	pub fn draw_background(&self, graphics: &mut graphics::Graphics) {
 		self.background.draw(graphics);
 	}
 
 	/// Draws current state to `display`
-	pub fn draw(&mut self, graphics: &graphics::Graphics) {
-		for a in range(self.page_y * 20, (self.page_y * 20) + 20) {
-			for b in range(self.page_x * 20, (self.page_x * 20) + 20) {
-				match self.tiles.get(a as uint).get(b as uint).sprite {
+	pub fn draw(&mut self, graphics: &mut graphics::Graphics) {
+		for a in self.page_y * 20.. (self.page_y * 20) + 20 {
+			for b in self.page_x * 20.. (self.page_x * 20) + 20 {
+				match self.tiles.get(a as usize).unwrap().get(b as usize).unwrap().sprite {
 					Some(ref sprite) => {
 						sprite.draw(graphics,
-						            (units::Tile(b as uint).to_game() % game::game::SCREEN_WIDTH.to_game(),
-						             units::Tile(a as uint).to_game() % game::game::SCREEN_HEIGHT.to_game()));
+						            (units::Tile(b as u32).to_game() % game::game::SCREEN_WIDTH.to_game(),
+						             units::Tile(a as u32).to_game() % game::game::SCREEN_HEIGHT.to_game()));
 					}
 					_ => {}
 				};
@@ -176,12 +178,16 @@ impl Map {
 		}	
 	}
 
-	pub fn get_page_x(&self) -> uint {
+	pub fn get_page_x(&self) -> u32 {
 		self.page_x
 	}
 
-	pub fn get_page_y(&self) -> uint {
+	pub fn get_page_y(&self) -> u32 {
 		self.page_y
+	}
+
+	pub fn get_tiles(self) -> Vec<Box<Vec<Box<Tile>>>> {
+		self.tiles
 	}
 
 	pub fn on_screen(&self, map_x: units::Game, map_y: units::Game) -> bool {
@@ -219,17 +225,18 @@ impl Map {
 	/// colliding w/ the edge of a tile that _appears to be_ empty space.
 	#[allow(visible_private_types)]
 	pub fn get_colliding_tiles(&self, rectangle: &Rectangle) -> Box<Vec<CollisionTile>> {
-		let mut collision_tiles: Box<Vec<CollisionTile>> = box Vec::new();
+		let mut collision_tiles: Box<Vec<CollisionTile>> = Box::new( Vec::new() );
 		
 		let units::Tile(first_row) =  rectangle.top().to_tile();
 		let units::Tile(last_row)  =  rectangle.bottom().to_tile();
 		let units::Tile(first_col) =  rectangle.left().to_tile();
 		let units::Tile(last_col)  =  rectangle.right().to_tile();
 
-		for row in range(first_row, last_row + 1) {
-			for col in range(first_col, last_col + 1) {
+		for row in first_row.. last_row + 1 {
+			for col in first_col.. last_col + 1 {
+				let tile_type = self.tiles.get(row as usize).unwrap().get(col as usize).unwrap().tile_type.clone();
 				collision_tiles.push( 
-					CollisionTile::new(units::Tile(row), units::Tile(col), self.tiles.get(row).get(col).tile_type)
+					CollisionTile::new(units::Tile(row), units::Tile(col), tile_type)
 				);
 			}
 		}

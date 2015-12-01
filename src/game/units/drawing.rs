@@ -1,3 +1,5 @@
+use std::ops::{Add, Sub, Mul, Div, Rem};
+
 static TILE_SIZE: i32          =  32;
 static SCALE: f64              = 1.0;
 
@@ -8,7 +10,7 @@ pub trait AsPixel { fn to_pixel(&self) -> Pixel; }
 /// A `Game` unit represents a density-independent distance in pixels.
 /// Converting a `Game` to pixels will round it to the nearest coordinate,
 /// scaled based on the desired tile size & resolution.
-#[deriving(PartialOrd,PartialEq)]
+#[derive(PartialOrd,PartialEq,Clone,Copy)]
 pub struct Game(pub f64);
 
 impl AsGame for Game {
@@ -20,7 +22,7 @@ impl AsTile for Game {
 	#[inline]
 	fn to_tile(&self) -> Tile {
 		let Game(a) = *self;
-		Tile((a / TILE_SIZE as f64) as uint)
+		Tile((a / TILE_SIZE as f64) as u32)
 	}
 }
 
@@ -30,52 +32,62 @@ impl AsPixel for Game {
 }
 
 // Allow `+` operator for anything which can be converted `#to_game()` 
-impl<T: AsGame>  Add<T, Game> for Game {
+impl<T: AsGame>  Add<T> for Game {
+	type Output = Game;
+
 	#[inline]
-	fn add(&self, rhs: &T) -> Game {
-		let (Game(a), Game(b)) = (*self, rhs.to_game());
+	fn add(self, rhs: T) -> Game {
+		let (Game(a), Game(b)) = (self, rhs.to_game());
 		Game(a + b)
 	}
 }
 
 // Allow `-` operator for anything which can be converted `#to_game()`
-impl <T: AsGame> Sub<T, Game> for Game {
+impl <T: AsGame> Sub<T> for Game {
+	type Output = Game;
+
 	#[inline]
-	fn sub(&self, rhs: &T) -> Game {
-		let (Game(a), Game(b)) = (*self, rhs.to_game());
+	fn sub(self, rhs: T) -> Game {
+		let (Game(a), Game(b)) = (self, rhs.to_game());
 		Game(a - b)
 	}
 }
 
 // Allow `*` operator for anything which can be converted `#to_game()`
-impl <T: AsGame> Mul<T, Game> for Game {
+impl <T: AsGame> Mul<T> for Game {
+	type Output = Game;
+
 	#[inline]
-	fn mul(&self, rhs: &T) -> Game {
-		let (Game(a), Game(b)) = (*self, rhs.to_game());
+	fn mul(self, rhs: T) -> Game {
+		let (Game(a), Game(b)) = (self, rhs.to_game());
 		Game(a * b)
 	}
 }
 
 // Allow `/` operator for anything which can be converted `#to_game()`
-impl <T: AsGame> Div<T, Game> for Game {
+impl <T: AsGame> Div<T> for Game {
+	type Output = Game;
+
 	#[inline]
-	fn div(&self, rhs: &T) -> Game {
-		let (Game(a), Game(b)) = (*self, rhs.to_game());
+	fn div(self, rhs: T) -> Game {
+		let (Game(a), Game(b)) = (self, rhs.to_game());
 		Game(a / b)
 	}
 }
 
 // Allow `%` operator for anything which can be converted `#to_game()`
-impl <T: AsGame> Rem<T, Game> for Game {
+impl <T: AsGame> Rem<T> for Game {
+	type Output = Game;
+
 	#[inline]
-	fn rem(&self, rhs: &T) -> Game {
-		let (Game(a), Game(b)) = (*self, rhs.to_game());
+	fn rem(self, rhs: T) -> Game {
+		let (Game(a), Game(b)) = (self, rhs.to_game());
 		Game(a % b)
 	}
 }
 
 /// A `Pixel` represents an absolute coordinate on a surface.
-#[deriving(PartialEq,PartialOrd)]
+#[derive(PartialEq,PartialOrd,Clone,Copy)]
 pub struct Pixel(pub i32);
 
 impl AsPixel for Pixel {
@@ -84,10 +96,12 @@ impl AsPixel for Pixel {
 }
 
 // Allow `+` operator for anything which can be converted `#to_pixel()`
-impl<T: AsPixel> Add<T, Pixel> for Pixel {
+impl<T: AsPixel> Add<T> for Pixel {
+	type Output = Pixel;
+
 	#[inline]
-	fn add(&self, rhs: &T) -> Pixel {
-		let (Pixel(a), Pixel(b)) = (*self, rhs.to_pixel());
+	fn add(self, rhs: T) -> Pixel {
+		let (Pixel(a), Pixel(b)) = (self, rhs.to_pixel());
 		Pixel(a + b)
 	}
 }
@@ -96,14 +110,14 @@ impl<T: AsPixel> Add<T, Pixel> for Pixel {
 /// 
 /// (This will ultimately be 16 Games, or some scaled number of
 /// pixels.)
-#[deriving(PartialEq,PartialOrd)]
-pub struct HalfTile(pub uint);
+#[derive(PartialEq,PartialOrd,Clone,Copy)]
+pub struct HalfTile(pub u32);
 
 impl AsGame for HalfTile {
 	#[inline]
 	fn to_game(&self) -> Game {
 		let HalfTile(a) = *self;
-		Game((a * (TILE_SIZE as uint / 2)) as f64)
+		Game((a * (TILE_SIZE as u32 / 2)) as f64)
 	}
 }
 
@@ -111,14 +125,14 @@ impl AsGame for HalfTile {
 /// _base tile-size_ (32 pixels).
 ///
 /// This may ultimately be scaled if converted to `Games` or `Pixels`
-#[deriving(PartialEq,PartialOrd)]
-pub struct Tile(pub uint);
+#[derive(PartialEq,PartialOrd,Clone,Copy)]
+pub struct Tile(pub u32);
 
 impl AsGame for Tile {
 	#[inline]
 	fn to_game(&self) -> Game {
 		let Tile(a) = *self;
-		Game((a * (TILE_SIZE as uint)) as f64)
+		Game((a * (TILE_SIZE as u32)) as f64)
 	}
 }
 
@@ -133,37 +147,45 @@ impl AsPixel for Tile {
 }
 
 // Allow `+` operator for anything which can be converted `#to_tile()`
-impl<T: AsTile> Add<T, Tile> for Tile {
+impl<T: AsTile> Add<T> for Tile {
+	type Output = Tile;
+
 	#[inline]
-	fn add(&self, rhs: &T) -> Tile {
-		let (Tile(a), Tile(b)) = (*self, rhs.to_tile());
+	fn add(self, rhs: T) -> Tile {
+		let (Tile(a), Tile(b)) = (self, rhs.to_tile());
 		Tile(a + b)
 	}
 }
 
 // Allow `-` operator for anything which can be converted to `#to_tile()`
-impl<T: AsTile> Sub<T, Tile> for Tile {
+impl<T: AsTile> Sub<T> for Tile {
+	type Output = Tile;
+
 	#[inline]
-	fn sub(&self, rhs: &T) -> Tile {
-		let (Tile(a), Tile(b)) = (*self, rhs.to_tile());
+	fn sub(self, rhs: T) -> Tile {
+		let (Tile(a), Tile(b)) = (self, rhs.to_tile());
 		Tile(a - b)
 	}
 }
 
 // Allow `*` operator for anything which can be converted `#to_tile()`
-impl<T: AsTile> Mul<T, Tile> for Tile {
+impl<T: AsTile> Mul<T> for Tile {
+	type Output = Tile;
+
 	#[inline]
-	fn mul(&self, rhs: &T) -> Tile {
-		let (Tile(a), Tile(b)) = (*self, rhs.to_tile());
+	fn mul(self, rhs: T) -> Tile {
+		let (Tile(a), Tile(b)) = (self, rhs.to_tile());
 		Tile(a * b)
 	}
 }
 
 // Allow `/` operator for anything which can be converted `#to_tile()`
-impl<T: AsTile> Div<T, Tile> for Tile {
+impl<T: AsTile> Div<T> for Tile {
+	type Output = Tile;
+
 	#[inline]
-	fn div(&self, rhs: &T) -> Tile {
-		let (Tile(a), Tile(b)) = (*self, rhs.to_tile());
+	fn div(self, rhs: T) -> Tile {
+		let (Tile(a), Tile(b)) = (self, rhs.to_tile());
 		Tile(a / b)
 	}
 }

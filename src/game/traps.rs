@@ -15,16 +15,16 @@ static SPRITE_NUM_FRAMES:  units::Frame  = 2;
 static SPRITE_FPS:         units::Fps    = 20;
 
 // Sprite locations
-static BEAR_TRAP_FRAME: units::Tile = units::Tile(0);
+const BEAR_TRAP_FRAME: units::Tile = units::Tile(0);
 
 // Animation frames 
-static BEAR_TRAP_CLOSED_FRAME: units::Tile = units::Tile(1);
+const BEAR_TRAP_CLOSED_FRAME: units::Tile = units::Tile(1);
 
 pub trait Trap {
-	fn draw(&self, display: &graphics::Graphics);
+	fn draw(&self, display: &mut graphics::Graphics);
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map);
 	fn damage_rectangle(&self) -> Rectangle;
-	fn get_type(&self) -> int;
+	fn get_type(&self) -> i32;
 	fn is_finished(&mut self) -> bool;
 	fn set_timer(&mut self);
 	fn get_map_x(&self) -> units::Game;
@@ -34,7 +34,7 @@ pub trait Trap {
 pub struct BearTrap {
 	character: Character, 
 	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
-	animation_timer: int
+	animation_timer: i32
 }
 
 impl BearTrap {
@@ -62,41 +62,41 @@ impl BearTrap {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
-			let asset_path = "assets/base/traps.bmp".to_string();
-			let motion_frame = BEAR_TRAP_FRAME;
+		let asset_path = "assets/base/traps.bmp".to_string();
+		let motion_frame = BEAR_TRAP_FRAME;
 
-			let facing_frame = units::Tile(0);
+		let facing_frame = units::Tile(0);
 
-			box sprite::Sprite::new(
-				display,
-				(motion_frame, facing_frame),
-				(units::Tile(1), units::Tile(1)),
-				asset_path
-			) as Box<sprite::Updatable<_>>
-		});
+		let loaded_sprite = Box::new( sprite::Sprite::new(
+			display,
+			(motion_frame, facing_frame),
+			(units::Tile(1), units::Tile(1)),
+			asset_path
+		) ) as Box<sprite::Updatable<_>>;
+
+		self.character.sprites.insert(movement, loaded_sprite);
 
 		let asset_path = "assets/base/traps.bmp".to_string();
 		let motion_frame = BEAR_TRAP_CLOSED_FRAME;
 		let facing_frame = units::Tile(0);
-		let animation_sprite = box sprite::Sprite::new(
+		let animation_sprite = Box::new( sprite::Sprite::new(
 			display, 
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path,
-		) as Box<sprite::Updatable<_>>;
+		) ) as Box<sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
 	}
 }
 
 impl Trap for BearTrap {
-	fn draw(&self, display: &graphics::Graphics) {
-		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
-		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let correction_x = self.character.get_map_x() % common::SCREEN_CORRECTION;
+		let correction_y = self.character.get_map_y() % common::SCREEN_CORRECTION;
 		if self.animation_timer > 0 {
-			self.animation_sprite.get(0).draw(display, (correction_x, correction_y));
+			self.animation_sprite.get(0).unwrap().draw(display, (correction_x, correction_y));
 		} else {
-			self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+			self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 		}
 	}
 
@@ -109,7 +109,7 @@ impl Trap for BearTrap {
 		self.character.damage_rectangle()
 	}
 
-	fn get_type(&self) -> int {
+	fn get_type(&self) -> i32 {
 		1
 	}
 

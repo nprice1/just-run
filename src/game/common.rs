@@ -1,6 +1,7 @@
-use std::rand::{task_rng, Rng};
+use rand;
+use rand::Rng;
 
-use std::collections::hashmap::HashMap;
+use std::collections::HashMap;
 
 use game::graphics;
 use game::sprite;
@@ -30,7 +31,7 @@ static Y_BOX: Rectangle = Rectangle {
 };
 
 // Screen correction for changing pages
-pub static SCREEN_CORRECTION: units::Tile = units::Tile(20);
+pub const SCREEN_CORRECTION: units::Tile = units::Tile(20);
 
 pub struct Character {
 	// assets
@@ -49,13 +50,13 @@ pub struct Character {
 	pub elapsed_time:  units::Millis,
 	pub velocity_x:    units::Velocity,
 	pub velocity_y:    units::Velocity,
-	pub accel_x:       int,
-	pub accel_y:       int, 
+	pub accel_x:       i32,
+	pub accel_y:       i32, 
 	pub target_x:      units::Game, 
 	pub target_y:      units::Game,
 
 	// flags
-	pub killed: int
+	pub killed: i32
 }
 
 impl Character {
@@ -79,7 +80,7 @@ impl Character {
 			y: y,
 			map_x: x,
 			map_y: y,
-			movement: (sprite::Standing, sprite::East),
+			movement: (sprite::Motion::Standing, sprite::Facing::East),
 			
 			velocity_x: units::Velocity(0.0),
 			velocity_y: units::Velocity(0.0),
@@ -97,9 +98,9 @@ impl Character {
 	// Draws player to screen
 	pub fn draw(&self, display: &mut graphics::Graphics) {
 		if self.killed >= 0 {
-			self.killed_sprite.get(0).draw(display, (self.x, self.y));
+			self.killed_sprite.get(0).unwrap().draw(display, (self.x, self.y));
 		} else {
-			self.sprites.get(&self.movement).draw(display, (self.x, self.y));
+			self.sprites.get(&self.movement).unwrap().draw(display, (self.x, self.y));
 		}
 	}
 
@@ -108,12 +109,12 @@ impl Character {
 		let asset_path = "assets/base/killed.bmp".to_string();
 		let motion_frame = KILL_FRAME; 
 		let facing_frame = units::Tile(0);
-		let sprite = box sprite::AnimatedSprite::new(
+		let sprite = Box::new( sprite::AnimatedSprite::new(
 				display, asset_path, 
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				SPRITE_NUM_FRAMES, SPRITE_FPS
-			).unwrap() as Box<sprite::Updatable<_>>;
+			).unwrap() ) as Box<sprite::Updatable<_>>;
 		self.killed_sprite.push(sprite);
 	}
 
@@ -122,9 +123,9 @@ impl Character {
 
 		self.movement = 
 			if self.accel_x == 0 && self.accel_y == 0 {
-				(sprite::Standing, last_facing)
+				(sprite::Motion::Standing, last_facing)
 			} else {
-				(sprite::Walking, last_facing)
+				(sprite::Motion::Walking, last_facing)
 			}	
 	}
 
@@ -270,7 +271,7 @@ impl Character {
 
 		let mut info = Info { collided: false, row: units::Tile(0), col: units::Tile(0) };
 		for tile in tiles.iter() {
-			if tile.tile_type == map::Wall {
+			if tile.tile_type == map::TileType::Wall {
 				info = Info {collided: true, row: tile.row, col: tile.col};
 				break;
 			}
@@ -297,12 +298,28 @@ impl Character {
 		self.y + units::HalfTile(1)
 	}
 
+	pub fn get_x(&self) -> units::Game {
+		self.x
+	}
+
+	pub fn get_y(&self) -> units::Game {
+		self.y
+	}
+
 	pub fn map_center_x(&self) -> units::Game {
 		self.map_x + units::HalfTile(1)
 	}
 
 	pub fn map_center_y(&self) -> units::Game {
 		self.map_y + units::HalfTile(1)
+	}
+
+	pub fn get_map_x(&self) -> units::Game {
+		self.map_x
+	}
+
+	pub fn get_map_y(&self) -> units::Game {
+		self.map_y
 	}
 
 	// x-axis collision detection
@@ -360,55 +377,48 @@ impl Character {
 	}
 
 	pub fn set_new_target(&mut self) {
-		let mut rng = task_rng();
+		let mut rng = rand::thread_rng();
 		let distance_to_target = self.distance( self.target_x, self.target_y );
 
 		if distance_to_target < 20.0 {
-			let chance_x = rng.gen_range(1u, 3u);
-			let chance_y = rng.gen_range(1u, 3u);
-			let plus_or_minus = rng.gen_range(1u, 3u);
-			self.target_x = match self.map_center_x() {
-				center if plus_or_minus == 1 => {
-						if center > units::Tile(1).to_game() && center < units::Tile(56).to_game() {
-							center + units::Tile(chance_x).to_game()
-						} else {
-							center - units::Tile(chance_x).to_game()
-						}
-					}
-				center => {
-						if center > units::Tile(3).to_game() && center < units::Tile(58).to_game() {
-							center - units::Tile(chance_x).to_game()
-						} else {
-							center + units::Tile(chance_x).to_game()
-						}
-					}
-			};
-			self.target_y = match self.map_center_y() {
-				center if plus_or_minus == 1 => {
-						if center > units::Tile(1).to_game() && center < units::Tile(56).to_game() {
-							center + units::Tile(chance_y).to_game()
-						} else {
-							center - units::Tile(chance_y).to_game()
-						}
-					}
-				center => {
-						if center > units::Tile(3).to_game() && center < units::Tile(58).to_game() {
-							center - units::Tile(chance_y).to_game()
-						} else {
-							center + units::Tile(chance_y).to_game()
-						}
-					}
-			};
+			let chance_x = rng.gen_range(1u32, 3u32);
+			let chance_y = rng.gen_range(1u32, 3u32);
+			let plus_or_minus = rng.gen_range(1u32, 3u32);
+			let center_x = self.map_center_x();
+			let center_y = self.map_center_y();
+			if plus_or_minus == 1 {
+				if center_x > units::Tile(1).to_game() && center_x < units::Tile(56).to_game() {
+					self.target_x = center_x + units::Tile(chance_x).to_game()
+				} else {
+					self.target_x = center_x - units::Tile(chance_x).to_game()
+				}
+				if center_y > units::Tile(1).to_game() && center_y < units::Tile(56).to_game() {
+					self.target_y = center_y + units::Tile(chance_y).to_game()
+				} else {
+					self.target_y = center_y - units::Tile(chance_y).to_game()
+				}
+			} else {
+				if center_x > units::Tile(3).to_game() && center_x < units::Tile(58).to_game() {
+					self.target_x = center_x - units::Tile(chance_x).to_game()
+				} else {
+					self.target_x = center_x + units::Tile(chance_x).to_game()
+				}
+				if center_y > units::Tile(3).to_game() && center_y < units::Tile(58).to_game() {
+					self.target_y = center_y - units::Tile(chance_y).to_game()
+				} else {
+					self.target_y = center_y + units::Tile(chance_y).to_game()
+				}
+			}
 		}
 	}
 
 	pub fn set_new_random_target(&mut self) {
-		let mut rng = task_rng();
+		let mut rng = rand::thread_rng();
 		let distance_to_target = self.distance( self.target_x, self.target_y );
 
 		if distance_to_target < 20.0 {
-			self.target_x = units::Tile(rng.gen_range(1u, 58u)).to_game();
-			self.target_y = units::Tile(rng.gen_range(1u, 58u)).to_game();
+			self.target_x = units::Tile(rng.gen_range(1u32, 58u32)).to_game();
+			self.target_y = units::Tile(rng.gen_range(1u32, 58u32)).to_game();
 		}
 	}
 

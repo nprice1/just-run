@@ -4,3 +4,6 @@ lib/*.rlib
 bin/**
 doc/**
 highscore.txt
+.DS_Store
+Cargo.lock
+target/*

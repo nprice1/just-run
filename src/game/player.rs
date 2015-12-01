@@ -1,4 +1,4 @@
-use std::collections::hashmap::HashMap;
+use std::collections::HashMap;
 
 use game::graphics;
 use game::sprite;
@@ -13,8 +13,8 @@ use game::common::Character;
 pub type MotionTup = (sprite::Motion, sprite::Facing);
 
 // player sprite animation
-static CHAR_OFFSET:         uint          = 12;
-static CRICKET_OFFSET:      uint          = 10;
+const CHAR_OFFSET:          u32           = 12;
+const CRICKET_OFFSET:       u32           = 10;
 static SPRITE_NUM_FRAMES:   units::Frame  = 3;
 static SPRITE_FPS:          units::Fps    = 20;
 static STANDING_HIT_FRAMES: units::Frame  = 2;
@@ -42,12 +42,12 @@ pub struct Player {
 	teleport_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
 	hit_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
 	cricket_bat: bool,
-	teleport_timer: int, 
-	immunity_timer: int,
-	health: uint,
+	teleport_timer: i32, 
+	immunity_timer: i32,
+	health: u32,
 	follow_x: units::Game,
 	follow_y: units::Game,
-	update_count: int
+	update_count: i32
 }
 
 impl Player {
@@ -112,18 +112,18 @@ impl Player {
 
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
-		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		self.character.sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		if self.has_bat() {
-			self.cricket_sprites.get_mut(&self.character.movement).update(elapsed_time);
+			self.cricket_sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		}
 		if self.teleport_timer > 0 {
-			self.teleport_sprites.get_mut(&self.character.movement).update(elapsed_time);
+			self.teleport_sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		}
 		if self.immunity_timer > 0 {
-			self.hit_sprites.get_mut(&self.character.movement).update(elapsed_time);
+			self.hit_sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		}
 		if self.character.is_killed() {
-			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+			self.character.killed_sprite.get_mut(0).unwrap().update(elapsed_time);
 		}
 
 		// run physics sim
@@ -140,131 +140,131 @@ impl Player {
 		movement: (sprite::Motion, sprite::Facing)
 	) {
 		self.character.load_killed_sprite(graphics);
-		self.cricket_sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.cricket_sprites.insert(movement, {
 			let file_path = "assets/MyChar.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = STAND_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => CRICKET_FACING_WEST,
-				sprite::East => CRICKET_FACING_EAST
+				sprite::Facing::West => CRICKET_FACING_WEST,
+				sprite::Facing::East => CRICKET_FACING_EAST
 			};
 
 			match movement {
 				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::Sprite::new(
+				(sprite::Motion::Standing, _) => {
+					Box::new( sprite::Sprite::new(
 						graphics, 
 						(motion_frame, facing_frame), 
 						(units::Tile(1), units::Tile(1)),	
 						file_path
-					) as Box<sprite::Updatable<_>> 
+					) ) as Box<sprite::Updatable<_>> 
 				}
 
 				// dynamic: 
-				(sprite::Walking, _) => {
-					box sprite::AnimatedSprite::new(
+				(sprite::Motion::Walking, _) => {
+					Box::new( sprite::AnimatedSprite::new(
 						graphics, file_path,
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						SPRITE_NUM_FRAMES, SPRITE_FPS
-					).unwrap() as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<sprite::Updatable<_>>
 				}
 			}
 		});
-		self.teleport_sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.teleport_sprites.insert(movement, {
 			let file_path = "assets/MyChar.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = TELEPORT_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => CRICKET_FACING_WEST,
-				sprite::East => CRICKET_FACING_EAST
+				sprite::Facing::West => CRICKET_FACING_WEST,
+				sprite::Facing::East => CRICKET_FACING_EAST
 			};
 
 			match movement {
 				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::Sprite::new(
+				(sprite::Motion::Standing, _) => {
+					Box::new( sprite::Sprite::new(
 						graphics, 
 						(motion_frame, facing_frame), 
 						(units::Tile(1), units::Tile(1)),	
 						file_path
-					) as Box<sprite::Updatable<_>> 
+					) ) as Box<sprite::Updatable<_>> 
 				}
 
 				// dynamic: 
-				(sprite::Walking, _) => {
-					box sprite::AnimatedSprite::new(
+				(sprite::Motion::Walking, _) => {
+					Box::new( sprite::AnimatedSprite::new(
 						graphics, file_path,
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						SPRITE_NUM_FRAMES, SPRITE_FPS
-					).unwrap() as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<sprite::Updatable<_>>
 				}
 			}
 		});
-		self.hit_sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.hit_sprites.insert(movement, {
 			let file_path = "assets/MyChar.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = HIT_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => FACING_WEST,
-				sprite::East => FACING_EAST
+				sprite::Facing::West => FACING_WEST,
+				sprite::Facing::East => FACING_EAST
 			};
 
 			match movement {
 				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::AnimatedSprite::new(
+				(sprite::Motion::Standing, _) => {
+					Box::new( sprite::AnimatedSprite::new(
 						graphics, file_path,
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						STANDING_HIT_FRAMES, HIT_FPS
-					).unwrap() as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<sprite::Updatable<_>>
 				}
 
 				// dynamic: 
-				(sprite::Walking, _) => {
-					box sprite::AnimatedSprite::new(
+				(sprite::Motion::Walking, _) => {
+					Box::new( sprite::AnimatedSprite::new(
 						graphics, file_path,
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						WALKING_HIT_FRAMES, HIT_FPS
-					).unwrap() as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<sprite::Updatable<_>>
 				}
 			}
 		});
-		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement, {
 			let file_path = "assets/MyChar.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = STAND_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => FACING_WEST,
-				sprite::East => FACING_EAST
+				sprite::Facing::West => FACING_WEST,
+				sprite::Facing::East => FACING_EAST
 			};
 
 			match movement {
 				// static: standing in place
-				(sprite::Standing, _) => {
-					box sprite::Sprite::new(
+				(sprite::Motion::Standing, _) => {
+					Box::new( sprite::Sprite::new(
 						graphics, 
 						(motion_frame, facing_frame), 
 						(units::Tile(1), units::Tile(1)),	
 						file_path
-					) as Box<sprite::Updatable<_>> 
+					) ) as Box<sprite::Updatable<_>> 
 				}
 
 				// dynamic: 
-				(sprite::Walking, _) => {
-					box sprite::AnimatedSprite::new(
+				(sprite::Motion::Walking, _) => {
+					Box::new( sprite::AnimatedSprite::new(
 						graphics, file_path,
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						SPRITE_NUM_FRAMES, SPRITE_FPS
-					).unwrap() as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<sprite::Updatable<_>>
 				}
 			}
 		});
@@ -273,25 +273,25 @@ impl Player {
 	//draw the player
 	pub fn draw(&self, display: &mut graphics::Graphics) {
 		if self.cricket_bat {
-			self.cricket_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+			self.cricket_sprites.get(&self.character.movement).unwrap().draw(display, (self.character.x, self.character.y));
 		} else if self.teleport_timer > 0 {
 			match self.teleport_timer {
 				x if x > 15 => {
 					let asset_path = "assets/base/teleport.bmp".to_string();
 					let motion_frame = TELEPORT_ANIMATION_FRAME;
 					let facing_frame = units::Tile(0);
-					let teleport_sprite = box sprite::Sprite::new(
+					let teleport_sprite = Box::new( sprite::Sprite::new(
 						display, 
 						(motion_frame, facing_frame),
 						(units::Tile(3), units::Tile(3)),
 						asset_path
-					) as Box<sprite::Updatable<_>>;
+					) ) as Box<sprite::Updatable<_>>;
 					teleport_sprite.draw(display, (self.character.x - units::Game(60.0), self.character.y - units::Game(60.0)));
 				},
-				_ => { self.teleport_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y)); }
+				_ => { self.teleport_sprites.get(&self.character.movement).unwrap().draw(display, (self.character.x, self.character.y)); }
 			}
 		} else if self.immunity_timer > 0 {
-			self.hit_sprites.get(&self.character.movement).draw(display, (self.character.x, self.character.y));
+			self.hit_sprites.get(&self.character.movement).unwrap().draw(display, (self.character.x, self.character.y));
 		} else {
 			self.character.draw(display);
 		}
@@ -300,14 +300,14 @@ impl Player {
 	/// The player will immediately face `West`
 	/// They will then accelerate at a constant rate in that direction.
 	pub fn start_moving_left(&mut self) {
-		self.character.set_facing(sprite::West);
+		self.character.set_facing(sprite::Facing::West);
 		self.character.accel_x = -1;
 	}
 
 	/// The player will immediately face `East`
 	/// They will then accelerate at a constant rate in that direction.
 	pub fn start_moving_right(&mut self) {
-		self.character.set_facing(sprite::East);
+		self.character.set_facing(sprite::Facing::East);
 		self.character.accel_x = 1;
 	}
 
@@ -367,7 +367,7 @@ impl Player {
 		self.health = self.health - 1;
 	}
 
-	pub fn get_health(&mut self) -> uint {
+	pub fn get_health(&mut self) -> u32 {
 		self.health
 	}
 

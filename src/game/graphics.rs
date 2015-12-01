@@ -1,12 +1,14 @@
 use std::rc::Rc;
 
-use std::collections::hashmap::HashMap;
-use collections::string;
+use std::collections::hash_map::{HashMap, Entry};
+use std::path::Path;
+use std::string;
 
 use game;
 use game::units;
 use game::units::{AsPixel};
 
+use sdl2;
 use sdl2::rect;
 use sdl2::surface;
 use sdl2::render;
@@ -17,84 +19,71 @@ use sdl2::pixels;
 use sdl2_mixer;
 use sdl2_ttf;
 
-static MAX_HP: uint = 3;
+static MAX_HP: u32 = 3;
 
 // fail when error
 macro_rules! trying(
-    ($e:expr) => (match $e { Ok(e) => e, Err(e) => fail!("failed: {}", e) })
-)
+    ($e:expr) => (match $e { Ok(e) => e, Err(e) => panic!("failed: {}", e) })
+);
 
 /// Acts as a buffer to the underlying display
-pub struct Graphics {
-	screen:   Box<render::Renderer<video::Window>>,
+pub struct Graphics<'g> {
+	screen:   Box<render::Renderer<'g>>,
 	music:    sdl2_mixer::Music,
 	pub sound_effects: Vec<sdl2_mixer::Chunk>,
-	pub sprite_cache:  HashMap<string::String, Rc<Box<render::Texture>>>,
+	pub sprite_cache:  HashMap<string::String, render::Texture>,
 }
 
-impl Graphics {
+impl<'g> Graphics<'g> {
 	/// Prepare the display for rendering
 	#[allow(unused_must_use)]
-	pub fn new() -> Graphics {
+	pub fn new(context: &sdl2::Sdl) -> Graphics<'g> {
 		let (units::Pixel(w), units::Pixel(h)) = 
 			(game::game::SCREEN_WIDTH.to_pixel(), game::game::SCREEN_HEIGHT.to_pixel());
-		
-		let current_mode = video::Window::new(
-			"Just F&#%IN RUN",                       // title
-			video::PosCentered, video::PosCentered,  // position (x,y)
-			w as int, h as int,
-			video::InputFocus
-		);
 
-		let window_context = match current_mode {
-			Ok(ctx)  => ctx,
-			Err(msg) => fail!(msg),
-		};
+	    let video_subsystem = context.video().unwrap();
 
-		let render_context = render::Renderer::from_window(
-			window_context,
-			render::DriverAuto,
-			render::Accelerated,
-		);
+	    let window = video_subsystem.window("rust-sdl2 demo: Video", w as u32, h as u32)
+	        .position_centered()
+	        .opengl()
+	        .build()
+	        .unwrap();
+
+	    let mut render_context = window.renderer().build().unwrap();
 
 		// setup background music
 		sdl2_mixer::open_audio(sdl2_mixer::DEFAULT_FREQUENCY, 0x8010u16, 2, 1024);
 		sdl2_mixer::allocate_channels(2);
-		sdl2_mixer::init(sdl2_mixer::InitMp3 | sdl2_mixer::InitFlac | sdl2_mixer::InitMod | sdl2_mixer::InitFluidSynth | sdl2_mixer::InitModPlug | sdl2_mixer::InitOgg);
+		sdl2_mixer::init(sdl2_mixer::INIT_MP3 | sdl2_mixer::INIT_FLAC | sdl2_mixer::INIT_MOD | sdl2_mixer::INIT_FLUIDSYNTH | sdl2_mixer::INIT_MODPLUG | sdl2_mixer::INIT_OGG);
 		let music = sdl2_mixer::Music::from_file( &Path::new("assets/background2.wav") ).unwrap();
 
 		// setup sound effects
 		let mut sound_effect_vec: Vec<sdl2_mixer::Chunk> = Vec::new();
-		let bullet = sdl2_mixer::Chunk::from_file( &Path::new("assets/bullet.wav") ).unwrap();
-		sound_effect_vec.push(bullet);
-		let wipeout = sdl2_mixer::Chunk::from_file( &Path::new("assets/wipeout.wav") ).unwrap();
-		sound_effect_vec.push(wipeout);
-		let nuke = sdl2_mixer::Chunk::from_file( &Path::new("assets/nuke.wav") ).unwrap();
-		sound_effect_vec.push(nuke);
-		let powerup = sdl2_mixer::Chunk::from_file( &Path::new("assets/powerup.wav") ).unwrap();
-		sound_effect_vec.push(powerup);
-		let debuff = sdl2_mixer::Chunk::from_file( &Path::new("assets/debuff.wav") ).unwrap();
-		sound_effect_vec.push(debuff);
-		let trap = sdl2_mixer::Chunk::from_file( &Path::new("assets/trap.wav") ).unwrap();
-		sound_effect_vec.push(trap);
-		let hit = sdl2_mixer::Chunk::from_file( &Path::new("assets/hit.wav") ).unwrap();
-		sound_effect_vec.push(hit);
-		let goal = sdl2_mixer::Chunk::from_file( &Path::new("assets/goal.wav") ).unwrap();
-		sound_effect_vec.push(goal);
+		// let bullet = sdl2_mixer::Chunk::from_file( &Path::new("assets/bullet.wav") ).unwrap();
+		// sound_effect_vec.push(bullet);
+		// let wipeout = sdl2_mixer::Chunk::from_file( &Path::new("assets/wipeout.wav") ).unwrap();
+		// sound_effect_vec.push(wipeout);
+		// let nuke = sdl2_mixer::Chunk::from_file( &Path::new("assets/nuke.wav") ).unwrap();
+		// sound_effect_vec.push(nuke);
+		// let powerup = sdl2_mixer::Chunk::from_file( &Path::new("assets/powerup.wav") ).unwrap();
+		// sound_effect_vec.push(powerup);
+		// let debuff = sdl2_mixer::Chunk::from_file( &Path::new("assets/debuff.wav") ).unwrap();
+		// sound_effect_vec.push(debuff);
+		// let trap = sdl2_mixer::Chunk::from_file( &Path::new("assets/trap.wav") ).unwrap();
+		// sound_effect_vec.push(trap);
+		// let hit = sdl2_mixer::Chunk::from_file( &Path::new("assets/hit.wav") ).unwrap();
+		// sound_effect_vec.push(hit);
+		// let goal = sdl2_mixer::Chunk::from_file( &Path::new("assets/goal.wav") ).unwrap();
+		// sound_effect_vec.push(goal);
 
-		let graphics: Graphics = match render_context {
-			Ok(renderer) => {
-				Graphics{
-					screen:        box renderer,
-					sprite_cache:  HashMap::<string::String, Rc<Box<render::Texture>>>::new(),
-					music:         music, 
-					sound_effects: sound_effect_vec
-				}
-			},
-			Err(msg) => {fail!(msg)},
-		};
+		let graphics: Graphics = 
+			Graphics {
+				screen:        Box::new(render_context),
+				sprite_cache:  HashMap::<string::String, render::Texture>::new(),
+				music:         music, 
+				sound_effects: sound_effect_vec
+			};
 		
-		mouse::show_cursor(false);
 		return graphics;
 	}
 
@@ -103,36 +92,37 @@ impl Graphics {
 	/// contexts.
 	pub fn load_image(&mut self, 
 	                  file_path: string::String, 
-	                  transparent_black: bool) -> Rc<Box<render::Texture>> {
+	                  transparent_black: bool) {
 		
 		// Retrieve a handle or generate a new one if it exists already.
-		let borrowed_display = &self.screen;
-		let handle = self.sprite_cache.find_or_insert_with(file_path, |key| {
-			// Load sprite
-			let sprite_path = Path::new((*key).clone());
-			let sprite_window = surface::Surface::from_bmp(&sprite_path);
+		// Load sprite
+		let sprite_path = Path::new(&file_path[..]);
+		let sprite_window = surface::Surface::load_bmp(&sprite_path);
 
-			// Store sprite
-			let sprite_surface = match sprite_window {
-				Ok(surface) => surface,
-				Err(msg) => fail!("sprite could not be loaded to a surface: {}", msg),
-			};
+		// Store sprite
+		let mut sprite_surface = match sprite_window {
+			Ok(surface) => surface,
+			Err(msg) => panic!("sprite could not be loaded to a surface: {}", msg),
+		};
 
-			// wrap surface in texture and store it
-			if transparent_black {
-				match sprite_surface.set_color_key(true, pixels::RGB(0,0,0)) {
-					Ok(_) => {},
-					Err(msg) => fail!("Failed to key sprite: {}", msg),
+		// wrap surface in texture and store it
+		if transparent_black {
+			match sprite_surface.set_color_key(true, pixels::Color::RGB(0,0,0)) {
+				Ok(_) => {},
+				Err(msg) => panic!("Failed to key sprite: {}", msg),
+			}
+		}
+
+		match self.sprite_cache.entry(file_path.clone()) {
+			Entry::Vacant(entry) => {
+				match self.screen.create_texture_from_surface(&sprite_surface) {
+					Ok(texture) => { entry.insert(texture); },
+					Err(msg) => panic!("sprite could not be rendered: {}", msg)
 				}
-			}
+			},
 
-			match borrowed_display.create_texture_from_surface(&sprite_surface) {
-				Ok(texture) => Rc::new(box texture),
-				Err(msg) => fail!("sprite could not be rendered: {}", msg)
-			}
-		});
-
-		handle.clone()
+			_ => {},
+		};
 	}
 
 	pub fn remove_image(&mut self, file_path: string::String) {
@@ -140,20 +130,21 @@ impl Graphics {
 	}
 	
 	#[allow(unused_must_use)]
-	pub fn blit_surface(&self,
-	                    src: &render::Texture,
+	pub fn blit_surface(&mut self,
+	                    src_id: &str,
 	                    src_rect:  &rect::Rect,
 	                    dest_rect: &rect::Rect) {
 		
-		self.screen.copy(src, Some(*src_rect), Some(*dest_rect));
+		let src = &mut self.sprite_cache.get_mut(src_id).unwrap();
+		let _ = self.screen.copy(src, Some(*src_rect), Some(*dest_rect));
 	}
 
-	pub fn switch_buffers(&self) {
+	pub fn switch_buffers(&mut self) {
 		self.screen.present();
 	}
 
 	#[allow(unused_must_use)]
-	pub fn clear_buffer(&self) {
+	pub fn clear_buffer(&mut self) {
 		self.screen.clear();
 	}
 
@@ -168,43 +159,52 @@ impl Graphics {
 		sdl2_mixer::Music::resume();
 	}
 	#[allow(unused_must_use)]
-	pub fn play_sound_effect(&self, index: uint) {
+	pub fn play_sound_effect(&self, index: u32) {
 		let channel = sdl2_mixer::Channel::all();
-		let chunk = self.sound_effects.get(index);
+		let chunk = self.sound_effects.get(index as usize).unwrap() as &sdl2_mixer::Chunk; 
 		channel.play(chunk, 0);
 	}
 
 	#[allow(unused_must_use)]
-	pub fn draw_text(&self, text: &str, dest_rect: rect::Rect) {
+	pub fn draw_text(&mut self, text: &str, dest_rect: rect::Rect) {
 		let font = trying!(sdl2_ttf::Font::from_file(&Path::new("assets/font.ttf"), 128));
 		// render a surface, and convert it to a texture bound to the renderer
-	    let surface = trying!(font.render_str_blended(text, pixels::RGBA(255, 0, 0, 255)));
+	    let surface = trying!(font.render(text, sdl2_ttf::blended(pixels::Color::RGBA(255, 0, 0, 255))));
 	    let texture = trying!(self.screen.create_texture_from_surface(&surface));
     	self.screen.copy(&texture, None, Some(dest_rect));
 	}
 
 	#[allow(unused_must_use)]
-	pub fn draw_line(&self, source: (i32, i32), dest: (i32, i32)) {
+	pub fn draw_line(&mut self, source: (i32, i32), dest: (i32, i32)) {
 		let (x1,y1) = source;
 		let (x2,y2) = dest;
 		let source_point = rect::Point::new(x1, y1);
 		let dest_point = rect::Point::new(x2, y2);
-		self.screen.set_draw_color(pixels::RGB(255, 255, 255));
+		self.screen.set_draw_color(pixels::Color::RGB(255, 255, 255));
 		self.screen.draw_line(source_point, dest_point);
 	}
 
 	#[allow(unused_must_use)]
-	pub fn draw_health(&mut self, hp: uint) {
-		let heart_sprites = self.load_image("assets/base/heart.bmp".to_string(), true); 
-		let full_source = rect::Rect::new(0, 0, 22, 22);
-		let empty_source = rect::Rect::new(25, 0, 22, 22);
-		for i in range(0, MAX_HP) {
+	pub fn draw_health(&mut self, hp: u32) {
+		let heart_sprites = "assets/base/heart.bmp"; 
+		let full_source = match rect::Rect::new(0, 0, 22, 22) {
+			Ok(rect) => { rect },
+			Err(msg) => { panic!(msg) }
+		};
+		let empty_source = match rect::Rect::new(25, 0, 22, 22) {
+			Ok(rect) => { rect },
+			Err(msg) => { panic!(msg) }
+		};
+		for i in 0.. MAX_HP {
 			let x = i * 25;
-			let dest = rect::Rect::new(x as i32, 0, 25, 25);
+			let dest = match rect::Rect::new(x as i32, 0, 25, 25) {
+				Ok(rect) => { rect },
+				Err(msg) => { panic!(msg) }
+			};	
 			if i < hp {
-				self.blit_surface(*heart_sprites, &full_source, &dest);
+				self.blit_surface(&heart_sprites, &full_source.unwrap(), &dest.unwrap());
 			} else {
-				self.blit_surface(*heart_sprites, &empty_source, &dest);
+				self.blit_surface(&heart_sprites, &empty_source.unwrap(), &dest.unwrap());
 			}
 		}
 	}

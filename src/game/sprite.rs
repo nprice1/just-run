@@ -2,27 +2,26 @@ use sdl2::rect;
 use sdl2::render;
 
 use std::rc::Rc;
-use collections::string;
 
 use game::graphics;
 
 use game::units;
 use game::units::{AsGame,AsPixel};
 
-#[deriving(Hash,Eq,PartialEq)]
+#[derive(Hash,Eq,PartialEq,Clone,Copy)]
 pub enum Motion {
 	Walking,
 	Standing
 }
-pub static MOTIONS: [Motion, ..2] = [Walking, Standing];
+pub const MOTIONS: [Motion; 2] = [Motion::Walking, Motion::Standing];
 
 
-#[deriving(Hash,Eq,PartialEq)]
+#[derive(Hash,Eq,PartialEq,Clone,Copy)]
 pub enum Facing {
 	West,
 	East
 }
-pub static FACINGS: [Facing, ..2] = [West, East];
+pub const FACINGS: [Facing; 2] = [Facing::West, Facing::East];
 
 /// Any object which can be represented in 2D space
 /// Coord represents the unit which describes this object's
@@ -30,7 +29,7 @@ pub static FACINGS: [Facing, ..2] = [West, East];
 ///
 /// Said unit must be expressible in terms of `Game` units.
 pub trait Drawable<Coord> { 
-	fn draw(&self, display: &graphics::Graphics, coords: (Coord,Coord));
+	fn draw(&self, display: &mut graphics::Graphics, coords: (Coord,Coord));
 }
 
 /// Any object which understands time and placement in 2D space.
@@ -40,19 +39,19 @@ pub trait Updatable<T> : Drawable<T> {
 
 /// Represents a static 32x32 2D character
 pub struct Sprite {
-	sprite_sheet:  Rc<Box<render::Texture>>,
+	sprite_sheet:  String,
 	source_rect:   rect::Rect,
 	size:    (units::Game, units::Game),
 }
 
-impl<O:AsGame, S:AsGame> Sprite {
+impl Sprite {
 	/// A new sprite which will draw itself at `coords`
 	/// `sprite_at` is the index (row) where the sprite starts in `file_name`
-	pub fn new(
+	pub fn new<O:AsGame, S:AsGame>(
 		graphics: &mut graphics::Graphics, 
 		offset:  (O,O),  // source_x, source_ys
 		size:    (S,S),  // width, height
-		file_name: string::String
+		file_name: String
 	) -> Sprite {
 		let (w,h) = size;
 		let (x,y) = offset;
@@ -66,12 +65,16 @@ impl<O:AsGame, S:AsGame> Sprite {
 		let (units::Pixel(xi), units::Pixel(yi)) = 
 			(norm_x.to_pixel(), norm_y.to_pixel());
 
-		let origin  = rect::Rect::new(xi,yi,wi,hi);
-		let sheet   = graphics.load_image(file_name, true);  // request graphics subsystem cache this sprite.
+		let origin = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
+			Ok(rect) => { rect },
+			Err(msg) => { panic!(msg) }
+		};
+
+		graphics.load_image(file_name.clone(), true);  // request graphics subsystem cache this sprite.
 
 		return Sprite {
-			sprite_sheet:  sheet,
-			source_rect:   origin,
+			sprite_sheet:  file_name,
+			source_rect:   origin.unwrap(),
 			size:          (norm_w,norm_h),
 		};
 	}
@@ -79,7 +82,7 @@ impl<O:AsGame, S:AsGame> Sprite {
 
 impl<C: AsGame> Drawable<C> for Sprite {
 	/// Draws selfs @ coordinates provided by 
-	fn draw (&self, display: &graphics::Graphics, coords: (C,C)) {
+	fn draw (&self, display: &mut graphics::Graphics, coords: (C,C)) {
 		let (w,h) = self.size;
 		let (x,y) = coords;
 		
@@ -87,9 +90,12 @@ impl<C: AsGame> Drawable<C> for Sprite {
 		let (units::Pixel(xi), units::Pixel(yi)) = 
 			(x.to_game().to_pixel(), y.to_game().to_pixel());
 	
-		let dest_rect = rect::Rect::new(xi, yi, wi, hi);
+		let dest_rect = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
+			Ok(d) => { d },
+			Err(msg) => { panic!(msg) }
+		};
 
-		display.blit_surface(*self.sprite_sheet, &self.source_rect, &dest_rect);
+		display.blit_surface(&self.sprite_sheet, &self.source_rect, &dest_rect.unwrap());
 	}
 }
 
@@ -105,7 +111,7 @@ impl<C: AsGame> Updatable<C> for Sprite {
 #[allow(dead_code)]
 pub struct AnimatedSprite {
 	pub source_rect:   rect::Rect,
-	pub sprite_sheet:  Rc<Box<render::Texture>>,
+	pub sprite_sheet:  String,
 
 	offset:  (units::Tile, units::Tile),
 	size:    (units::Tile, units::Tile),
@@ -124,14 +130,14 @@ impl AnimatedSprite {
 	/// Returns an error message if sprite-sheet could not be loaded.
 	pub fn new(
 		graphics:    &mut graphics::Graphics,
-		sheet_path:  string::String,
+		sheet_path:  String,
 
 		offset:  (units::Tile, units::Tile),
 		size:    (units::Tile, units::Tile),
 
 		num_frames:  units::Frame,
 		fps:         units::Fps
-	) -> Result<AnimatedSprite, string::String> {
+	) -> Result<AnimatedSprite, String> {
 		// attempt to load sprite-sheet from `assets/MyChar.bmp`
 		let (w,h) = size;
 		let (x,y) = offset;
@@ -139,20 +145,23 @@ impl AnimatedSprite {
 		let (units::Pixel(wi), units::Pixel(hi)) = (w.to_pixel(), h.to_pixel());
 		let (units::Pixel(xi), units::Pixel(yi)) = (x.to_pixel(), y.to_pixel());
 		
-		let origin = rect::Rect::new(xi, yi, wi, hi);
+		let origin = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
+			Ok(rect) => { rect },
+			Err(msg) => { panic!(msg) }
+		};
 		
-		let sheet = graphics.load_image(sheet_path, true); // request graphics subsystem cache this sprite.
-		let sprite = AnimatedSprite{
+		graphics.load_image(sheet_path.clone(), true); // request graphics subsystem cache this sprite.
+		let sprite = AnimatedSprite {
 			offset:  offset,
 			size:    size,
 			
 			fps: fps,
 			current_frame: 0,
-			num_frames:   num_frames,        // our frames are drawin w/ a 0-idx'd window.
+			num_frames:   num_frames,        // our frames are drawn w/ a 0-idx'd window.
 			last_update:  units::Millis(0),
 			
-			sprite_sheet:  sheet,
-			source_rect:   origin,
+			sprite_sheet:  sheet_path,
+			source_rect:   origin.unwrap(),
 		};
 
 		return Ok(sprite);
@@ -162,7 +171,7 @@ impl AnimatedSprite {
 impl<C: AsGame> Updatable<C> for AnimatedSprite {
 	/// Reads current time-deltas and mutates state accordingly.
 	fn update(&mut self, elapsed_time: units::Millis) {
-		let frame_time = units::Millis(1000 / self.fps as int);
+		let frame_time = units::Millis(1000 / self.fps as i32);
 		self.last_update = self.last_update + elapsed_time;
 
 		// if we have missed drawing a frame
@@ -171,10 +180,16 @@ impl<C: AsGame> Updatable<C> for AnimatedSprite {
 			self.current_frame += 1;              // increment frame counter
 
 			if self.current_frame < self.num_frames {
-				self.source_rect.x += self.source_rect.w;
+				self.source_rect = match self.source_rect.offset(self.source_rect.x() + self.source_rect.width() as i32, 0) {
+					Ok(rect) => { rect },
+					Err(msg) => { panic!(msg) }
+				}
 			} else {
 				self.current_frame  = 0;
-				self.source_rect.x -= self.source_rect.w * (self.num_frames - 1) as i32;
+				self.source_rect = match self.source_rect.offset(self.source_rect.x() - self.source_rect.width() as i32 * (self.num_frames - 1) as i32, 0) {
+					Ok(rect) => { rect },
+					Err(msg) => { panic!(msg) }
+				}
 			}
 		}
 	}
@@ -182,7 +197,7 @@ impl<C: AsGame> Updatable<C> for AnimatedSprite {
 
 impl<C: AsGame> Drawable<C> for AnimatedSprite {
 	/// Draws selfs @ coordinates provided by `Updatable` trait
-	fn draw(&self, display: &graphics::Graphics, coords: (C,C)) {
+	fn draw(&self, display: &mut graphics::Graphics, coords: (C,C)) {
 		let (w,h) = self.size;
 		let (x,y) = coords;
 		
@@ -190,7 +205,10 @@ impl<C: AsGame> Drawable<C> for AnimatedSprite {
 		let (units::Pixel(xi), units::Pixel(yi)) = 
 			(x.to_game().to_pixel(), y.to_game().to_pixel());
 
-		let dest_rect = rect::Rect::new(xi, yi, wi, hi);
-		display.blit_surface(*self.sprite_sheet, &self.source_rect, &dest_rect);
+		let dest_rect = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
+			Ok(d) => { d },
+			Err(msg) => { panic!(msg) }
+		};
+		display.blit_surface(&self.sprite_sheet, &self.source_rect, &dest_rect.unwrap());
 	}
 }

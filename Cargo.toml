@@ -1,0 +1,18 @@
+[package]
+
+name = "just_run"
+version = "0.0.1"
+authors = [ "Nolan Price <senshuponbiki@gmail.com>" ]
+
+[dependencies]
+sdl2 = "0.09"
+rand = "*"
+time = "*"
+
+[dependencies.sdl2_mixer]
+path = "../rust-sdl2_mixer"
+version = "0.8.0"
+
+[dependencies.sdl2_ttf]
+path = "../rust-sdl2_ttf"
+version = "0.9.1"

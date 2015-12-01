@@ -1,4 +1,4 @@
-use std::collections::hashmap::HashMap;
+use std::collections::HashMap;
 
 use game::collisions::Rectangle;
 use game::sprite;
@@ -28,8 +28,8 @@ static PROP_OFFSET:       units::Tile = units::Tile(19);
 static WIND_OFFSET:       units::Tile = units::Tile(24);
 static BAR_OFFSET:        units::Tile = units::Tile(26);
 
-static NUM_PARTS:                uint = 3;
-static POSSIBLE_CONFIGS:         uint = 8;
+static NUM_PARTS:                u32 = 3;
+static POSSIBLE_CONFIGS:         u32 = 8;
 
 pub struct Helicopter {
 	pub x: units::Game,
@@ -37,8 +37,8 @@ pub struct Helicopter {
 	pub map_x: units::Game, 
 	pub map_y: units::Game,
 
-	sprites:  HashMap<uint, Box<sprite::Updatable<units::Game>>>,
-	parts:    HashMap<uint, uint>
+	sprites:  HashMap<u32, Box<sprite::Updatable<units::Game>>>,
+	parts:    HashMap<u32, u32>
 }
 
 pub struct Prop {
@@ -57,8 +57,8 @@ impl Helicopter {
 	pub fn new(display: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> Helicopter {
 		
-		let sprite_map = HashMap::<uint, Box<sprite::Updatable<_>>>::new();
-		let part_map = HashMap::<uint, uint>::new();
+		let sprite_map = HashMap::<u32, Box<sprite::Updatable<_>>>::new();
+		let part_map = HashMap::<u32, u32>::new();
 
 		let mut new_helicopter = Helicopter { 
 			x: x, y: y,
@@ -76,133 +76,133 @@ impl Helicopter {
 	fn load_sprites(&mut self, 
 	               display: &mut graphics::Graphics) {
 
-		for i in range(0, POSSIBLE_CONFIGS) {
+		for i in 0.. POSSIBLE_CONFIGS {
 			match i {
 				0 => {
-					self.sprites.find_or_insert_with(0u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(0u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = SCRAPPED_X_OFFSET;
 							let sprite_y = SCRAPPED_Y_OFFSET;
 
-							box sprite::Sprite::new(
-									display, 
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									asset_path
-								) as Box<sprite::Updatable<_>>
+							Box::new( sprite::Sprite::new(
+								display, 
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								asset_path
+							) ) as Box<sprite::Updatable<_>>
 						}
 					);
 				},
 				1 => {
-					self.sprites.find_or_insert_with(1u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(1u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_1_OFFSET;
 							let sprite_y = PERM_Y_OFFSET;
 
-							box sprite::Sprite::new(
-									display, 
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									asset_path
-								) as Box<sprite::Updatable<_>>
+							Box::new( sprite::Sprite::new(
+								display, 
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								asset_path
+							) ) as Box<sprite::Updatable<_>>
 						}
 					);
 				},
 				2 => {
-					self.sprites.find_or_insert_with(2u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(2u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_2_OFFSET;
 							let sprite_y = PERM_Y_OFFSET;
 
-							box sprite::Sprite::new(
-									display, 
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									asset_path
-								) as Box<sprite::Updatable<_>>
+							Box::new( sprite::Sprite::new(
+								display, 
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								asset_path
+							) ) as Box<sprite::Updatable<_>>
 						}
 					);
 				},
 				3 => {
-					self.sprites.find_or_insert_with(3u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(3u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_3_OFFSET;
 							let sprite_y = PERM_Y_OFFSET;
 
-							box sprite::Sprite::new(
-									display, 
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									asset_path
-								) as Box<sprite::Updatable<_>>
+							Box::new( sprite::Sprite::new(
+								display, 
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								asset_path
+							) ) as Box<sprite::Updatable<_>>
 						}
 					);
 				},
 				4 => {
-					self.sprites.find_or_insert_with(4u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(4u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_4_OFFSET;
 							let sprite_y = PERM_Y_OFFSET;
 
-							box sprite::Sprite::new(
-									display, 
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									asset_path
-								) as Box<sprite::Updatable<_>>
+							Box::new( sprite::Sprite::new(
+								display, 
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								asset_path
+							) ) as Box<sprite::Updatable<_>>
 						}
 					);
 				},
 				5 => {
-					self.sprites.find_or_insert_with(5u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(5u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_5_OFFSET;
 							let sprite_y = PERM_Y_OFFSET;
 
-							box sprite::Sprite::new(
-									display, 
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									asset_path
-								) as Box<sprite::Updatable<_>>
+							Box::new( sprite::Sprite::new(
+								display, 
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								asset_path
+							) ) as Box<sprite::Updatable<_>>
 						}
 					);
 				},
 				6 => {
-					self.sprites.find_or_insert_with(6u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(6u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_6_OFFSET;
 							let sprite_y = PERM_Y_OFFSET;
 
-							box sprite::Sprite::new(
-									display, 
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									asset_path
-								) as Box<sprite::Updatable<_>>
+							Box::new( sprite::Sprite::new(
+								display, 
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								asset_path
+							) ) as Box<sprite::Updatable<_>>
 						}
 					);
 				},
 				_ => {
-					self.sprites.find_or_insert_with(7u,
-						|_| -> Box<sprite::Updatable<_>> {
+					self.sprites.insert(7u32,
+						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = COMPLETE_X_OFFSET;
 							let sprite_y = SCRAPPED_Y_OFFSET;
 
-							box sprite::AnimatedSprite::new(
-									display, asset_path,
-									(sprite_x, sprite_y), 
-									(units::Tile(4), units::Tile(3)),
-									SPRITE_NUM_FRAMES, SPRITE_FPS
-								).unwrap() as Box<sprite::Updatable<_>>
+							Box::new( sprite::AnimatedSprite::new(
+								display, asset_path,
+								(sprite_x, sprite_y), 
+								(units::Tile(4), units::Tile(3)),
+								SPRITE_NUM_FRAMES, SPRITE_FPS
+							).unwrap() ) as Box<sprite::Updatable<_>>
 						}
 					);
 				}
@@ -221,40 +221,40 @@ impl Vehicle for Helicopter {
 	}
 
 	fn update(&mut self, elapsed_time: units::Millis) {
-		let sprite_ref = self.sprites.get_mut(&7u);
-		sprite_ref.update(elapsed_time);
+		let sprite_ref = self.sprites.get_mut(&7u32);
+		sprite_ref.unwrap().update(elapsed_time);
 	}
 
 	fn update_for_cinematic(&mut self) {
 		self.y = self.y - units::Game(1.0);
 	}
 
-	fn draw(&self, display: &graphics::Graphics) {
-		let mut config = 0u;
-		if self.parts.len() == NUM_PARTS {
-			config = 7u;
-		} else if self.parts.contains_key(&1u) && self.parts.contains_key(&3u) {
-			config = 1u;
-		} else if self.parts.contains_key(&2u) && self.parts.contains_key(&3u) {
-			config = 2u;
-		} else if self.parts.contains_key(&1u) && self.parts.contains_key(&2u) {
-			config = 6u;
-		} else if self.parts.contains_key(&3u) {
-			config = 3u;
-		} else if self.parts.contains_key(&2u) {
-			config = 4u;
-		} else if self.parts.contains_key(&1u) {
-			config = 5u;
+	fn draw(&self, display: &mut graphics::Graphics) {
+		let mut config = 0u32;
+		if self.parts.len() == NUM_PARTS as usize {
+			config = 7u32;
+		} else if self.parts.contains_key(&1u32) && self.parts.contains_key(&3u32) {
+			config = 1u32;
+		} else if self.parts.contains_key(&2u32) && self.parts.contains_key(&3u32) {
+			config = 2u32;
+		} else if self.parts.contains_key(&1u32) && self.parts.contains_key(&2u32) {
+			config = 6u32;
+		} else if self.parts.contains_key(&3u32) {
+			config = 3u32;
+		} else if self.parts.contains_key(&2u32) {
+			config = 4u32;
+		} else if self.parts.contains_key(&1u32) {
+			config = 5u32;
 		}
-		self.sprites.get(&config).draw(display, (self.x, self.y));
+		self.sprites.get(&config).unwrap().draw(display, (self.x, self.y));
 	}
 
-	fn add_part(&mut self, part_num: uint) {
+	fn add_part(&mut self, part_num: u32) {
 		self.parts.insert(part_num, 1);
 	}
 
 	fn is_built(&self) -> bool {
-		if self.parts.len() == NUM_PARTS {
+		if self.parts.len() == NUM_PARTS as usize {
 			true
 		} else {
 			false
@@ -277,7 +277,7 @@ impl Vehicle for Helicopter {
 		self.map_y
 	}
 
-	fn get_type(&self) -> int{
+	fn get_type(&self) -> i32 {
 		1
 	}
 }
@@ -303,18 +303,18 @@ impl Prop {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement, {
 			let asset_path = "assets/base/heli.bmp".to_string();
 			let motion_frame = PROP_OFFSET;
 
 			let facing_frame = PARTS_Y_OFFSET;
 
-			box sprite::Sprite::new(
+			Box::new( sprite::Sprite::new(
 				display,
 				(motion_frame, facing_frame),
 				(units::Tile(3), units::Tile(1)),
 				asset_path
-			) as Box<sprite::Updatable<_>>
+			) ) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -330,10 +330,10 @@ impl Part for Prop {
 	fn draw(&self, display: &mut graphics::Graphics) {
 		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
 		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
-		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
-	fn part_type(&self) -> uint {
+	fn part_type(&self) -> u32 {
 		1
 	}
 
@@ -375,18 +375,18 @@ impl Windshield {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement, {
 			let asset_path = "assets/base/heli.bmp".to_string();
 			let motion_frame = WIND_OFFSET;
 
 			let facing_frame = PARTS_Y_OFFSET;
 
-			box sprite::Sprite::new(
+			Box::new( sprite::Sprite::new(
 				display,
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) as Box<sprite::Updatable<_>>
+			) ) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -402,10 +402,10 @@ impl Part for Windshield {
 	fn draw(&self, display: &mut graphics::Graphics) {
 		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
 		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
-		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
-	fn part_type(&self) -> uint {
+	fn part_type(&self) -> u32 {
 		2
 	}
 
@@ -447,18 +447,18 @@ impl Bar {
 	               display: &mut graphics::Graphics,
 	               movement: (sprite::Motion, sprite::Facing)) {
 
-		self.character.sprites.find_or_insert_with(movement, |_| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement, {
 			let asset_path = "assets/base/heli.bmp".to_string();
 			let motion_frame = BAR_OFFSET;
 
 			let facing_frame = PARTS_Y_OFFSET;
 
-			box sprite::Sprite::new(
+			Box::new( sprite::Sprite::new(
 				display,
 				(motion_frame, facing_frame),
 				(units::Tile(2), units::Tile(1)),
 				asset_path
-			) as Box<sprite::Updatable<_>>
+			) ) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -474,10 +474,10 @@ impl Part for Bar {
 	fn draw(&self, display: &mut graphics::Graphics) {
 		let correction_x = self.character.map_x % common::SCREEN_CORRECTION;
 		let correction_y = self.character.map_y % common::SCREEN_CORRECTION;
-		self.character.sprites.get(&self.character.movement).draw(display, (correction_x, correction_y));
+		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
-	fn part_type(&self) -> uint {
+	fn part_type(&self) -> u32 {
 		3
 	}
 

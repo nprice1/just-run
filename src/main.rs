@@ -1,15 +1,17 @@
 #![crate_id="rust-story#0.0.1"]
 
-
-#![feature(macro_rules)]
 extern crate sdl2;
 extern crate sdl2_mixer;
 extern crate sdl2_ttf;
-extern crate collections;
+extern crate rand;
+extern crate time;
 
 pub mod game;
 
 pub fn main() {
-	let mut story = game::Game::new();
+	println!("initalizing sdl ...");
+	let sdl_context = sdl2::init().unwrap();
+
+	let mut story = ::game::Game::new(&sdl_context);
 	story.start();
 }

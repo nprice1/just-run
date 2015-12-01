@@ -47,7 +47,7 @@ pub trait Zombie {
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game);
 	fn draw(&self, display: &mut graphics::Graphics);
 	fn damage_rectangle(&self) -> Rectangle;
-	fn zombie_type(&self) -> int;
+	fn zombie_type(&self) -> i32;
 	fn get_target(&self) -> (units::Game, units::Game);
 	fn get_x(&self) -> units::Game;
 	fn get_y(&self) -> units::Game;
@@ -97,22 +97,22 @@ impl SlowZombie {
 	               movement: (sprite::Motion, sprite::Facing)) {
 
 		self.character.load_killed_sprite(display);
-		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement, {
 			let asset_path = "assets/base/Npc/NpcWeed.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = SLOW_WALK_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => WEST_OFFSET,
-				sprite::East => EAST_OFFSET
+				sprite::Facing::West => WEST_OFFSET,
+				sprite::Facing::East => EAST_OFFSET
 			};
 				
-			box sprite::Sprite::new(
+			Box::new( sprite::Sprite::new(
 				display,
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) as Box<sprite::Updatable<_>>
+			) ) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -125,14 +125,14 @@ impl Zombie for SlowZombie {
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
 		if self.character.accel_x < 0 {
-			self.character.set_facing(sprite::West);
+			self.character.set_facing(sprite::Facing::West);
 		}
 		else {
-		 	self.character.set_facing(sprite::East);
+		 	self.character.set_facing(sprite::Facing::East);
 		} 
-		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		self.character.sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		if self.character.is_killed() {
-			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+			self.character.killed_sprite.get_mut(0).unwrap().update(elapsed_time);
 		}
 
 		// run physics sim
@@ -142,13 +142,13 @@ impl Zombie for SlowZombie {
 
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
 		self.character.accel_x = match self.character.map_center_x() {
-			center if center < player_x => 1,
-			center if center > player_x => -1,
+			ref center if center < &player_x => 1,
+			ref center if center > &player_x => -1,
 			_				            => 0
 		};
 		self.character.accel_y = match self.character.map_center_y() {
-			center if center < player_y => 1, 
-			center if center > player_y => -1, 
+			ref center if center < &player_y => 1, 
+			ref center if center > &player_y => -1, 
 			_				            => 0
 		};
 	}
@@ -161,7 +161,7 @@ impl Zombie for SlowZombie {
 		self.character.damage_rectangle()
 	}
 
-	fn zombie_type(&self) -> int {
+	fn zombie_type(&self) -> i32 {
 		1
 	}
 
@@ -220,22 +220,22 @@ impl CrazyZombie {
 	               movement: (sprite::Motion, sprite::Facing)) {
 
 		self.character.load_killed_sprite(display);
-		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement, {
 			let asset_path = "assets/base/Npc/NpcWeed.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = CRAZY_WALK_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => WEST_OFFSET,
-				sprite::East => EAST_OFFSET
+				sprite::Facing::West => WEST_OFFSET,
+				sprite::Facing::East => EAST_OFFSET
 			};
 					
-			box sprite::Sprite::new(
+			Box::new( sprite::Sprite::new(
 				display,
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) as Box<sprite::Updatable<_>>
+			) ) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -248,14 +248,14 @@ impl Zombie for CrazyZombie {
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
 		if self.character.accel_x < 0 {
-			self.character.set_facing(sprite::West);
+			self.character.set_facing(sprite::Facing::West);
 		}
 		else {
-		 	self.character.set_facing(sprite::East);
+		 	self.character.set_facing(sprite::Facing::East);
 		} 
-		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		self.character.sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		if self.character.is_killed() {
-			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+			self.character.killed_sprite.get_mut(0).unwrap().update(elapsed_time);
 		}
 
 		// set proper acceleration
@@ -280,18 +280,18 @@ impl Zombie for CrazyZombie {
 		if !self.chasing {
 			self.character.set_new_target();
 		} else {
-			self.character.target_x = player_x;
+		    self.character.target_x = player_x;
 			self.character.target_y = player_y;
 		}
 
 		self.character.accel_x = match self.character.map_center_x() {
-			center if center < self.character.target_x => 1,
-			center if center > self.character.target_x => -1,
+			ref center if center < &self.character.target_x => 1,
+			ref center if center > &self.character.target_x => -1,
 			_				            	 		   => 0
 		};
 		self.character.accel_y = match self.character.map_center_y() {
-			center if center < self.character.target_y => 1, 
-			center if center > self.character.target_y => -1, 
+			ref center if center < &self.character.target_y => 1, 
+			ref center if center > &self.character.target_y => -1, 
 			_				            	 		   => 0
 		};
 	}
@@ -304,7 +304,7 @@ impl Zombie for CrazyZombie {
 		self.character.damage_rectangle()
 	}
 
-	fn zombie_type(&self) -> int {
+	fn zombie_type(&self) -> i32 {
 		2
 	}
 
@@ -362,22 +362,22 @@ impl RandomZombie {
 	               movement: (sprite::Motion, sprite::Facing)) {
 
 		self.character.load_killed_sprite(display);
-		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement, {
 			let asset_path = "assets/base/Npc/NpcCemet.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = RANDOM_WALK_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => units::Tile(1),
-				sprite::East => units::Tile(2)
+				sprite::Facing::West => units::Tile(1),
+				sprite::Facing::East => units::Tile(2)
 			};
 
-			box sprite::Sprite::new(
+			Box::new( sprite::Sprite::new(
 				display,
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) as Box<sprite::Updatable<_>>
+			) ) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -390,14 +390,14 @@ impl Zombie for RandomZombie {
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
 		if self.character.accel_x < 0 {
-			self.character.set_facing(sprite::West);
+			self.character.set_facing(sprite::Facing::West);
 		}
 		else {
-		 	self.character.set_facing(sprite::East);
+		 	self.character.set_facing(sprite::Facing::East);
 		} 
-		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		self.character.sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		if self.character.is_killed() {
-			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+			self.character.killed_sprite.get_mut(0).unwrap().update(elapsed_time);
 		}
 
 		// run physics sim
@@ -410,13 +410,13 @@ impl Zombie for RandomZombie {
 		self.character.set_new_random_target();
 
 		self.character.accel_x = match self.character.map_center_x() {
-			center if center < self.character.target_x => 1,
-			center if center > self.character.target_x => -1,
+			ref center if center < &self.character.target_x => 1,
+			ref center if center > &self.character.target_x => -1,
 			_				            	 		   => 0
 		};
 		self.character.accel_y = match self.character.map_center_y() {
-			center if center < self.character.target_y => 1, 
-			center if center > self.character.target_y => -1, 
+			ref center if center < &self.character.target_y => 1, 
+			ref center if center > &self.character.target_y => -1, 
 			_				            	 		   => 0
 		};
 	}
@@ -429,7 +429,7 @@ impl Zombie for RandomZombie {
 		self.character.damage_rectangle()
 	}
 
-	fn zombie_type(&self) -> int {
+	fn zombie_type(&self) -> i32 {
 		3
 	}
 
@@ -488,22 +488,22 @@ impl CloudZombie {
 	               movement: (sprite::Motion, sprite::Facing)) {
 
 		self.character.load_killed_sprite(display);
-		self.character.sprites.find_or_insert_with(movement, |key| -> Box<sprite::Updatable<_>> {
+		self.character.sprites.insert(movement,  {
 			let asset_path = "assets/base/Npc/NpcMaze.bmp".to_string();
-			let (_, facing) = *key;
+			let (_, facing) = movement;
 			let motion_frame = CLOUD_WALK_FRAME;
 
 			let facing_frame = match facing {
-				sprite::West => WEST_OFFSET,
-				sprite::East => EAST_OFFSET
+				sprite::Facing::West => WEST_OFFSET,
+				sprite::Facing::East => EAST_OFFSET
 			};
 
-			box sprite::AnimatedSprite::new(
+			Box::new( sprite::AnimatedSprite::new(
 				display, asset_path,
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				SPRITE_NUM_FRAMES, SPRITE_FPS
-			).unwrap() as Box<sprite::Updatable<_>>
+			).unwrap() ) as Box<sprite::Updatable<_>>
 		});
 	}
 }
@@ -516,14 +516,14 @@ impl Zombie for CloudZombie {
 		// update sprite
 		self.character.current_motion(); // update motion once at beginning of frame for consistency
 		if self.character.accel_x < 0 {
-			self.character.set_facing(sprite::West);
+			self.character.set_facing(sprite::Facing::West);
 		}
 		else {
-		 	self.character.set_facing(sprite::East);
+		 	self.character.set_facing(sprite::Facing::East);
 		} 
-		self.character.sprites.get_mut(&self.character.movement).update(elapsed_time);
+		self.character.sprites.get_mut(&self.character.movement).unwrap().update(elapsed_time);
 		if self.character.is_killed() {
-			self.character.killed_sprite.get_mut(0).update(elapsed_time);
+			self.character.killed_sprite.get_mut(0).unwrap().update(elapsed_time);
 		}
 
 		// run physics sim
@@ -547,13 +547,13 @@ impl Zombie for CloudZombie {
 		}
 
 		self.character.accel_x = match self.character.map_center_x() {
-			center if center < self.character.target_x => 1,
-			center if center > self.character.target_x => -1,
+			ref center if center < &self.character.target_x => 1,
+			ref center if center > &self.character.target_x => -1,
 			_				            	 		   => 0
 		};
 		self.character.accel_y = match self.character.map_center_y() {
-			center if center < self.character.target_y => 1, 
-			center if center > self.character.target_y => -1, 
+			ref center if center < &self.character.target_y => 1, 
+			ref center if center > &self.character.target_y => -1, 
 			_				            	 		   => 0
 		};
 	}
@@ -566,7 +566,7 @@ impl Zombie for CloudZombie {
 		self.character.damage_rectangle()
 	}
 
-	fn zombie_type(&self) -> int {
+	fn zombie_type(&self) -> i32 {
 		4
 	}
 
