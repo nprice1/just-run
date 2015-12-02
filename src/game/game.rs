@@ -782,10 +782,10 @@ impl<'e> Game<'e> {
 		self.map.update(elapsed_time);
 		if self.freeze_counter == 0 {
 			for i in 0u32.. self.enemies.len() as u32 { 
-				let enemy = self.enemies.get_mut(i as usize);
+				let enemy = self.enemies.get_mut(i as usize).unwrap();
 				let (player_x, player_y) = self.player.get_follow_coords();
-				enemy.unwrap().set_acceleration(player_x, player_y); 
-				// enemy.unwrap().update(elapsed_time, &self.map); 
+				enemy.set_acceleration(player_x, player_y); 
+				enemy.update(elapsed_time, &self.map); 
 			}
 		} else {
 			self.freeze_counter = self.freeze_counter - 1;
@@ -808,7 +808,6 @@ impl<'e> Game<'e> {
 		if !self.player.is_immune() {
 			for i in 0.. self.enemies.len() { 
 				if self.enemies.get(i).unwrap().damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
-					println!("COLLISION");
 					if self.player.has_bat() || self.player.is_teleporting() {
 						let enemy = self.enemies.remove(i);
 						self.display.play_sound_effect(6);
@@ -821,7 +820,6 @@ impl<'e> Game<'e> {
 				 	else {
 				 		collidedWithZombie = true;
 				 	}
-				 	println!("AFTER COLLISION");
 				 	break;
 				}
 			}
@@ -939,10 +937,10 @@ impl<'e> Game<'e> {
 	fn update_cinematic(&mut self, elapsed_time: units::Millis) {
 		self.map.update(elapsed_time);
 		for i in 0u32.. self.enemies.len() as u32 { 
-			let enemy = self.enemies.get_mut(i as usize);
+			let enemy = self.enemies.get_mut(i as usize).unwrap();
 			let (player_x, player_y) = self.player.get_follow_coords();
-			enemy.unwrap().set_acceleration(player_x, player_y); 
-			// enemy.unwrap().update(elapsed_time, &self.map); 
+			enemy.set_acceleration(player_x, player_y); 
+			enemy.update(elapsed_time, &self.map); 
 		}
 		self.vehicle.update(elapsed_time);
 	}
