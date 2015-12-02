@@ -11,7 +11,7 @@ pub trait AsFloat {
 /// Millis represents a length of time in milliseconds as a signed integer.
 /// (NOTE: As `Millis` supports basic arithmetic: "negative time" is possible.)
 #[derive(Eq,Ord,PartialEq,PartialOrd,Clone,Copy)]
-pub struct Millis(pub i32);
+pub struct Millis(pub i64);
 
 impl Add<Millis> for Millis {
 	type Output = Millis;

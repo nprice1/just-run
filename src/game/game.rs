@@ -16,7 +16,7 @@ use sdl2::keyboard::Keycode;
 use sdl2_ttf;
 
 use rand;
-use time;
+use time::{Duration, PreciseTime};
 
 pub use game::units::{AsGame};
 
@@ -34,7 +34,7 @@ pub use game::graphics;
 pub use game::collisions::Rectangle;
 
 const TARGET_FRAMERATE: units::Fps  =  60;
-static MAX_FRAME_TIME: units::Millis =  units::Millis(5 * (1000 / TARGET_FRAMERATE) as i32);
+static MAX_FRAME_TIME: units::Millis =  units::Millis(5 * (1000 / TARGET_FRAMERATE) as i64);
 
 pub static LEVEL_WIDTH:   units::Tile =  units::Tile(60);
 pub static SCREEN_WIDTH: units::Tile =  units::Tile(20);
@@ -102,6 +102,7 @@ impl<'e> Game<'e> {
 	/// This function will return to the caller when the escape key is pressed.
 	pub fn new(context: &'e sdl2::Sdl) -> Game<'e> {
 		// initialize all major subsystems
+	    let _ttf_context = sdl2_ttf::init();
 		// hide the mouse cursor in our drawing context
 		let mut display = graphics::Graphics::new(context);
 		let controller  = input::Input::new();
@@ -498,8 +499,9 @@ impl<'e> Game<'e> {
 	/// until its next frame deadline.
 	fn event_loop(&mut self) {
 		// event loop control
-		let frame_delay          = units::Millis(1000 / TARGET_FRAMERATE as i32);
-		let mut last_update_time = units::Millis(time::get_time().sec as i32);
+		let frame_delay          = units::Millis(1000 / TARGET_FRAMERATE as i64);
+		let start_time = PreciseTime::now();
+		let mut last_update_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
 		
 		let mut running = true;
 
@@ -509,7 +511,7 @@ impl<'e> Game<'e> {
 		};
 		
 		while running && !self.completed_lvl {
-			let start_time_ms = units::Millis(time::get_time().sec as i32);
+			let start_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
 			self.controller.begin_new_frame();
 
 			// drain event queue once per frame
@@ -573,7 +575,7 @@ impl<'e> Game<'e> {
 			}
 
 			// inform actors of how much time has passed since last frame
-			let current_time_ms = units::Millis(time::get_time().sec as i32);
+			let current_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
 			let elapsed_time    = current_time_ms - last_update_time;
 		
 			// only update if not in paused state
@@ -594,7 +596,7 @@ impl<'e> Game<'e> {
 			}
 
 			// throttle event-loop based on iteration time vs frame deadline
-			let iter_time = units::Millis(time::get_time().sec as i32) - start_time_ms;
+			let iter_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds()) - start_time_ms;
 			let next_frame_time: u64 = if frame_delay > iter_time { 
 				let (units::Millis(fd), units::Millis(it)) = (frame_delay, iter_time);
 				(fd - it) as u64
@@ -615,9 +617,9 @@ impl<'e> Game<'e> {
 		}
 		let mut cinematic_counter = LEVEL_1_CINEMATIC_FRAMES;
 		while self.completed_lvl && running {
-			let start_time_ms = units::Millis(time::get_time().sec as i32);
+			let start_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
 			// inform actors of how much time has passed since last frame
-			let current_time_ms = units::Millis(time::get_time().sec as i32);
+			let current_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
 			let elapsed_time    = current_time_ms - last_update_time;
 
 			self.controller.begin_new_frame();
@@ -665,7 +667,7 @@ impl<'e> Game<'e> {
 			}
 
 			// throttle event-loop based on iteration time vs frame deadline
-			let iter_time = units::Millis(time::get_time().sec as i32) - start_time_ms;
+			let iter_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds()) - start_time_ms;
 			let next_frame_time: u64 = if frame_delay > iter_time { 
 				let (units::Millis(fd), units::Millis(it)) = (frame_delay, iter_time);
 				(fd - it) as u64
@@ -785,8 +787,7 @@ impl<'e> Game<'e> {
 				enemy.unwrap().set_acceleration(player_x, player_y); 
 				// enemy.unwrap().update(elapsed_time, &self.map); 
 			}
-		}
-		else {
+		} else {
 			self.freeze_counter = self.freeze_counter - 1;
 		}
 		self.player.update(elapsed_time, &self.map);

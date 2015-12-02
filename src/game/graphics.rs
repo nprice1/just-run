@@ -187,24 +187,25 @@ impl<'g> Graphics<'g> {
 	#[allow(unused_must_use)]
 	pub fn draw_health(&mut self, hp: u32) {
 		let heart_sprites = "assets/base/heart.bmp"; 
+		self.load_image(String::from(heart_sprites), false);
 		let full_source = match rect::Rect::new(0, 0, 22, 22) {
-			Ok(rect) => { rect },
+			Ok(rect) => { rect.unwrap() },
 			Err(msg) => { panic!(msg) }
 		};
 		let empty_source = match rect::Rect::new(25, 0, 22, 22) {
-			Ok(rect) => { rect },
+			Ok(rect) => { rect.unwrap() },
 			Err(msg) => { panic!(msg) }
 		};
 		for i in 0.. MAX_HP {
 			let x = i * 25;
 			let dest = match rect::Rect::new(x as i32, 0, 25, 25) {
-				Ok(rect) => { rect },
+				Ok(rect) => { rect.unwrap() },
 				Err(msg) => { panic!(msg) }
-			};	
+			};
 			if i < hp {
-				self.blit_surface(&heart_sprites, &full_source.unwrap(), &dest.unwrap());
+				self.blit_surface(&heart_sprites, &full_source, &dest);
 			} else {
-				self.blit_surface(&heart_sprites, &empty_source.unwrap(), &dest.unwrap());
+				self.blit_surface(&heart_sprites, &empty_source, &dest);
 			}
 		}
 	}

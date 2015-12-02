@@ -1,5 +1,4 @@
 .rust/*
-*assets
 lib/*.rlib
 bin/**
 doc/**
