@@ -499,7 +499,7 @@ impl<'e> Game<'e> {
 	/// until its next frame deadline.
 	fn event_loop(&mut self) {
 		// event loop control
-		let frame_delay          = units::Millis(1000 / TARGET_FRAMERATE as i64);
+		let frame_delay = units::Millis(1000 / TARGET_FRAMERATE as i64);
 		let start_time = PreciseTime::now();
 		let mut last_update_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
 		
@@ -808,6 +808,7 @@ impl<'e> Game<'e> {
 		if !self.player.is_immune() {
 			for i in 0.. self.enemies.len() { 
 				if self.enemies.get(i).unwrap().damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
+					println!("COLLISION");
 					if self.player.has_bat() || self.player.is_teleporting() {
 						let enemy = self.enemies.remove(i);
 						self.display.play_sound_effect(6);
@@ -820,6 +821,7 @@ impl<'e> Game<'e> {
 				 	else {
 				 		collidedWithZombie = true;
 				 	}
+				 	println!("AFTER COLLISION");
 				 	break;
 				}
 			}

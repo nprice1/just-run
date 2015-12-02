@@ -59,22 +59,22 @@ impl<'g> Graphics<'g> {
 
 		// setup sound effects
 		let mut sound_effect_vec: Vec<sdl2_mixer::Chunk> = Vec::new();
-		// let bullet = sdl2_mixer::Chunk::from_file( &Path::new("assets/bullet.wav") ).unwrap();
-		// sound_effect_vec.push(bullet);
-		// let wipeout = sdl2_mixer::Chunk::from_file( &Path::new("assets/wipeout.wav") ).unwrap();
-		// sound_effect_vec.push(wipeout);
-		// let nuke = sdl2_mixer::Chunk::from_file( &Path::new("assets/nuke.wav") ).unwrap();
-		// sound_effect_vec.push(nuke);
-		// let powerup = sdl2_mixer::Chunk::from_file( &Path::new("assets/powerup.wav") ).unwrap();
-		// sound_effect_vec.push(powerup);
-		// let debuff = sdl2_mixer::Chunk::from_file( &Path::new("assets/debuff.wav") ).unwrap();
-		// sound_effect_vec.push(debuff);
-		// let trap = sdl2_mixer::Chunk::from_file( &Path::new("assets/trap.wav") ).unwrap();
-		// sound_effect_vec.push(trap);
-		// let hit = sdl2_mixer::Chunk::from_file( &Path::new("assets/hit.wav") ).unwrap();
-		// sound_effect_vec.push(hit);
-		// let goal = sdl2_mixer::Chunk::from_file( &Path::new("assets/goal.wav") ).unwrap();
-		// sound_effect_vec.push(goal);
+		let bullet = sdl2_mixer::Chunk::from_file( &Path::new("assets/bullet.wav") ).unwrap();
+		sound_effect_vec.push(bullet);
+		let wipeout = sdl2_mixer::Chunk::from_file( &Path::new("assets/wipeout.wav") ).unwrap();
+		sound_effect_vec.push(wipeout);
+		let nuke = sdl2_mixer::Chunk::from_file( &Path::new("assets/nuke.wav") ).unwrap();
+		sound_effect_vec.push(nuke);
+		let powerup = sdl2_mixer::Chunk::from_file( &Path::new("assets/powerup.wav") ).unwrap();
+		sound_effect_vec.push(powerup);
+		let debuff = sdl2_mixer::Chunk::from_file( &Path::new("assets/debuff.wav") ).unwrap();
+		sound_effect_vec.push(debuff);
+		let trap = sdl2_mixer::Chunk::from_file( &Path::new("assets/trap.wav") ).unwrap();
+		sound_effect_vec.push(trap);
+		let hit = sdl2_mixer::Chunk::from_file( &Path::new("assets/hit.wav") ).unwrap();
+		sound_effect_vec.push(hit);
+		let goal = sdl2_mixer::Chunk::from_file( &Path::new("assets/goal.wav") ).unwrap();
+		sound_effect_vec.push(goal);
 
 		let graphics: Graphics = 
 			Graphics {

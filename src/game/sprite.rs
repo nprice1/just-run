@@ -180,14 +180,14 @@ impl<C: AsGame> Updatable<C> for AnimatedSprite {
 			self.current_frame += 1;              // increment frame counter
 
 			if self.current_frame < self.num_frames {
-				self.source_rect = match self.source_rect.offset(self.source_rect.x() + self.source_rect.width() as i32, 0) {
-					Ok(rect) => { rect },
+				self.source_rect = match rect::Rect::new(self.source_rect.x() + self.source_rect.width() as i32, self.source_rect.y(), self.source_rect.width(), self.source_rect.height()) {
+					Ok(rect) => { rect.unwrap() },
 					Err(msg) => { panic!(msg) }
 				}
 			} else {
 				self.current_frame  = 0;
-				self.source_rect = match self.source_rect.offset(self.source_rect.x() - self.source_rect.width() as i32 * (self.num_frames - 1) as i32, 0) {
-					Ok(rect) => { rect },
+				self.source_rect = match rect::Rect::new(self.source_rect.x() - self.source_rect.width() as i32 * (self.num_frames - 1) as i32, self.source_rect.y(), self.source_rect.width(), self.source_rect.height()) {
+					Ok(rect) => { rect.unwrap() },
 					Err(msg) => { panic!(msg) }
 				}
 			}
