@@ -187,12 +187,12 @@ impl<'g> Graphics<'g> {
 	#[allow(unused_must_use)]
 	pub fn draw_health(&mut self, hp: u32) {
 		let heart_sprites = "assets/base/heart.bmp"; 
-		self.load_image(String::from(heart_sprites), false);
-		let full_source = match rect::Rect::new(0, 0, 22, 22) {
+		self.load_image(String::from(heart_sprites), true);
+		let full_source = match rect::Rect::new(0, 0, 18, 18) {
 			Ok(rect) => { rect.unwrap() },
 			Err(msg) => { panic!(msg) }
 		};
-		let empty_source = match rect::Rect::new(25, 0, 22, 22) {
+		let empty_source = match rect::Rect::new(21, 0, 18, 18) {
 			Ok(rect) => { rect.unwrap() },
 			Err(msg) => { panic!(msg) }
 		};

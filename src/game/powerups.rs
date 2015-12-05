@@ -17,14 +17,14 @@ static SPRITE_NUM_FRAMES:  units::Frame  = 3;
 static SPRITE_FPS:         units::Fps    = 20;
 
 // Sprite locations
-const CRICKET_FRAME: units::Tile = units::Tile(1);
-const KILLZOMBIE_FRAME: units::Tile = units::Tile(2);
-const WIPEOUT_FRAME: units::Tile = units::Tile(3);
-const FREEZE_FRAME: units::Tile = units::Tile(7);
-const TELEPORT_FRAME: units::Tile = units::Tile(8);
+const KILLZOMBIE_FRAME: units::Tile = units::Tile(0);
+const WIPEOUT_FRAME: units::Tile = units::Tile(1);
+const NUKE_FRAME: units::Tile = units::Tile(2);
+const FREEZE_FRAME: units::Tile = units::Tile(3);
+const CRICKET_FRAME: units::Tile = units::Tile(4);
+const BAD_FRAME: units::Tile = units::Tile(5);
+const TELEPORT_FRAME: units::Tile = units::Tile(6);
 const TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(0);
-const NUKE_FRAME: units::Tile = units::Tile(9);
-const BAD_FRAME: units::Tile = units::Tile(10);
 
 // Animation frames 
 const WIPEOUT_ANIMATION_FRAME: units::Tile = units::Tile(1);
@@ -293,11 +293,11 @@ impl WipeOut {
 
 		let asset_path = "assets/base/explosion.bmp".to_string();
 		let motion_frame = WIPEOUT_ANIMATION_FRAME;
-		let facing_frame = units::Tile(7);
+		let facing_frame = units::Tile(0);
 		let animation_sprite = Box::new( sprite::AnimatedSprite::new(
 			display, asset_path,
 			(motion_frame, facing_frame),
-			(units::Tile(5), units::Tile(5)),
+			(units::Tile(4), units::Tile(4)),
 			SPRITE_NUM_FRAMES, SPRITE_FPS
 		).unwrap() ) as Box<sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
@@ -485,7 +485,7 @@ impl Teleport {
 		let animation_sprite = Box::new( sprite::Sprite::new(
 			display, 
 			(motion_frame, facing_frame),
-			(units::Tile(3), units::Tile(3)),
+			(units::Tile(1), units::Tile(1)),
 			asset_path
 		) ) as Box<sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);

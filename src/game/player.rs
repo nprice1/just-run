@@ -27,7 +27,7 @@ static MAX_VELOCITY: units::Velocity      = units::Velocity(0.17859375);
 // motion
 static STAND_FRAME: units::Tile   = units::Tile(0);
 static TELEPORT_FRAME: units::Tile = units::Tile(3);
-static TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(0);
+static TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(1);
 static HIT_FRAME: units::Tile = units::Tile(3);
 
 // horizontal facing (Facing)
@@ -283,10 +283,10 @@ impl Player {
 					let teleport_sprite = Box::new( sprite::Sprite::new(
 						display, 
 						(motion_frame, facing_frame),
-						(units::Tile(3), units::Tile(3)),
+						(units::Tile(1), units::Tile(1)),
 						asset_path
 					) ) as Box<sprite::Updatable<_>>;
-					teleport_sprite.draw(display, (self.character.x - units::Game(60.0), self.character.y - units::Game(60.0)));
+					teleport_sprite.draw(display, (self.character.x, self.character.y));
 				},
 				_ => { self.teleport_sprites.get(&self.character.movement).unwrap().draw(display, (self.character.x, self.character.y)); }
 			}

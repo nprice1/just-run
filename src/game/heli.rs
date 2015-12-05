@@ -14,19 +14,20 @@ static SPRITE_NUM_FRAMES:   units::Frame  = 4;
 static SPRITE_FPS:          units::Fps    = 20;
 
 static COMPLETE_X_OFFSET: units::Tile = units::Tile(0);
-static SCRAPPED_X_OFFSET: units::Tile = units::Tile(29);
-static SCRAPPED_Y_OFFSET: units::Tile = units::Tile(2);
-static PERM_1_OFFSET:     units::Tile = units::Tile(0);
+static SCRAPPED_X_OFFSET: units::Tile = units::Tile(0);
+static SCRAPPED_Y_OFFSET: units::Tile = units::Tile(3);
+static PERM_1_OFFSET:     units::Tile = units::Tile(8);
 static PERM_2_OFFSET:     units::Tile = units::Tile(4);
-static PERM_3_OFFSET:     units::Tile = units::Tile(9);
-static PERM_4_OFFSET:     units::Tile = units::Tile(14);
-static PERM_5_OFFSET:     units::Tile = units::Tile(19);
-static PERM_6_OFFSET:     units::Tile = units::Tile(24);
-static PERM_Y_OFFSET:     units::Tile = units::Tile(5);
-static PARTS_Y_OFFSET:    units::Tile = units::Tile(3);
-static PROP_OFFSET:       units::Tile = units::Tile(19);
-static WIND_OFFSET:       units::Tile = units::Tile(24);
-static BAR_OFFSET:        units::Tile = units::Tile(26);
+static PERM_3_OFFSET:     units::Tile = units::Tile(0);
+static PERM_4_OFFSET:     units::Tile = units::Tile(4);
+static PERM_5_OFFSET:     units::Tile = units::Tile(8);
+static PERM_6_OFFSET:     units::Tile = units::Tile(0);
+static PERM1_Y_OFFSET:    units::Tile = units::Tile(3);
+static PERM2_Y_OFFSET:    units::Tile = units::Tile(6);
+static PARTS_Y_OFFSET:    units::Tile = units::Tile(9);
+static PROP_OFFSET:       units::Tile = units::Tile(0);
+static WIND_OFFSET:       units::Tile = units::Tile(7);
+static BAR_OFFSET:        units::Tile = units::Tile(4);
 
 static NUM_PARTS:                u32 = 3;
 static POSSIBLE_CONFIGS:         u32 = 8;
@@ -99,7 +100,7 @@ impl Helicopter {
 						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_1_OFFSET;
-							let sprite_y = PERM_Y_OFFSET;
+							let sprite_y = PERM2_Y_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -115,7 +116,7 @@ impl Helicopter {
 						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_2_OFFSET;
-							let sprite_y = PERM_Y_OFFSET;
+							let sprite_y = PERM2_Y_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -131,7 +132,7 @@ impl Helicopter {
 						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_3_OFFSET;
-							let sprite_y = PERM_Y_OFFSET;
+							let sprite_y = PERM1_Y_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -147,7 +148,7 @@ impl Helicopter {
 						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_4_OFFSET;
-							let sprite_y = PERM_Y_OFFSET;
+							let sprite_y = PERM1_Y_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -163,7 +164,7 @@ impl Helicopter {
 						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_5_OFFSET;
-							let sprite_y = PERM_Y_OFFSET;
+							let sprite_y = PERM1_Y_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -179,7 +180,7 @@ impl Helicopter {
 						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = PERM_6_OFFSET;
-							let sprite_y = PERM_Y_OFFSET;
+							let sprite_y = PERM2_Y_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -195,7 +196,7 @@ impl Helicopter {
 						{
 							let asset_path = "assets/base/heli.bmp".to_string();
 							let sprite_x = COMPLETE_X_OFFSET;
-							let sprite_y = SCRAPPED_Y_OFFSET;
+							let sprite_y = COMPLETE_X_OFFSET;
 
 							Box::new( sprite::AnimatedSprite::new(
 								display, asset_path,
@@ -322,7 +323,7 @@ impl Prop {
 impl Part for Prop {
     fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
-			x: self.character.x + units::Tile(1) + units::HalfTile(1), y: self.character.y + units::HalfTile(1),
+			x: self.character.x + units::Tile(1), y: self.character.y + units::HalfTile(1),
 			width: units::Game(32.0 * 2.0), height: units::Game(16.0),
 		}
 	}

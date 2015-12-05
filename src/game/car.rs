@@ -13,21 +13,20 @@ use game::units;
 static SPRITE_NUM_FRAMES:   units::Frame  = 4;
 static SPRITE_FPS:          units::Fps    = 20;
 
-const COMPLETE_X_OFFSET: units::Tile = units::Tile(12);
+const COMPLETE_X_OFFSET: units::Tile = units::Tile(0);
 const SCRAPPED_X_OFFSET: units::Tile = units::Tile(0);
-const SCRAPPED_Y_OFFSET: units::Tile = units::Tile(0);
-const PERM_1_OFFSET:     units::Tile = units::Tile(6);
-const PERM_2_OFFSET:     units::Tile = units::Tile(12);
-const PERM_3_OFFSET:     units::Tile = units::Tile(0);
+const SCRAPPED_Y_OFFSET: units::Tile = units::Tile(2);
+const PERM_1_OFFSET:     units::Tile = units::Tile(0);
+const PERM_2_OFFSET:     units::Tile = units::Tile(6);
+const PERM_3_OFFSET:     units::Tile = units::Tile(12);
 const PERM_4_OFFSET:     units::Tile = units::Tile(6);
-const PERM_5_OFFSET:     units::Tile = units::Tile(12);
+const PERM_5_OFFSET:     units::Tile = units::Tile(0);
 const PERM_6_OFFSET:     units::Tile = units::Tile(6);
-const PERM_1_2_OFFSET:   units::Tile = units::Tile(0);
-const PERM_3_5_OFFSET:   units::Tile = units::Tile(2);
-const PERM_6_7_OFFSET:   units::Tile = units::Tile(4);
+const PERM_1_2_5_OFFSET: units::Tile = units::Tile(0);
+const PERM_3_4_6_OFFSET: units::Tile = units::Tile(2);
 const PARTS_Y_OFFSET:    units::Tile = units::Tile(4);
-const TIRE_OFFSET:       units::Tile = units::Tile(0);
-const DOOR_OFFSET:       units::Tile = units::Tile(2);
+const TIRE_OFFSET:       units::Tile = units::Tile(2);
+const DOOR_OFFSET:       units::Tile = units::Tile(0);
 const ENGINE_OFFSET:     units::Tile = units::Tile(4);
 
 static NUM_PARTS:                u32 = 3;
@@ -99,7 +98,7 @@ impl Car {
 					self.sprites.insert(1u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_1_OFFSET;
-							let sprite_y = PERM_1_2_OFFSET;
+							let sprite_y = PERM_1_2_5_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -114,7 +113,7 @@ impl Car {
 					self.sprites.insert(2u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_2_OFFSET;
-							let sprite_y = PERM_1_2_OFFSET;
+							let sprite_y = PERM_1_2_5_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -129,7 +128,7 @@ impl Car {
 					self.sprites.insert(3u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_3_OFFSET;
-							let sprite_y = PERM_3_5_OFFSET;
+							let sprite_y = PERM_3_4_6_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -144,7 +143,7 @@ impl Car {
 					self.sprites.insert(4u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_4_OFFSET;
-							let sprite_y = PERM_3_5_OFFSET;
+							let sprite_y = PERM_3_4_6_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -159,7 +158,7 @@ impl Car {
 					self.sprites.insert(5u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_5_OFFSET;
-							let sprite_y = PERM_3_5_OFFSET;
+							let sprite_y = PERM_1_2_5_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -174,7 +173,7 @@ impl Car {
 					self.sprites.insert(6u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_6_OFFSET;
-							let sprite_y = PERM_6_7_OFFSET;
+							let sprite_y = PERM_3_4_6_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -189,7 +188,7 @@ impl Car {
 					self.sprites.insert(7u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = COMPLETE_X_OFFSET;
-							let sprite_y = PERM_6_7_OFFSET;
+							let sprite_y = COMPLETE_X_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -449,7 +448,7 @@ impl Door {
 		let loaded_sprite = Box::new( sprite::Sprite::new(
 			display,
 			(motion_frame, facing_frame),
-			(units::Tile(2), units::Tile(1)),
+			(units::Tile(2), units::Tile(2)),
 			asset_path
 		) ) as Box<sprite::Updatable<_>>;
 
@@ -460,7 +459,7 @@ impl Door {
 impl Part for Door {
 	fn damage_rectangle(&self) -> Rectangle {
 		Rectangle {
-			x: self.character.x + units::Tile(1), y: self.character.y + units::HalfTile(1),
+			x: self.character.x + units::Tile(1), y: self.character.y + units::Tile(1),
 			width: units::Game(32.0), height: units::Game(16.0),
 		}
 	}
