@@ -16,14 +16,14 @@ static SPRITE_FPS:          units::Fps    = 20;
 const COMPLETE_X_OFFSET: units::Tile = units::Tile(0);
 const SCRAPPED_X_OFFSET: units::Tile = units::Tile(0);
 const SCRAPPED_Y_OFFSET: units::Tile = units::Tile(2);
-const PERM_1_OFFSET:     units::Tile = units::Tile(0);
-const PERM_2_OFFSET:     units::Tile = units::Tile(6);
-const PERM_3_OFFSET:     units::Tile = units::Tile(12);
-const PERM_4_OFFSET:     units::Tile = units::Tile(6);
-const PERM_5_OFFSET:     units::Tile = units::Tile(0);
+const PERM_1_OFFSET:     units::Tile = units::Tile(6);
+const PERM_2_OFFSET:     units::Tile = units::Tile(18);
+const PERM_3_OFFSET:     units::Tile = units::Tile(18);
+const PERM_4_OFFSET:     units::Tile = units::Tile(12);
+const PERM_5_OFFSET:     units::Tile = units::Tile(12);
 const PERM_6_OFFSET:     units::Tile = units::Tile(6);
-const PERM_1_2_5_OFFSET: units::Tile = units::Tile(0);
-const PERM_3_4_6_OFFSET: units::Tile = units::Tile(2);
+const PERM_1_3_5_OFFSET: units::Tile = units::Tile(2);
+const PERM_2_4_6_OFFSET: units::Tile = units::Tile(0);
 const PARTS_Y_OFFSET:    units::Tile = units::Tile(4);
 const TIRE_OFFSET:       units::Tile = units::Tile(2);
 const DOOR_OFFSET:       units::Tile = units::Tile(0);
@@ -98,7 +98,7 @@ impl Car {
 					self.sprites.insert(1u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_1_OFFSET;
-							let sprite_y = PERM_1_2_5_OFFSET;
+							let sprite_y = PERM_1_3_5_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -113,7 +113,7 @@ impl Car {
 					self.sprites.insert(2u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_2_OFFSET;
-							let sprite_y = PERM_1_2_5_OFFSET;
+							let sprite_y = PERM_2_4_6_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -128,7 +128,7 @@ impl Car {
 					self.sprites.insert(3u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_3_OFFSET;
-							let sprite_y = PERM_3_4_6_OFFSET;
+							let sprite_y = PERM_1_3_5_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -143,7 +143,7 @@ impl Car {
 					self.sprites.insert(4u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_4_OFFSET;
-							let sprite_y = PERM_3_4_6_OFFSET;
+							let sprite_y = PERM_2_4_6_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -158,7 +158,7 @@ impl Car {
 					self.sprites.insert(5u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_5_OFFSET;
-							let sprite_y = PERM_1_2_5_OFFSET;
+							let sprite_y = PERM_1_3_5_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 
@@ -173,7 +173,7 @@ impl Car {
 					self.sprites.insert(6u32, {
 							let asset_path = "assets/base/racer.bmp".to_string();
 							let sprite_x = PERM_6_OFFSET;
-							let sprite_y = PERM_3_4_6_OFFSET;
+							let sprite_y = PERM_2_4_6_OFFSET;
 
 							Box::new( sprite::Sprite::new(
 								display, 

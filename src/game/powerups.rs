@@ -28,7 +28,7 @@ const TELEPORT_ANIMATION_FRAME: units::Tile = units::Tile(0);
 
 // Animation frames 
 const WIPEOUT_ANIMATION_FRAME: units::Tile = units::Tile(1);
-const NUKE_ANIMATION_FRAME: units::Tile = units::Tile(1);
+const NUKE_ANIMATION_FRAME: units::Tile = units::Tile(0);
 
 pub trait Powerup {
 	fn draw(&self, display: &mut graphics::Graphics);
@@ -297,7 +297,7 @@ impl WipeOut {
 		let animation_sprite = Box::new( sprite::AnimatedSprite::new(
 			display, asset_path,
 			(motion_frame, facing_frame),
-			(units::Tile(4), units::Tile(4)),
+			(units::Tile(4), units::Tile(5)),
 			SPRITE_NUM_FRAMES, SPRITE_FPS
 		).unwrap() ) as Box<sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
@@ -604,7 +604,7 @@ impl Nuke {
 		let asset_path = "assets/base/nuke.bmp".to_string();
 		let motion_frame = NUKE_ANIMATION_FRAME;
 
-		let facing_frame = units::Tile(10);
+		let facing_frame = units::Tile(0);
 
 		let animation_sprite = Box::new( sprite::AnimatedSprite::new(
 			display, asset_path,

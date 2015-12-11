@@ -133,13 +133,7 @@ impl<'e> Game<'e> {
 			parts: part_vector,
 			coll_parts: coll_part_vector,
 
-			// vehicle: Box::new( heli::Helicopter::new(
-			// 	&mut display, 
-			// 	VEHICLE_STARTING_X.to_game(), 
-			// 	VEHICLE_STARTING_Y.to_game()
-			// ) ) as Box<vehicle::Vehicle>,
-
-			vehicle: Box::new( car::Car::new(
+			vehicle: Box::new( heli::Helicopter::new(
 				&mut display, 
 				VEHICLE_STARTING_X.to_game(), 
 				VEHICLE_STARTING_Y.to_game()
@@ -337,22 +331,22 @@ impl<'e> Game<'e> {
 					0 => {
 						Box::new( car::Tire::new(
 							&mut self.display, 
-							units::Tile(2).to_game(),
-							units::Tile(5).to_game()
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
 						) ) as Box<vehicle::Part>
 					},
 					1 => {
 						Box::new( car::Door::new(
 							&mut self.display, 
-							units::Tile(4).to_game(),
-							units::Tile(5).to_game()
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
 						) ) as Box<vehicle::Part>
 					},
 					_ => {
 						Box::new( car::Engine::new(
 							&mut self.display, 
-							units::Tile(6).to_game(),
-							units::Tile(5).to_game()
+							units::Tile(x).to_game(),
+							units::Tile(y).to_game()
 						) ) as Box<vehicle::Part>
 					}
 				}
