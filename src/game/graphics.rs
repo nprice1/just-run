@@ -55,7 +55,7 @@ impl<'g> Graphics<'g> {
 		sdl2_mixer::open_audio(sdl2_mixer::DEFAULT_FREQUENCY, 0x8010u16, 2, 1024);
 		sdl2_mixer::allocate_channels(2);
 		sdl2_mixer::init(sdl2_mixer::INIT_MP3 | sdl2_mixer::INIT_FLAC | sdl2_mixer::INIT_MOD | sdl2_mixer::INIT_FLUIDSYNTH | sdl2_mixer::INIT_MODPLUG | sdl2_mixer::INIT_OGG);
-		let music = sdl2_mixer::Music::from_file( &Path::new("assets/background2.wav") ).unwrap();
+		let music = sdl2_mixer::Music::from_file( &Path::new("assets/background.wav") ).unwrap();
 
 		// setup sound effects
 		let mut sound_effect_vec: Vec<sdl2_mixer::Chunk> = Vec::new();

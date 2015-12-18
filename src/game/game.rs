@@ -663,7 +663,6 @@ impl<'e> Game<'e> {
 				self.display.switch_buffers();
 			} else {
 				self.draw_completion_screen();
-				self.display.switch_buffers();
 			}
 
 			// throttle event-loop based on iteration time vs frame deadline
