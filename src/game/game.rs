@@ -505,11 +505,11 @@ impl<'e> Game<'e> {
 		
 		let mut running = true;
 
-		let mut event_pump = match self.context.event_pump() {
+		let mut event_pump =  match self.context.event_pump() {
 			Ok(pump) => { pump },
 			Err(msg) => { panic!(msg) }
 		};
-		
+
 		while running && !self.completed_lvl {
 			let start_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
 			self.controller.begin_new_frame();
@@ -606,6 +606,71 @@ impl<'e> Game<'e> {
 
 			std::thread::sleep_ms(next_frame_time as u32);
 
+			if (self.completed_lvl && running) {
+				let mut cinematic_counter = LEVEL_1_CINEMATIC_FRAMES;
+				while self.completed_lvl && running {
+					let start_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
+					// inform actors of how much time has passed since last frame
+					let current_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
+					let elapsed_time    = current_time_ms - last_update_time;
+					let mut show_completion_screen = true;
+
+					self.controller.begin_new_frame();
+
+					// drain event queue once per frame
+					// ideally should do in separate task
+					for event in event_pump.poll_iter() {
+						match event {
+							Event::KeyDown { keycode, .. } => {
+								self.controller.key_down_event(keycode.unwrap());
+							},
+							Event::KeyUp { keycode, .. } => {
+								self.controller.key_up_event(keycode.unwrap());
+							},
+							_ => {},
+						}
+					}
+
+					// Handle exit game
+					if self.controller.was_key_released(Keycode::Escape) {
+						self.completed_lvl = false;
+					}
+
+					// Handle paused game
+					if self.controller.was_key_released(Keycode::Return) {
+						if cinematic_counter < 0 {
+							self.completed_lvl = false;
+							self.new_level(false);
+							break;
+						} 
+					}
+				
+					// only update if not in paused state
+					self.update_cinematic(cmp::min(elapsed_time, MAX_FRAME_TIME));
+					last_update_time = current_time_ms;
+
+					if cinematic_counter > 0 {
+						self.display.clear_buffer(); // clear back-buffer
+						self.draw_cinematic(cinematic_counter);
+						self.draw_zombies();
+						self.display.switch_buffers();
+					} else if show_completion_screen {
+						self.draw_completion_screen();
+					}
+
+					// throttle event-loop based on iteration time vs frame deadline
+					let iter_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds()) - start_time_ms;
+					let next_frame_time: u64 = if frame_delay > iter_time { 
+						let (units::Millis(fd), units::Millis(it)) = (frame_delay, iter_time);
+						(fd - it) as u64
+					} else { 0 as u64 };
+					
+					std::thread::sleep_ms(next_frame_time as u32);
+
+					cinematic_counter = cinematic_counter - 1;
+				}
+			}
+
 			/* Print current FPS to stdout
 			let units::Millis(start_time) = start_time_ms;
 			let seconds_per_frame =  (sdl::get_ticks() as int - start_time) as f64 / 1000.0;
@@ -614,67 +679,6 @@ impl<'e> Game<'e> {
 			println!("fps: {}", fps);
 			*/
 			
-		}
-		let mut cinematic_counter = LEVEL_1_CINEMATIC_FRAMES;
-		while self.completed_lvl && running {
-			let start_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
-			// inform actors of how much time has passed since last frame
-			let current_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
-			let elapsed_time    = current_time_ms - last_update_time;
-
-			self.controller.begin_new_frame();
-
-			// drain event queue once per frame
-			// ideally should do in separate task
-			for event in event_pump.poll_iter() {
-				match event {
-					Event::KeyDown { keycode, .. } => {
-						self.controller.key_down_event(keycode.unwrap());
-					},
-					Event::KeyUp { keycode, .. } => {
-						self.controller.key_up_event(keycode.unwrap());
-					},
-					_ => {},
-				}
-			}
-
-			// Handle exit game
-			if self.controller.was_key_released(Keycode::Escape) {
-				self.completed_lvl = false;
-			}
-
-			// Handle paused game
-			if self.controller.was_key_released(Keycode::Return) {
-				if cinematic_counter < 0 {
-					self.completed_lvl = false;
-					self.new_level(false);
-					self.event_loop();
-				} 
-			}
-		
-			// only update if not in paused state
-			self.update_cinematic(cmp::min(elapsed_time, MAX_FRAME_TIME));
-			last_update_time = current_time_ms;
-
-			if cinematic_counter > 0 {
-				self.display.clear_buffer(); // clear back-buffer
-				self.draw_cinematic(cinematic_counter);
-				self.draw_zombies();
-				self.display.switch_buffers();
-			} else {
-				self.draw_completion_screen();
-			}
-
-			// throttle event-loop based on iteration time vs frame deadline
-			let iter_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds()) - start_time_ms;
-			let next_frame_time: u64 = if frame_delay > iter_time { 
-				let (units::Millis(fd), units::Millis(it)) = (frame_delay, iter_time);
-				(fd - it) as u64
-			} else { 0 as u64 };
-			
-			std::thread::sleep_ms(next_frame_time as u32);
-
-			cinematic_counter = cinematic_counter - 1;
 		}
 
 	}
