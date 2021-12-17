@@ -17,3 +17,4 @@ pub mod car;
 pub mod vehicle;
 pub mod powerups;
 pub mod traps;
+pub mod music;

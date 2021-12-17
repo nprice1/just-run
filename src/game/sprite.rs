@@ -1,7 +1,4 @@
 use sdl2::rect;
-use sdl2::render;
-
-use std::rc::Rc;
 
 use game::graphics;
 
@@ -65,16 +62,13 @@ impl Sprite {
 		let (units::Pixel(xi), units::Pixel(yi)) = 
 			(norm_x.to_pixel(), norm_y.to_pixel());
 
-		let origin = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
-			Ok(rect) => { rect },
-			Err(msg) => { panic!(msg) }
-		};
+		let origin = rect::Rect::new(xi, yi, wi as u32, hi as u32);
 
 		graphics.load_image(file_name.clone(), true);  // request graphics subsystem cache this sprite.
 
 		return Sprite {
 			sprite_sheet:  file_name,
-			source_rect:   origin.unwrap(),
+			source_rect:   origin,
 			size:          (norm_w,norm_h),
 		};
 	}
@@ -90,17 +84,14 @@ impl<C: AsGame> Drawable<C> for Sprite {
 		let (units::Pixel(xi), units::Pixel(yi)) = 
 			(x.to_game().to_pixel(), y.to_game().to_pixel());
 	
-		let dest_rect = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
-			Ok(d) => { d },
-			Err(msg) => { panic!(msg) }
-		};
+		let dest_rect = rect::Rect::new(xi, yi, wi as u32, hi as u32);
 
-		display.blit_surface(&self.sprite_sheet, &self.source_rect, &dest_rect.unwrap());
+		display.blit_surface(&self.sprite_sheet, &self.source_rect, &dest_rect);
 	}
 }
 
-#[allow(unused_variable)]
 impl<C: AsGame> Updatable<C> for Sprite {
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis) {
 		// no-op for static sprite.
 	}
@@ -145,10 +136,7 @@ impl AnimatedSprite {
 		let (units::Pixel(wi), units::Pixel(hi)) = (w.to_pixel(), h.to_pixel());
 		let (units::Pixel(xi), units::Pixel(yi)) = (x.to_pixel(), y.to_pixel());
 		
-		let origin = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
-			Ok(rect) => { rect },
-			Err(msg) => { panic!(msg) }
-		};
+		let origin = rect::Rect::new(xi, yi, wi as u32, hi as u32);
 		
 		graphics.load_image(sheet_path.clone(), true); // request graphics subsystem cache this sprite.
 		let sprite = AnimatedSprite {
@@ -161,7 +149,7 @@ impl AnimatedSprite {
 			last_update:  units::Millis(0),
 			
 			sprite_sheet:  sheet_path,
-			source_rect:   origin.unwrap(),
+			source_rect:   origin,
 		};
 
 		return Ok(sprite);
@@ -171,7 +159,7 @@ impl AnimatedSprite {
 impl<C: AsGame> Updatable<C> for AnimatedSprite {
 	/// Reads current time-deltas and mutates state accordingly.
 	fn update(&mut self, elapsed_time: units::Millis) {
-		let frame_time = units::Millis(1000 / self.fps as i64);
+		let frame_time = units::Millis(1000 / self.fps as u128);
 		self.last_update = self.last_update + elapsed_time;
 
 		// if we have missed drawing a frame
@@ -180,16 +168,22 @@ impl<C: AsGame> Updatable<C> for AnimatedSprite {
 			self.current_frame += 1;              // increment frame counter
 
 			if self.current_frame < self.num_frames {
-				self.source_rect = match rect::Rect::new(self.source_rect.x() + self.source_rect.width() as i32, self.source_rect.y(), self.source_rect.width(), self.source_rect.height()) {
-					Ok(rect) => { rect.unwrap() },
-					Err(msg) => { panic!(msg) }
-				}
+				self.source_rect = 
+					rect::Rect::new(
+						self.source_rect.x() + self.source_rect.width() as i32,
+						self.source_rect.y(),
+						self.source_rect.width(),
+						self.source_rect.height()
+					);
 			} else {
 				self.current_frame  = 0;
-				self.source_rect = match rect::Rect::new(self.source_rect.x() - self.source_rect.width() as i32 * (self.num_frames - 1) as i32, self.source_rect.y(), self.source_rect.width(), self.source_rect.height()) {
-					Ok(rect) => { rect.unwrap() },
-					Err(msg) => { panic!(msg) }
-				}
+				self.source_rect = 
+					rect::Rect::new(
+						self.source_rect.x() - self.source_rect.width() as i32 * (self.num_frames - 1) as i32,
+						self.source_rect.y(),
+						self.source_rect.width(),
+						self.source_rect.height()
+					);
 			}
 		}
 	}
@@ -205,10 +199,7 @@ impl<C: AsGame> Drawable<C> for AnimatedSprite {
 		let (units::Pixel(xi), units::Pixel(yi)) = 
 			(x.to_game().to_pixel(), y.to_game().to_pixel());
 
-		let dest_rect = match rect::Rect::new(xi, yi, wi as u32, hi as u32) {
-			Ok(d) => { d },
-			Err(msg) => { panic!(msg) }
-		};
-		display.blit_surface(&self.sprite_sheet, &self.source_rect, &dest_rect.unwrap());
+		let dest_rect = rect::Rect::new(xi, yi, wi as u32, hi as u32);
+		display.blit_surface(&self.sprite_sheet, &self.source_rect, &dest_rect);
 	}
 }

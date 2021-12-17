@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use std::collections::hash_map::{HashMap, Entry};
 use std::path::Path;
 use std::string;
@@ -11,13 +9,10 @@ use game::units::{AsPixel};
 use sdl2;
 use sdl2::rect;
 use sdl2::surface;
-use sdl2::render;
-use sdl2::video;
-use sdl2::mouse;
+use sdl2::render::{self, Canvas, TextureCreator};
+use sdl2::ttf::Sdl2TtfContext;
+use sdl2::video::{Window, WindowContext};
 use sdl2::pixels;
-
-use sdl2_mixer;
-use sdl2_ttf;
 
 static MAX_HP: u32 = 3;
 
@@ -27,61 +22,43 @@ macro_rules! trying(
 );
 
 /// Acts as a buffer to the underlying display
-pub struct Graphics<'g> {
-	screen:   Box<render::Renderer<'g>>,
-	music:    sdl2_mixer::Music,
-	pub sound_effects: Vec<sdl2_mixer::Chunk>,
+pub struct Graphics {
+	screen:   		   Box<Canvas<Window>>,
+	texture_creator:   TextureCreator<WindowContext>,
+ 	ttf: 	   		   Sdl2TtfContext,
 	pub sprite_cache:  HashMap<string::String, render::Texture>,
 }
 
-impl<'g> Graphics<'g> {
+impl Graphics {
 	/// Prepare the display for rendering
 	#[allow(unused_must_use)]
-	pub fn new(context: &sdl2::Sdl) -> Graphics<'g> {
+	pub fn new(context: &sdl2::Sdl) -> Graphics {
 		let (units::Pixel(w), units::Pixel(h)) = 
 			(game::game::SCREEN_WIDTH.to_pixel(), game::game::SCREEN_HEIGHT.to_pixel());
 
-	    let video_subsystem = context.video().unwrap();
+	    let _video_subsystem = context.video().unwrap();
 
-	    let window = video_subsystem.window("rust-sdl2 demo: Video", w as u32, h as u32)
+	    let window = _video_subsystem.window("Just Run", w as u32, h as u32)
 	        .position_centered()
 	        .opengl()
 	        .build()
-	        .unwrap();
+			.unwrap();
 
-	    let mut render_context = window.renderer().build().unwrap();
+		let canvas = window
+			.into_canvas()
+			.accelerated()
+			.build()
+			.unwrap();
 
-		// setup background music
-		sdl2_mixer::open_audio(sdl2_mixer::DEFAULT_FREQUENCY, 0x8010u16, 2, 1024);
-		sdl2_mixer::allocate_channels(2);
-		sdl2_mixer::init(sdl2_mixer::INIT_MP3 | sdl2_mixer::INIT_FLAC | sdl2_mixer::INIT_MOD | sdl2_mixer::INIT_FLUIDSYNTH | sdl2_mixer::INIT_MODPLUG | sdl2_mixer::INIT_OGG);
-		let music = sdl2_mixer::Music::from_file( &Path::new("assets/background.wav") ).unwrap();
-
-		// setup sound effects
-		let mut sound_effect_vec: Vec<sdl2_mixer::Chunk> = Vec::new();
-		let bullet = sdl2_mixer::Chunk::from_file( &Path::new("assets/bullet.wav") ).unwrap();
-		sound_effect_vec.push(bullet);
-		let wipeout = sdl2_mixer::Chunk::from_file( &Path::new("assets/wipeout.wav") ).unwrap();
-		sound_effect_vec.push(wipeout);
-		let nuke = sdl2_mixer::Chunk::from_file( &Path::new("assets/nuke.wav") ).unwrap();
-		sound_effect_vec.push(nuke);
-		let powerup = sdl2_mixer::Chunk::from_file( &Path::new("assets/powerup.wav") ).unwrap();
-		sound_effect_vec.push(powerup);
-		let debuff = sdl2_mixer::Chunk::from_file( &Path::new("assets/debuff.wav") ).unwrap();
-		sound_effect_vec.push(debuff);
-		let trap = sdl2_mixer::Chunk::from_file( &Path::new("assets/trap.wav") ).unwrap();
-		sound_effect_vec.push(trap);
-		let hit = sdl2_mixer::Chunk::from_file( &Path::new("assets/hit.wav") ).unwrap();
-		sound_effect_vec.push(hit);
-		let goal = sdl2_mixer::Chunk::from_file( &Path::new("assets/goal.wav") ).unwrap();
-		sound_effect_vec.push(goal);
+		let ttf_context = sdl2::ttf::init().unwrap();
+		let texture_creator = canvas.texture_creator();
 
 		let graphics: Graphics = 
 			Graphics {
-				screen:        Box::new(render_context),
-				sprite_cache:  HashMap::<string::String, render::Texture>::new(),
-				music:         music, 
-				sound_effects: sound_effect_vec
+				screen:        	 Box::new(canvas),
+				texture_creator: texture_creator,
+				sprite_cache:    HashMap::<string::String, render::Texture>::new(),
+				ttf:   	         ttf_context,
 			};
 		
 		return graphics;
@@ -115,7 +92,7 @@ impl<'g> Graphics<'g> {
 
 		match self.sprite_cache.entry(file_path.clone()) {
 			Entry::Vacant(entry) => {
-				match self.screen.create_texture_from_surface(&sprite_surface) {
+				match self.texture_creator.create_texture_from_surface(&sprite_surface) {
 					Ok(texture) => { entry.insert(texture); },
 					Err(msg) => panic!("sprite could not be rendered: {}", msg)
 				}
@@ -149,28 +126,12 @@ impl<'g> Graphics<'g> {
 	}
 
 	#[allow(unused_must_use)]
-	pub fn play_music(&self) {
-		self.music.play(-1);
-	}
-	pub fn pause_music(&self) {
-		sdl2_mixer::Music::pause();
-	}
-	pub fn resume_music(&self) {
-		sdl2_mixer::Music::resume();
-	}
-	#[allow(unused_must_use)]
-	pub fn play_sound_effect(&self, index: u32) {
-		let channel = sdl2_mixer::Channel::all();
-		let chunk = self.sound_effects.get(index as usize).unwrap() as &sdl2_mixer::Chunk; 
-		channel.play(chunk, 0);
-	}
-
-	#[allow(unused_must_use)]
 	pub fn draw_text(&mut self, text: &str, dest_rect: rect::Rect) {
-		let font = trying!(sdl2_ttf::Font::from_file(&Path::new("assets/font.ttf"), 128));
+		let font = self.ttf.load_font(&Path::new("assets/font.ttf"), 128).unwrap();
 		// render a surface, and convert it to a texture bound to the renderer
-	    let surface = trying!(font.render(text, sdl2_ttf::blended(pixels::Color::RGBA(255, 0, 0, 255))));
-	    let texture = trying!(self.screen.create_texture_from_surface(&surface));
+	    let surface = trying!(font.render(text).blended(pixels::Color::RGBA(255, 0, 0, 255)));
+		let texture_creator = self.screen.texture_creator();
+	    let texture = trying!(texture_creator.create_texture_from_surface(&surface));
     	self.screen.copy(&texture, None, Some(dest_rect));
 	}
 
@@ -188,20 +149,11 @@ impl<'g> Graphics<'g> {
 	pub fn draw_health(&mut self, hp: u32) {
 		let heart_sprites = "assets/base/heart.bmp"; 
 		self.load_image(String::from(heart_sprites), true);
-		let full_source = match rect::Rect::new(0, 0, 18, 18) {
-			Ok(rect) => { rect.unwrap() },
-			Err(msg) => { panic!(msg) }
-		};
-		let empty_source = match rect::Rect::new(21, 0, 18, 18) {
-			Ok(rect) => { rect.unwrap() },
-			Err(msg) => { panic!(msg) }
-		};
+		let full_source = rect::Rect::new(0, 0, 18, 18);
+		let empty_source = rect::Rect::new(21, 0, 18, 18);
 		for i in 0.. MAX_HP {
 			let x = i * 25;
-			let dest = match rect::Rect::new(x as i32, 0, 25, 25) {
-				Ok(rect) => { rect.unwrap() },
-				Err(msg) => { panic!(msg) }
-			};
+			let dest = rect::Rect::new(x as i32, 0, 25, 25);
 			if i < hp {
 				self.blit_surface(&heart_sprites, &full_source, &dest);
 			} else {

@@ -2,17 +2,12 @@
 
 name = "just_run"
 version = "0.0.1"
-authors = [ "Nolan Price <senshuponbiki@gmail.com>" ]
+authors = [ "Nolan Price <nolan@nolanprice.com>" ]
 
 [dependencies]
-sdl2 = "0.09"
 rand = "*"
 time = "*"
 
-[dependencies.sdl2_mixer]
-path = "../rust-sdl2_mixer"
-version = "0.8.0"
-
-[dependencies.sdl2_ttf]
-path = "../rust-sdl2_ttf"
-version = "0.9.1"
+[dependencies.sdl2]
+version = "0.35.0"
+features = ["mixer", "ttf", "unsafe_textures"]

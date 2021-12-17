@@ -1,12 +1,8 @@
-use std::rc::Rc;
-
 use game;
-use game::graphics;
-use game::units;
-use game::units::{AsPixel};
+use game::{graphics, units};
+use game::units::AsPixel;
 
 use sdl2::rect::Rect;
-use sdl2::render::Texture;
 
 use std::string;
 
@@ -19,7 +15,7 @@ pub struct FixedBackdrop {
 
 impl FixedBackdrop {
 	pub fn new(path: string::String, graphics: &mut graphics::Graphics) -> FixedBackdrop {
-		let asset = graphics.load_image(path.clone(), false);
+		graphics.load_image(path.clone(), false);
 		FixedBackdrop { surface_id: path }
 	}
 
@@ -32,16 +28,10 @@ impl FixedBackdrop {
 
 		while units::Pixel(x) < game::LEVEL_WIDTH.to_pixel() {
 			while units::Pixel(y) < game::LEVEL_HEIGHT.to_pixel() {
-				let src  = match Rect::new(0, 0, tile_size as u32, tile_size as u32) {
-					Ok(rect) => { rect },
-					Err(msg) => { panic!(msg) }
-				};
-				let dest = match Rect::new(x, y, tile_size as u32, tile_size as u32) {
-					Ok(rect) => { rect },
-					Err(msg) => { panic!(msg) }
-				};
+				let src  = Rect::new(0, 0, tile_size as u32, tile_size as u32);
+				let dest = Rect::new(x, y, tile_size as u32, tile_size as u32);
 
-				graphics.blit_surface(&self.surface_id, &src.unwrap(), &dest.unwrap());
+				graphics.blit_surface(&self.surface_id, &src, &dest);
 				y+= tile_size;
 			}
 

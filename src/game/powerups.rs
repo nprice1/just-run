@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use game::collisions::Rectangle;
 use game::sprite;
 use game::graphics;
-use game::Game;
 use game::map;
 
 use game::units;
@@ -56,7 +55,7 @@ pub struct KillZombie {
 
 pub struct WipeOut {
 	character: Character, 
-	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	animation_sprite: Vec<Box<dyn sprite::Updatable<units::Game>>>, 
 	animation_timer: i32,
 	is_debuff: bool
 }
@@ -68,15 +67,15 @@ pub struct Freeze {
 
 pub struct Teleport {
 	character: Character, 
-	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	animation_sprite: Vec<Box<dyn sprite::Updatable<units::Game>>>, 
 	animation_timer: i32,
 	is_debuff: bool
 }
 
 pub struct Nuke {
 	character: Character, 
-	alternate_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
-	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	alternate_sprites: HashMap<MotionTup, Box<dyn sprite::Updatable<units::Game>>>,
+	animation_sprite: Vec<Box<dyn sprite::Updatable<units::Game>>>, 
 	animation_timer: i32,
 	is_debuff: bool
 }
@@ -113,7 +112,7 @@ impl CricketBat {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 	}
@@ -126,9 +125,9 @@ impl Powerup for CricketBat {
 		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		;
+		
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -152,7 +151,7 @@ impl Powerup for CricketBat {
 	}
 
 	fn set_timer(&mut self) {
-		;
+		
 	}
 
 	fn get_map_x(&self) -> units::Game {
@@ -197,7 +196,7 @@ impl KillZombie {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 	}
@@ -210,9 +209,9 @@ impl Powerup for KillZombie {
 		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		;
+
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -255,7 +254,7 @@ impl WipeOut {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> WipeOut {
 
-		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+		let animation: Vec<Box<dyn sprite::Updatable<units::Game>>> = Vec::new();
 
 		let mut new_powerup = WipeOut { 
 			character: common::Character::new(x, y), 
@@ -287,7 +286,7 @@ impl WipeOut {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 
@@ -299,7 +298,7 @@ impl WipeOut {
 			(motion_frame, facing_frame),
 			(units::Tile(4), units::Tile(5)),
 			SPRITE_NUM_FRAMES, SPRITE_FPS
-		).unwrap() ) as Box<sprite::Updatable<_>>;
+		).unwrap() ) as Box<dyn sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
 	}
 }
@@ -315,7 +314,7 @@ impl Powerup for WipeOut {
 		}
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		self.animation_sprite.get_mut(0).unwrap().update(elapsed_time);
 	}
@@ -388,7 +387,7 @@ impl Freeze {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 	}
@@ -401,9 +400,9 @@ impl Powerup for Freeze {
 		self.character.sprites.get(&self.character.movement).unwrap().draw(display, (correction_x, correction_y));
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		;
+		
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {
@@ -427,7 +426,7 @@ impl Powerup for Freeze {
 	}
 
 	fn set_timer(&mut self) {
-		;
+		
 	}
 
 	fn get_map_x(&self) -> units::Game {
@@ -443,7 +442,7 @@ impl Teleport {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> Teleport {
 
-		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+		let animation: Vec<Box<dyn sprite::Updatable<units::Game>>> = Vec::new();
 
 		let mut new_powerup = Teleport { 
 			character: common::Character::new(x, y), 
@@ -475,7 +474,7 @@ impl Teleport {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 
@@ -487,7 +486,7 @@ impl Teleport {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
 	}
 }
@@ -503,7 +502,7 @@ impl Powerup for Teleport {
 		}
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		self.animation_sprite.get_mut(0).unwrap().update(elapsed_time);
 	}
@@ -548,11 +547,11 @@ impl Nuke {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> Nuke {
 
-		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+		let animation: Vec<Box<dyn sprite::Updatable<units::Game>>> = Vec::new();
 
 		let mut new_powerup = Nuke { 
 			character: common::Character::new(x, y), 
-			alternate_sprites: HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new(),
+			alternate_sprites: HashMap::<MotionTup, Box<dyn sprite::Updatable<_>>>::new(),
 			animation_sprite: animation,
 			animation_timer: 0,
 			is_debuff: false
@@ -581,7 +580,7 @@ impl Nuke {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 
@@ -596,7 +595,7 @@ impl Nuke {
                (motion_frame, facing_frame),
                (units::Tile(1), units::Tile(1)),
                asset_path
-        ) ) as Box<sprite::Updatable<_>>;
+        ) ) as Box<dyn sprite::Updatable<_>>;
 
         self.alternate_sprites.insert(movement, alternate_sprite);
 
@@ -611,7 +610,7 @@ impl Nuke {
 			(motion_frame, facing_frame),
 			(units::Tile(20), units::Tile(20)),
 			SPRITE_NUM_FRAMES, 60
-		).unwrap() ) as Box<sprite::Updatable<_>>;
+		).unwrap() ) as Box<dyn sprite::Updatable<_>>;
 
 		self.animation_sprite.push(animation_sprite);
 	}
@@ -630,7 +629,7 @@ impl Powerup for Nuke {
 		}
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
 		self.animation_sprite.get_mut(0).unwrap().update(elapsed_time);
 	}

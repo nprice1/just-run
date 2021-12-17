@@ -8,8 +8,6 @@ use game::units;
 use game::common;
 use game::common::Character;
 
-type MotionTup = (sprite::Motion, sprite::Facing);
-
 static SPRITE_NUM_FRAMES:  units::Frame  = 2;
 static SPRITE_FPS:         units::Fps    = 20;
 
@@ -112,7 +110,7 @@ impl SlowZombie {
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) ) as Box<sprite::Updatable<_>>
+			) ) as Box<dyn sprite::Updatable<_>>
 		});
 	}
 }
@@ -235,7 +233,7 @@ impl CrazyZombie {
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) ) as Box<sprite::Updatable<_>>
+			) ) as Box<dyn sprite::Updatable<_>>
 		});
 	}
 }
@@ -377,7 +375,7 @@ impl RandomZombie {
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) ) as Box<sprite::Updatable<_>>
+			) ) as Box<dyn sprite::Updatable<_>>
 		});
 	}
 }
@@ -405,7 +403,7 @@ impl Zombie for RandomZombie {
 		self.character.update_y(map, RANDOM_WALKING_ACCEL, RANDOM_MAX_VELOCITY);
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn set_acceleration(&mut self, player_x: units::Game, player_y: units::Game) {
 		self.character.set_new_random_target();
 
@@ -503,7 +501,7 @@ impl CloudZombie {
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				SPRITE_NUM_FRAMES, SPRITE_FPS
-			).unwrap() ) as Box<sprite::Updatable<_>>
+			).unwrap() ) as Box<dyn sprite::Updatable<_>>
 		});
 	}
 }

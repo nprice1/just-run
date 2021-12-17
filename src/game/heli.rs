@@ -38,7 +38,7 @@ pub struct Helicopter {
 	pub map_x: units::Game, 
 	pub map_y: units::Game,
 
-	sprites:  HashMap<u32, Box<sprite::Updatable<units::Game>>>,
+	sprites:  HashMap<u32, Box<dyn sprite::Updatable<units::Game>>>,
 	parts:    HashMap<u32, u32>
 }
 
@@ -58,7 +58,7 @@ impl Helicopter {
 	pub fn new(display: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> Helicopter {
 		
-		let sprite_map = HashMap::<u32, Box<sprite::Updatable<_>>>::new();
+		let sprite_map = HashMap::<u32, Box<dyn sprite::Updatable<_>>>::new();
 		let part_map = HashMap::<u32, u32>::new();
 
 		let mut new_helicopter = Helicopter { 
@@ -91,7 +91,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -107,7 +107,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -123,7 +123,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -139,7 +139,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -155,7 +155,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -171,7 +171,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -187,7 +187,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -203,7 +203,7 @@ impl Helicopter {
 								(sprite_x, sprite_y), 
 								(units::Tile(4), units::Tile(3)),
 								SPRITE_NUM_FRAMES, SPRITE_FPS
-							).unwrap() ) as Box<sprite::Updatable<_>>
+							).unwrap() ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				}
@@ -315,7 +315,7 @@ impl Prop {
 				(motion_frame, facing_frame),
 				(units::Tile(3), units::Tile(1)),
 				asset_path
-			) ) as Box<sprite::Updatable<_>>
+			) ) as Box<dyn sprite::Updatable<_>>
 		});
 	}
 }
@@ -387,7 +387,7 @@ impl Windshield {
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				asset_path
-			) ) as Box<sprite::Updatable<_>>
+			) ) as Box<dyn sprite::Updatable<_>>
 		});
 	}
 }
@@ -459,7 +459,7 @@ impl Bar {
 				(motion_frame, facing_frame),
 				(units::Tile(2), units::Tile(1)),
 				asset_path
-			) ) as Box<sprite::Updatable<_>>
+			) ) as Box<dyn sprite::Updatable<_>>
 		});
 	}
 }

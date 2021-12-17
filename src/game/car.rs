@@ -10,9 +10,6 @@ use game::vehicle::Part;
 
 use game::units;
 
-static SPRITE_NUM_FRAMES:   units::Frame  = 4;
-static SPRITE_FPS:          units::Fps    = 20;
-
 const COMPLETE_X_OFFSET: units::Tile = units::Tile(0);
 const SCRAPPED_X_OFFSET: units::Tile = units::Tile(0);
 const SCRAPPED_Y_OFFSET: units::Tile = units::Tile(2);
@@ -38,7 +35,7 @@ pub struct Car {
 	pub map_x: units::Game, 
 	pub map_y: units::Game,
 
-	sprites:  HashMap<u32, Box<sprite::Updatable<units::Game>>>,
+	sprites:  HashMap<u32, Box<dyn sprite::Updatable<units::Game>>>,
 	parts:    HashMap<u32, u32>
 }
 
@@ -58,7 +55,7 @@ impl Car {
 	pub fn new(display: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> Car {
 		
-		let sprite_map = HashMap::<u32, Box<sprite::Updatable<_>>>::new();
+		let sprite_map = HashMap::<u32, Box<dyn sprite::Updatable<_>>>::new();
 		let part_map = HashMap::<u32, u32>::new();
 
 		let mut new_car = Car { 
@@ -90,7 +87,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -105,7 +102,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -120,7 +117,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -135,7 +132,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -150,7 +147,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -165,7 +162,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -180,7 +177,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				},
@@ -195,7 +192,7 @@ impl Car {
 								(sprite_x, sprite_y), 
 								(units::Tile(6), units::Tile(2)),
 								asset_path
-							) ) as Box<sprite::Updatable<_>>
+							) ) as Box<dyn sprite::Updatable<_>>
 						}
 					);
 				}
@@ -306,7 +303,7 @@ impl Tire {
 			(motion_frame, facing_frame),
 			(units::Tile(2), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 	}
@@ -378,7 +375,7 @@ impl Engine {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 	}
@@ -450,7 +447,7 @@ impl Door {
 			(motion_frame, facing_frame),
 			(units::Tile(2), units::Tile(2)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 	}

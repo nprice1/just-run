@@ -7,16 +7,14 @@ use std::path::Path;
 use std::vec::Vec;
 use rand::Rng;
 use std::string::String;
+use std::time::Instant;
 
 use sdl2;
 use sdl2::rect;
-use sdl2::timer;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2_ttf;
 
 use rand;
-use time::{Duration, PreciseTime};
 
 pub use game::units::{AsGame};
 
@@ -31,10 +29,11 @@ pub use game::car;
 pub use game::heli;
 pub use game::player;
 pub use game::graphics;
+pub use game::music;
 pub use game::collisions::Rectangle;
 
 const TARGET_FRAMERATE: units::Fps  =  60;
-static MAX_FRAME_TIME: units::Millis =  units::Millis(5 * (1000 / TARGET_FRAMERATE) as i64);
+static MAX_FRAME_TIME: units::Millis =  units::Millis(5 * (1000 / TARGET_FRAMERATE) as u128);
 
 pub static LEVEL_WIDTH:   units::Tile =  units::Tile(60);
 pub static SCREEN_WIDTH: units::Tile =  units::Tile(20);
@@ -62,28 +61,26 @@ pub static VEHICLE_STARTING_Y: units::Tile = units::Tile(1);
 // hadle the annoying Rect i32
 macro_rules! rect(
     ($x:expr, $y:expr, $w:expr, $h:expr) => (
-        match rect::Rect::new($x as i32, $y as i32, $w as u32, $h as u32) {
-        	Ok(rect) => { rect.unwrap() },
-        	Err(msg) => { panic!(msg) }
-        }
+        rect::Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
     )
 );
 
 /// An instance of the `just-run` game with its own event loop.
 pub struct Game<'engine> {
 	player:     player::Player,
-	enemies:    Vec<Box<enemies::Zombie>>,
-	powerups:   Vec<Box<powerups::Powerup>>,
-	traps:      Vec<Box<traps::Trap>>,
-	killed:     Vec<Box<enemies::Zombie>>,
-	activated:  Vec<Box<powerups::Powerup>>,
-	tripped:    Vec<Box<traps::Trap>>,
-	parts:      Vec<Box<vehicle::Part>>,
-	coll_parts: Vec<Box<vehicle::Part>>,
-	vehicle:    Box<vehicle::Vehicle>,
+	enemies:    Vec<Box<dyn enemies::Zombie>>,
+	powerups:   Vec<Box<dyn powerups::Powerup>>,
+	traps:      Vec<Box<dyn traps::Trap>>,
+	killed:     Vec<Box<dyn enemies::Zombie>>,
+	activated:  Vec<Box<dyn powerups::Powerup>>,
+	tripped:    Vec<Box<dyn traps::Trap>>,
+	parts:      Vec<Box<dyn vehicle::Part>>,
+	coll_parts: Vec<Box<dyn vehicle::Part>>,
+	vehicle:    Box<dyn vehicle::Vehicle>,
 	map:        map::Map,
 
-	display:        graphics::Graphics<'engine>,
+	display:        graphics::Graphics,
+	music:			music::Music<'engine>,
 	context:        &'engine sdl2::Sdl,
 	controller:     input::Input,
 	paused:         bool,
@@ -101,20 +98,19 @@ impl<'e> Game<'e> {
 	/// Starts running this games event loop, note that this will block indefinitely.
 	/// This function will return to the caller when the escape key is pressed.
 	pub fn new(context: &'e sdl2::Sdl) -> Game<'e> {
-		// initialize all major subsystems
-	    let _ttf_context = sdl2_ttf::init();
 		// hide the mouse cursor in our drawing context
 		let mut display = graphics::Graphics::new(context);
+		let music = music::Music::new(context);
 		let controller  = input::Input::new();
 		let mut rng = rand::thread_rng();
-		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
-		let powerups_vector: Vec<Box<powerups::Powerup>> = Vec::new();
-		let traps_vector: Vec<Box<traps::Trap>> = Vec::new();
-		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
-		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
-		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
-		let part_vector: Vec<Box<vehicle::Part>> = Vec::new();
-		let coll_part_vector: Vec<Box<vehicle::Part>> = Vec::new();
+		let enemies_vector: Vec<Box<dyn enemies::Zombie>> = Vec::new();
+		let powerups_vector: Vec<Box<dyn powerups::Powerup>> = Vec::new();
+		let traps_vector: Vec<Box<dyn traps::Trap>> = Vec::new();
+		let killed_vector: Vec<Box<dyn enemies::Zombie>> = Vec::new();
+		let activated_vector: Vec<Box<dyn powerups::Powerup>> = Vec::new();
+		let tripped_vector: Vec<Box<dyn traps::Trap>> = Vec::new();
+		let part_vector: Vec<Box<dyn vehicle::Part>> = Vec::new();
+		let coll_part_vector: Vec<Box<dyn vehicle::Part>> = Vec::new();
 
 		let mut game = Game {
 			map: map::Map::load_map(&mut display, 1 as i32),
@@ -137,9 +133,10 @@ impl<'e> Game<'e> {
 				&mut display, 
 				VEHICLE_STARTING_X.to_game(), 
 				VEHICLE_STARTING_Y.to_game()
-			) ) as Box<vehicle::Vehicle>,
+			) ) as Box<dyn vehicle::Vehicle>,
 
 			display:        display,
+			music:			music,
 			context:        context,
 			controller:     controller, 
 			paused:         true,
@@ -152,13 +149,13 @@ impl<'e> Game<'e> {
 			freeze_counter: 0, 
 			alt_control:    false
 		};
-		let number_of_zombies = rng.gen_range(20u32, MAX_ENEMIES);
+		let number_of_zombies = rng.gen_range(20u32..MAX_ENEMIES);
 		for _ in 0.. number_of_zombies {
-		  	game.spawn_zombie(rng.gen_range(1u32, 5u32), (units::Game(0.0), units::Game(0.0)));
+		  	game.spawn_zombie(rng.gen_range(1u32..5u32), (units::Game(0.0), units::Game(0.0)));
 		}
-		let number_of_powerups = rng.gen_range(0u32, MAX_POWERUPS);
+		let number_of_powerups = rng.gen_range(0u32..MAX_POWERUPS);
 		for _ in 0.. number_of_powerups {
-			game.spawn_powerup(rng.gen_range(1u32, 7u32));
+			game.spawn_powerup(rng.gen_range(1u32..7u32));
 		}
 		// let number_of_traps = rng.gen_range(0u, MAX_TRAPS);
 		// for _ in range(0, number_of_traps) {
@@ -177,32 +174,32 @@ impl<'e> Game<'e> {
 			1 => {
 				Box::new( enemies::SlowZombie::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<enemies::Zombie>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn enemies::Zombie>
 			}
 			2 => {
 				Box::new( enemies::CrazyZombie::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<enemies::Zombie>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn enemies::Zombie>
 			}
 			3 => {
 				Box::new( enemies::RandomZombie::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<enemies::Zombie>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn enemies::Zombie>
 			}
 			_ => {
 				match location {
 					(units::Game(0.0), units::Game(0.0)) => Box::new( enemies::CloudZombie::new(
 																&mut self.display, 
-																(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-																(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-															) ) as Box<enemies::Zombie>,
-					(x, y) => Box::new( enemies::CloudZombie::new(&mut self.display, x, y) ) as Box<enemies::Zombie>,
+																(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+																(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+															) ) as Box<dyn enemies::Zombie>,
+					(x, y) => Box::new( enemies::CloudZombie::new(&mut self.display, x, y) ) as Box<dyn enemies::Zombie>,
 				}
 			}
 		};
@@ -225,44 +222,44 @@ impl<'e> Game<'e> {
 			1 => {
 				Box::new( powerups::CricketBat::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<powerups::Powerup>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn powerups::Powerup>
 			}
 			2 => {
 				Box::new( powerups::KillZombie::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<powerups::Powerup>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn powerups::Powerup>
 			}
 			3 => {
 				Box::new( powerups::WipeOut::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<powerups::Powerup>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn powerups::Powerup>
 			}
 			4 => {
 				Box::new( powerups::Freeze::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<powerups::Powerup>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn powerups::Powerup>
 			}
 			5 => {
 				Box::new( powerups::Teleport::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<powerups::Powerup>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn powerups::Powerup>
 			} 
 			_ => {
 				Box::new( powerups::Nuke::new(
 					&mut self.display, 
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game(),
-					(units::Tile(rng.gen_range(1u32, POSSIBLE_CHARACTER_TILES))).to_game()
-				) ) as Box<powerups::Powerup>
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game(),
+					(units::Tile(rng.gen_range(1u32..POSSIBLE_CHARACTER_TILES))).to_game()
+				) ) as Box<dyn powerups::Powerup>
 			}
 		};
 		let colliding_tiles = self.map.get_colliding_tiles(&powerup.damage_rectangle());
@@ -293,12 +290,12 @@ impl<'e> Game<'e> {
 	pub fn spawn_part(&mut self, kind: u32) {
 		let mut rng = rand::thread_rng();
 		let (min, max) = POSSIBLE_PART_RANGE;
-		let mut x = rng.gen_range(0, max);
-		let mut y = rng.gen_range(0, max);
+		let mut x = rng.gen_range(0..max);
+		let mut y = rng.gen_range(0..max);
 		if x < 20 {
-			y = rng.gen_range(min, max);
+			y = rng.gen_range(min..max);
 		} else if y < 20 {
-			x = rng.gen_range(min, max);
+			x = rng.gen_range(min..max);
 		}
 		let part = match self.vehicle.get_type() {
 			1 => {
@@ -308,21 +305,21 @@ impl<'e> Game<'e> {
 							&mut self.display, 
 							units::Tile(x).to_game(),
 							units::Tile(y).to_game()
-						) ) as Box<vehicle::Part>
+						) ) as Box<dyn vehicle::Part>
 					},
 					1 => {
 						Box::new( heli::Windshield::new(
 							&mut self.display, 
 							units::Tile(x).to_game(),
 							units::Tile(y).to_game()
-						) ) as Box<vehicle::Part>
+						) ) as Box<dyn vehicle::Part>
 					},
 					_ => {
 						Box::new( heli::Bar::new(
 							&mut self.display, 
 							units::Tile(x).to_game(),
 							units::Tile(y).to_game()
-						) ) as Box<vehicle::Part>
+						) ) as Box<dyn vehicle::Part>
 					}
 				}
 			},
@@ -333,21 +330,21 @@ impl<'e> Game<'e> {
 							&mut self.display, 
 							units::Tile(x).to_game(),
 							units::Tile(y).to_game()
-						) ) as Box<vehicle::Part>
+						) ) as Box<dyn vehicle::Part>
 					},
 					1 => {
 						Box::new( car::Door::new(
 							&mut self.display, 
 							units::Tile(x).to_game(),
 							units::Tile(y).to_game()
-						) ) as Box<vehicle::Part>
+						) ) as Box<dyn vehicle::Part>
 					},
 					_ => {
 						Box::new( car::Engine::new(
 							&mut self.display, 
 							units::Tile(x).to_game(),
 							units::Tile(y).to_game()
-						) ) as Box<vehicle::Part>
+						) ) as Box<dyn vehicle::Part>
 					}
 				}
 			}
@@ -363,7 +360,7 @@ impl<'e> Game<'e> {
 	}
 
 	pub fn start(&mut self) {
-		self.display.play_music();
+		self.music.play_music();
 		self.draw_start_screen();
 		self.event_loop();
 	}
@@ -415,25 +412,25 @@ impl<'e> Game<'e> {
 	pub fn restart(&mut self) {
 		println!("Restarting game...");
 		self.level = 0;
-		self.new_level(true);
+		self.new_level();
 		self.paused = true;
 		self.score = 0;
 		self.timer = LEVEL_1_TIME;
 	}
 
-	pub fn new_level(&mut self, restart: bool) {
+	pub fn new_level(&mut self) {
 		println!("Starting new level...");
 		self.level = self.level + 1;
 
 		let mut rng = rand::thread_rng();
-		let enemies_vector: Vec<Box<enemies::Zombie>> = Vec::new();
-		let powerup_vector: Vec<Box<powerups::Powerup>> = Vec::new();
-		let traps_vector: Vec<Box<traps::Trap>> = Vec::new();
-		let killed_vector: Vec<Box<enemies::Zombie>> = Vec::new();
-		let activated_vector: Vec<Box<powerups::Powerup>> = Vec::new();
-		let tripped_vector: Vec<Box<traps::Trap>> = Vec::new();
-		let coll_part_vector: Vec<Box<vehicle::Part>> = Vec::new();
-		let part_vector: Vec<Box<vehicle::Part>> = Vec::new();
+		let enemies_vector: Vec<Box<dyn enemies::Zombie>> = Vec::new();
+		let powerup_vector: Vec<Box<dyn powerups::Powerup>> = Vec::new();
+		let traps_vector: Vec<Box<dyn traps::Trap>> = Vec::new();
+		let killed_vector: Vec<Box<dyn enemies::Zombie>> = Vec::new();
+		let activated_vector: Vec<Box<dyn powerups::Powerup>> = Vec::new();
+		let tripped_vector: Vec<Box<dyn traps::Trap>> = Vec::new();
+		let coll_part_vector: Vec<Box<dyn vehicle::Part>> = Vec::new();
+		let part_vector: Vec<Box<dyn vehicle::Part>> = Vec::new();
 
 		self.player = player::Player::new(
 				&mut self.display,
@@ -441,21 +438,21 @@ impl<'e> Game<'e> {
 				PLAYER_STARTING_Y.to_game()
 			);
 
-		let vehicle_num = rng.gen_range(0, 2);
+		let vehicle_num = rng.gen_range(0..2);
 		self.vehicle = match vehicle_num {
 			0 => {
 				Box::new( heli::Helicopter::new(
 					&mut self.display, 
 					VEHICLE_STARTING_X.to_game(), 
 					VEHICLE_STARTING_Y.to_game()
-				) ) as Box<vehicle::Vehicle>
+				) ) as Box<dyn vehicle::Vehicle>
 			}, 
 			_ => {
 				Box::new( car::Car::new(
 					&mut self.display, 
 					VEHICLE_STARTING_X.to_game(), 
 					VEHICLE_STARTING_Y.to_game()
-				) ) as Box<vehicle::Vehicle>
+				) ) as Box<dyn vehicle::Vehicle>
 			}
 		};
 
@@ -467,13 +464,13 @@ impl<'e> Game<'e> {
 		self.tripped = tripped_vector;
 		self.coll_parts = coll_part_vector;
 		self.parts = part_vector;
-		let number_of_zombies = rng.gen_range(20u32, MAX_ENEMIES);
+		let number_of_zombies = rng.gen_range(20u32..MAX_ENEMIES);
 		for _ in 0.. number_of_zombies {
-		  	self.spawn_zombie(rng.gen_range(1u32, 5u32), (units::Game(0.0), units::Game(0.0)));
+		  	self.spawn_zombie(rng.gen_range(1u32..5u32), (units::Game(0.0), units::Game(0.0)));
 		}
-		let number_of_powerups = rng.gen_range(0u32, MAX_POWERUPS);
+		let number_of_powerups = rng.gen_range(0u32..MAX_POWERUPS);
 		for _ in 0.. number_of_powerups {
-			self.spawn_powerup(rng.gen_range(1u32, 7u32));
+			self.spawn_powerup(rng.gen_range(1u32..7u32));
 		}
 		// let number_of_traps = rng.gen_range(0u, MAX_TRAPS);
 		// for _ in range(0, number_of_traps) {
@@ -499,19 +496,19 @@ impl<'e> Game<'e> {
 	/// until its next frame deadline.
 	fn event_loop(&mut self) {
 		// event loop control
-		let frame_delay = units::Millis(1000 / TARGET_FRAMERATE as i64);
-		let start_time = PreciseTime::now();
-		let mut last_update_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
+		let frame_delay = units::Millis(1000 / TARGET_FRAMERATE as u128);
+		let start_time = Instant::now();
+		let mut last_update_time = Game::time_since(start_time);
 		
 		let mut running = true;
 
 		let mut event_pump =  match self.context.event_pump() {
 			Ok(pump) => { pump },
-			Err(msg) => { panic!(msg) }
+			Err(msg) => { panic!("{}", msg) }
 		};
 
 		while running && !self.completed_lvl {
-			let start_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
+			let start_time_ms = Game::time_since(start_time);
 			self.controller.begin_new_frame();
 
 			// drain event queue once per frame
@@ -537,10 +534,10 @@ impl<'e> Game<'e> {
 			if self.controller.was_key_released(Keycode::Return) {
 				if self.paused {
 					self.paused = false;
-					self.display.resume_music();
+					self.music.resume_music();
 				} else {
 					self.paused = true;
-					self.display.pause_music();
+					self.music.pause_music();
 				}
 			}
 
@@ -575,7 +572,7 @@ impl<'e> Game<'e> {
 			}
 
 			// inform actors of how much time has passed since last frame
-			let current_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
+			let current_time_ms = Game::time_since(start_time);
 			let elapsed_time    = current_time_ms - last_update_time;
 		
 			// only update if not in paused state
@@ -596,7 +593,7 @@ impl<'e> Game<'e> {
 			}
 
 			// throttle event-loop based on iteration time vs frame deadline
-			let iter_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds()) - start_time_ms;
+			let iter_time = Game::time_since(start_time) - start_time_ms;
 			let next_frame_time: u64 = if frame_delay > iter_time { 
 				let (units::Millis(fd), units::Millis(it)) = (frame_delay, iter_time);
 				(fd - it) as u64
@@ -609,11 +606,11 @@ impl<'e> Game<'e> {
 			if (self.completed_lvl && running) {
 				let mut cinematic_counter = LEVEL_1_CINEMATIC_FRAMES;
 				while self.completed_lvl && running {
-					let start_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
+					let start_time_ms = units::Millis(Instant::now().elapsed().as_millis());
 					// inform actors of how much time has passed since last frame
-					let current_time_ms = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds());
+					let current_time_ms = Game::time_since(start_time);
 					let elapsed_time    = current_time_ms - last_update_time;
-					let mut show_completion_screen = true;
+					let show_completion_screen = true;
 
 					self.controller.begin_new_frame();
 
@@ -640,7 +637,7 @@ impl<'e> Game<'e> {
 					if self.controller.was_key_released(Keycode::Return) {
 						if cinematic_counter < 0 {
 							self.completed_lvl = false;
-							self.new_level(false);
+							self.new_level();
 							break;
 						} 
 					}
@@ -651,7 +648,7 @@ impl<'e> Game<'e> {
 
 					if cinematic_counter > 0 {
 						self.display.clear_buffer(); // clear back-buffer
-						self.draw_cinematic(cinematic_counter);
+						self.draw_cinematic();
 						self.draw_zombies();
 						self.display.switch_buffers();
 					} else if show_completion_screen {
@@ -659,7 +656,7 @@ impl<'e> Game<'e> {
 					}
 
 					// throttle event-loop based on iteration time vs frame deadline
-					let iter_time = units::Millis(start_time.to(PreciseTime::now()).num_milliseconds()) - start_time_ms;
+					let iter_time = units::Millis(start_time.elapsed().as_millis()) - start_time_ms;
 					let next_frame_time: u64 = if frame_delay > iter_time { 
 						let (units::Millis(fd), units::Millis(it)) = (frame_delay, iter_time);
 						(fd - it) as u64
@@ -709,9 +706,9 @@ impl<'e> Game<'e> {
 		}
 		self.draw_zombies();
 		self.player.draw(&mut self.display);
-		let mut kill_list: Vec<Box<enemies::Zombie>> = Vec::new();
-		let mut active_list: Vec<Box<powerups::Powerup>> = Vec::new();
-		let mut tripped_list: Vec<Box<traps::Trap>> = Vec::new();
+		let mut kill_list: Vec<Box<dyn enemies::Zombie>> = Vec::new();
+		let mut active_list: Vec<Box<dyn powerups::Powerup>> = Vec::new();
+		let mut tripped_list: Vec<Box<dyn traps::Trap>> = Vec::new();
 		for _ in 0.. self.activated.len() { 
 			match self.activated.pop() {
 				Some(activated) => {
@@ -772,7 +769,7 @@ impl<'e> Game<'e> {
 		}
 	}
 
-	fn draw_cinematic(&mut self, counter: i32) {
+	fn draw_cinematic(&mut self) {
 		// background
 		self.map.draw_background(&mut self.display);
 		self.map.draw(&mut self.display);
@@ -782,7 +779,7 @@ impl<'e> Game<'e> {
 
 	/// Passes the current time in milliseconds to our underlying actors.
 	fn update(&mut self, elapsed_time: units::Millis) {
-		self.map.update(elapsed_time);
+		self.map.update();
 		if self.freeze_counter == 0 {
 			for i in 0u32.. self.enemies.len() as u32 { 
 				let enemy = self.enemies.get_mut(i as usize).unwrap();
@@ -807,13 +804,13 @@ impl<'e> Game<'e> {
 		}
 		self.vehicle.update(elapsed_time);
 
-		let mut collidedWithZombie = false;
+		let mut collided_with_zombie = false;
 		if !self.player.is_immune() {
 			for i in 0.. self.enemies.len() { 
 				if self.enemies.get(i).unwrap().damage_rectangle().collides_with_player(&self.player.character.damage_rectangle()) {
 					if self.player.has_bat() || self.player.is_teleporting() {
 						let enemy = self.enemies.remove(i);
-						self.display.play_sound_effect(6);
+						self.music.play_sound_effect(6);
 						let mut mut_enemy = enemy;
 						mut_enemy.kill_zombie();
 						self.killed.push(mut_enemy);
@@ -821,7 +818,7 @@ impl<'e> Game<'e> {
 						self.timer = self.timer + 100;
 					}
 				 	else {
-				 		collidedWithZombie = true;
+						collided_with_zombie = true;
 				 	}
 				 	break;
 				}
@@ -833,7 +830,7 @@ impl<'e> Game<'e> {
 			for i in 0.. self.parts.len() { 
 				if self.parts.get(i).unwrap().damage_rectangle().collides_with(&self.player.character.damage_rectangle()) {
 					let part = self.parts.remove(i);
-					self.display.play_sound_effect(7);
+					self.music.play_sound_effect(7);
 					self.coll_parts.push(part);
 					break;
 				}
@@ -903,8 +900,8 @@ impl<'e> Game<'e> {
 			self.restart();
 		}
 
-		if collidedWithZombie || player_hit_trap {
-			self.display.play_sound_effect(6);
+		if collided_with_zombie || player_hit_trap {
+			self.music.play_sound_effect(6);
 			match self.player.get_health() {
 				health if health > 1 => {
 					self.player.hit_player();
@@ -938,7 +935,7 @@ impl<'e> Game<'e> {
 	}
 
 	fn update_cinematic(&mut self, elapsed_time: units::Millis) {
-		self.map.update(elapsed_time);
+		self.map.update();
 		for i in 0u32.. self.enemies.len() as u32 { 
 			let enemy = self.enemies.get_mut(i as usize).unwrap();
 			let (player_x, player_y) = self.player.get_follow_coords();
@@ -956,16 +953,16 @@ impl<'e> Game<'e> {
 			// kill next zombie you touch without dying
 			1 => { 
 				println!("CRICKET BAT"); 
-				self.display.play_sound_effect(3); 
+				self.music.play_sound_effect(3); 
 				self.player.give_bat(); 
 			},
 			// kill random zombie
 			2 => { 
 				println!("KILL ZOMBIE"); 
 				if self.enemies.len() > 0 {
-					self.display.play_sound_effect(0);
+					self.music.play_sound_effect(0);
 					let mut rng = rand::thread_rng(); 
-					let killed = self.enemies.remove( rng.gen_range(0u32, length as u32) as usize );
+					let killed = self.enemies.remove( rng.gen_range(0u32..length as u32) as usize );
 					let mut mut_enemy = killed;
 					self.activated.push(powerup);
 					mut_enemy.kill_zombie();
@@ -976,8 +973,8 @@ impl<'e> Game<'e> {
 			// wipe out all zombies in given range
 			3 => { 
 				println!("WIPE OUT");
-				self.display.play_sound_effect(1); 
-				let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
+				self.music.play_sound_effect(1); 
+				let mut new_enemies: Vec<Box<dyn enemies::Zombie>> = Vec::new();
 				for _ in 0.. self.enemies.len() { 
 					let enemy = self.enemies.pop();
 					match enemy {
@@ -1002,12 +999,12 @@ impl<'e> Game<'e> {
 			// freeze all zombies
 			4 => { 
 				println!("FREEZE"); 
-				self.display.play_sound_effect(3);
+				self.music.play_sound_effect(3);
 				self.freeze_counter = 300; 
 			},
 			5 => { 
 				println!("TELEPORT"); 
-				self.display.play_sound_effect(3); 
+				self.music.play_sound_effect(3); 
 				// teleport player to helicopter
 				self.player.character.map_x = self.vehicle.get_map_x(); 
 				self.player.character.map_y = self.vehicle.get_map_y() + units::Tile(2).to_game(); 
@@ -1019,14 +1016,14 @@ impl<'e> Game<'e> {
 			_ => { 
 				if powerup.is_debuff() {
 					println!("SUCKS TO BE YOU"); 
-					self.display.play_sound_effect(4);
+					self.music.play_sound_effect(4);
 					let mut rng = rand::thread_rng();
-					let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
+					let mut new_enemies: Vec<Box<dyn enemies::Zombie>> = Vec::new();
 					for _ in 0.. self.enemies.len() { 
 						let enemy = self.enemies.pop();
 						match enemy {
 							Some(enemy) => {
-								if rng.gen_range(1u32, 11u32) >= 3 {
+								if rng.gen_range(1u32..11u32) >= 3 {
 									let crazy_zombie = Box::new( enemies::CrazyZombie::new(
 										&mut self.display, 
 										enemy.get_map_x(),
@@ -1043,8 +1040,8 @@ impl<'e> Game<'e> {
 					self.enemies = new_enemies;
 				} else {
 					println!("NUKE"); 
-					self.display.play_sound_effect(2);
-					let mut new_enemies: Vec<Box<enemies::Zombie>> = Vec::new();
+					self.music.play_sound_effect(2);
+					let mut new_enemies: Vec<Box<dyn enemies::Zombie>> = Vec::new();
 					for _ in 0.. self.enemies.len() {
 						match self.enemies.pop() {
 							Some(enemy) => {
@@ -1076,7 +1073,7 @@ impl<'e> Game<'e> {
 			// Activate bear trap
 			_ => { 
 				println!("BEAR TRAP");
-				self.display.play_sound_effect(5);
+				self.music.play_sound_effect(5);
 				let mut mut_trap = trap;
 				mut_trap.set_timer();
 				self.tripped.push(mut_trap);
@@ -1089,10 +1086,10 @@ impl<'e> Game<'e> {
 		    Ok(file) => { 
 		    	let mut score = String::new();
 		    	let mut f = file;
-		    	f.read_to_string(&mut score);
+		    	f.read_to_string(&mut score).unwrap();
 		    	match score.parse::<i32>() {
 		    		Ok(s) => { s },
-		    		Err(msg) => { panic!(msg) }
+		    		Err(msg) => { panic!("{}", msg) }
 		    	}
 		    }, // succeeded
 		    Err(e) => { println!("failed to get highscore: {}", e); 0 }
@@ -1104,11 +1101,15 @@ impl<'e> Game<'e> {
 			match File::create(&Path::new("highscore.txt")) {
 			    Ok(file) => { 
 			    	let mut f = file;
-			    	f.write_all(new_score.to_string().as_bytes());
+			    	f.write_all(new_score.to_string().as_bytes()).unwrap();
 			    	self.highscore = new_score;
 			    }, // succeeded
 			    Err(e) => println!("failed to write highscore: {}", e)
 			}
 		}
+	}
+
+	fn time_since(start: Instant) -> units::Millis {
+		return units::Millis(Instant::now().duration_since(start).as_millis());
 	}
 }

@@ -35,7 +35,7 @@ impl CollisionTile {
 #[derive(Clone)]
 pub struct Tile {
 	tile_type:  TileType,
-	sprite:     Option<Rc<Box<sprite::Updatable<units::Game>>>>
+	sprite:     Option<Rc<Box<dyn sprite::Updatable<units::Game>>>>
 }
 
 impl Tile {
@@ -45,7 +45,7 @@ impl Tile {
 	}
 
 	/// Creates a tile of `tile_type` initialized w/ its optional sprite.
-	fn from_sprite(sprite: Rc<Box<sprite::Updatable<units::Game>>>,
+	fn from_sprite(sprite: Rc<Box<dyn sprite::Updatable<units::Game>>>,
 	               tile_type: TileType) -> Tile {
 		Tile { tile_type: tile_type, sprite: Some(sprite) }
 	}
@@ -62,8 +62,8 @@ pub struct Map {
 impl Map {
 	/// Will initialize a map (60 * 60) tiles:
 	pub fn load_map(graphics: &mut graphics::Graphics, level: i32) -> Map {
-		static rows: u32 = 60;
-		static cols: u32 = 60; 
+		static ROWS: u32 = 60;
+		static COLS: u32 = 60; 
 
 		let map_path =  "assets/base/Stage/PrtCave.bmp".to_string();
 		let sprite   =  Rc::new(
@@ -72,7 +72,7 @@ impl Map {
 				(units::Tile(1) , units::Tile(0)),
 				(units::Tile(1), units::Tile(1)),
 				map_path.clone()
-			) ) as Box<sprite::Updatable<_>>
+			) ) as Box<dyn sprite::Updatable<_>>
 		);
 
 		let blank_tile = Tile::new();
@@ -80,11 +80,11 @@ impl Map {
 		let mut tile_vec: Vec<Box<Vec<Box<Tile>>>> = Vec::new();
 		match level { 
 			1 => { 
-				for i in 0.. rows {
+				for i in 0.. ROWS {
 					let mut vec = Box::new( Vec::new() );
-					for j in 0.. cols {
+					for j in 0.. COLS {
 						// make the border
-						if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 {
+						if i == ROWS - 1 || i == 0 || j == 0 || j == COLS - 1 {
 							vec.push( Box::new(wall_tile.clone()) );
 						}
 						else {
@@ -96,23 +96,23 @@ impl Map {
 			},
 			_ => {
 				let mut rng = rand::thread_rng();
-				let rand_num_cols = rng.gen_range(1, 30);
-				let rand_num_rows = rng.gen_range(1, 30);
+				let rand_num_cols = rng.gen_range(1..30);
+				let rand_num_rows = rng.gen_range(1..30);
 				let mut rand_cols: Vec<i32> = Vec::new();
 				let mut rand_rows: Vec<i32> = Vec::new();
 				for _ in 0.. rand_num_cols {
 					let mut rng = rand::thread_rng();
-					rand_cols.push( rng.gen_range(1, 60) );
+					rand_cols.push( rng.gen_range(1..60) );
 				}
 				for _ in 0.. rand_num_rows {
 					let mut rng = rand::thread_rng();
-					rand_rows.push( rng.gen_range(1, 60) );
+					rand_rows.push( rng.gen_range(1..60) );
 				}
-				for i in 0.. rows {
+				for i in 0.. ROWS {
 					let mut vec = Box::new( Vec::new() );
-					for j in 0.. cols {
+					for j in 0.. COLS {
 						// make the border
-						if i == rows - 1 || i == 0 || j == 0 || j == cols - 1 || ( rand_rows.contains(&(i as i32)) && rand_cols.contains(&(j as i32)) ) {
+						if i == ROWS - 1 || i == 0 || j == 0 || j == COLS - 1 || ( rand_rows.contains(&(i as i32)) && rand_cols.contains(&(j as i32)) ) {
 							if (i > 0 && i < 9) && (j > 0 && j < 9) {
 								vec.push( Box::new(blank_tile.clone()) );
 							} else {
@@ -203,8 +203,7 @@ impl Map {
 	}
 
 	/// no-op for demo map
-	#[allow(unused_variable)]
-	pub fn update(&mut self, elapsed_time: units::Millis) {
+	pub fn update(&mut self) {
 		/* 
 		 * This was effectively unused and IMHO does not warrant the
 		 * complexity introduced by using dynamic borrow-ck'ing.
@@ -223,7 +222,6 @@ impl Map {
 	/// NOTE: This is a simple check of the _outside bounds_ of the
 	/// rectangle & tile. -- This method may claim that the player is 
 	/// colliding w/ the edge of a tile that _appears to be_ empty space.
-	#[allow(visible_private_types)]
 	pub fn get_colliding_tiles(&self, rectangle: &Rectangle) -> Box<Vec<CollisionTile>> {
 		let mut collision_tiles: Box<Vec<CollisionTile>> = Box::new( Vec::new() );
 		

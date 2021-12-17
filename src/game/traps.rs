@@ -1,18 +1,12 @@
 use game::collisions::Rectangle;
 use game::sprite;
 use game::graphics;
-use game::Game;
 use game::map;
 
 use game::units;
 
 use game::common;
 use game::common::Character;
-
-type MotionTup = (sprite::Motion, sprite::Facing);
-
-static SPRITE_NUM_FRAMES:  units::Frame  = 2;
-static SPRITE_FPS:         units::Fps    = 20;
 
 // Sprite locations
 const BEAR_TRAP_FRAME: units::Tile = units::Tile(0);
@@ -33,7 +27,7 @@ pub trait Trap {
 
 pub struct BearTrap {
 	character: Character, 
-	animation_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	animation_sprite: Vec<Box<dyn sprite::Updatable<units::Game>>>, 
 	animation_timer: i32
 }
 
@@ -41,7 +35,7 @@ impl BearTrap {
 	pub fn new(graphics: &mut graphics::Graphics,
 	           x: units::Game, y: units::Game) -> BearTrap {
 
-		let animation: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+		let animation: Vec<Box<dyn sprite::Updatable<units::Game>>> = Vec::new();
 
 		let mut new_trap = BearTrap { 
 			character: common::Character::new(x, y), 
@@ -72,7 +66,7 @@ impl BearTrap {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 
 		self.character.sprites.insert(movement, loaded_sprite);
 
@@ -84,7 +78,7 @@ impl BearTrap {
 			(motion_frame, facing_frame),
 			(units::Tile(1), units::Tile(1)),
 			asset_path,
-		) ) as Box<sprite::Updatable<_>>;
+		) ) as Box<dyn sprite::Updatable<_>>;
 		self.animation_sprite.push(animation_sprite);
 	}
 }
@@ -100,9 +94,9 @@ impl Trap for BearTrap {
 		}
 	}
 
-	#[allow(unused_variable)]
+	#[allow(unused_variables)]
 	fn update(&mut self, elapsed_time: units::Millis, map: &map::Map) {
-		;
+		
 	}
 
 	fn damage_rectangle(&self) -> Rectangle {

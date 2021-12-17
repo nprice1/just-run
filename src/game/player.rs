@@ -8,7 +8,6 @@ use game::map;
 use game::units;
 
 use game::common;
-use game::common::Character;
 
 pub type MotionTup = (sprite::Motion, sprite::Facing);
 
@@ -38,9 +37,9 @@ static CRICKET_FACING_EAST: units::Tile  = units::Tile(1 + CRICKET_OFFSET);
 
 pub struct Player {
 	pub character: common::Character,
-	cricket_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
-	teleport_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
-	hit_sprites: HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
+	cricket_sprites: HashMap<MotionTup, Box<dyn sprite::Updatable<units::Game>>>,
+	teleport_sprites: HashMap<MotionTup, Box<dyn sprite::Updatable<units::Game>>>,
+	hit_sprites: HashMap<MotionTup, Box<dyn sprite::Updatable<units::Game>>>,
 	cricket_bat: bool,
 	teleport_timer: i32, 
 	immunity_timer: i32,
@@ -58,9 +57,9 @@ impl Player {
 	/// The player is initailized `standing` facing `east`.
 	/// The player will continue to fall until some collision is detected.
 	pub fn new(graphics: &mut graphics::Graphics, x: units::Game, y: units::Game) -> Player {
-		let cricket = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
-		let teleport = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
-		let hit = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
+		let cricket = HashMap::<MotionTup, Box<dyn sprite::Updatable<_>>>::new();
+		let teleport = HashMap::<MotionTup, Box<dyn sprite::Updatable<_>>>::new();
+		let hit = HashMap::<MotionTup, Box<dyn sprite::Updatable<_>>>::new();
 		// construct new player
 		let mut new_player = Player{
 			character: common::Character::new(x, y),
@@ -158,7 +157,7 @@ impl Player {
 						(motion_frame, facing_frame), 
 						(units::Tile(1), units::Tile(1)),	
 						file_path
-					) ) as Box<sprite::Updatable<_>> 
+					) ) as Box<dyn sprite::Updatable<_>> 
 				}
 
 				// dynamic: 
@@ -168,7 +167,7 @@ impl Player {
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						SPRITE_NUM_FRAMES, SPRITE_FPS
-					).unwrap() ) as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<dyn sprite::Updatable<_>>
 				}
 			}
 		});
@@ -190,7 +189,7 @@ impl Player {
 						(motion_frame, facing_frame), 
 						(units::Tile(1), units::Tile(1)),	
 						file_path
-					) ) as Box<sprite::Updatable<_>> 
+					) ) as Box<dyn sprite::Updatable<_>> 
 				}
 
 				// dynamic: 
@@ -200,7 +199,7 @@ impl Player {
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						SPRITE_NUM_FRAMES, SPRITE_FPS
-					).unwrap() ) as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<dyn sprite::Updatable<_>>
 				}
 			}
 		});
@@ -222,7 +221,7 @@ impl Player {
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						STANDING_HIT_FRAMES, HIT_FPS
-					).unwrap() ) as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<dyn sprite::Updatable<_>>
 				}
 
 				// dynamic: 
@@ -232,7 +231,7 @@ impl Player {
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						WALKING_HIT_FRAMES, HIT_FPS
-					).unwrap() ) as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<dyn sprite::Updatable<_>>
 				}
 			}
 		});
@@ -254,7 +253,7 @@ impl Player {
 						(motion_frame, facing_frame), 
 						(units::Tile(1), units::Tile(1)),	
 						file_path
-					) ) as Box<sprite::Updatable<_>> 
+					) ) as Box<dyn sprite::Updatable<_>> 
 				}
 
 				// dynamic: 
@@ -264,7 +263,7 @@ impl Player {
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						SPRITE_NUM_FRAMES, SPRITE_FPS
-					).unwrap() ) as Box<sprite::Updatable<_>>
+					).unwrap() ) as Box<dyn sprite::Updatable<_>>
 				}
 			}
 		});
@@ -285,7 +284,7 @@ impl Player {
 						(motion_frame, facing_frame),
 						(units::Tile(1), units::Tile(1)),
 						asset_path
-					) ) as Box<sprite::Updatable<_>>;
+					) ) as Box<dyn sprite::Updatable<_>>;
 					teleport_sprite.draw(display, (self.character.x, self.character.y));
 				},
 				_ => { self.teleport_sprites.get(&self.character.movement).unwrap().draw(display, (self.character.x, self.character.y)); }

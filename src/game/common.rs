@@ -35,8 +35,8 @@ pub const SCREEN_CORRECTION: units::Tile = units::Tile(20);
 
 pub struct Character {
 	// assets
-	pub sprites:   HashMap<MotionTup, Box<sprite::Updatable<units::Game>>>,
-	pub killed_sprite: Vec<Box<sprite::Updatable<units::Game>>>, 
+	pub sprites:   HashMap<MotionTup, Box<dyn sprite::Updatable<units::Game>>>,
+	pub killed_sprite: Vec<Box<dyn sprite::Updatable<units::Game>>>, 
 
 	// positioning on screen
 	pub x: units::Game, 
@@ -67,8 +67,8 @@ impl Character {
 	/// The player is initailized `standing` facing `east`.
 	pub fn new(x: units::Game, y: units::Game) -> Character {
 		// insert sprites into map
-		let sprite_map = HashMap::<MotionTup, Box<sprite::Updatable<_>>>::new();
-		let killed_vec: Vec<Box<sprite::Updatable<units::Game>>> = Vec::new();
+		let sprite_map = HashMap::<MotionTup, Box<dyn sprite::Updatable<_>>>::new();
+		let killed_vec: Vec<Box<dyn sprite::Updatable<units::Game>>> = Vec::new();
 
 		// construct new player
 		let new_character = Character{
@@ -114,7 +114,7 @@ impl Character {
 				(motion_frame, facing_frame),
 				(units::Tile(1), units::Tile(1)),
 				SPRITE_NUM_FRAMES, SPRITE_FPS
-			).unwrap() ) as Box<sprite::Updatable<_>>;
+			).unwrap() ) as Box<dyn sprite::Updatable<_>>;
 		self.killed_sprite.push(sprite);
 	}
 
@@ -381,9 +381,9 @@ impl Character {
 		let distance_to_target = self.distance( self.target_x, self.target_y );
 
 		if distance_to_target < 20.0 {
-			let chance_x = rng.gen_range(1u32, 3u32);
-			let chance_y = rng.gen_range(1u32, 3u32);
-			let plus_or_minus = rng.gen_range(1u32, 3u32);
+			let chance_x = rng.gen_range(1u32..3u32);
+			let chance_y = rng.gen_range(1u32..3u32);
+			let plus_or_minus = rng.gen_range(1u32..3u32);
 			let center_x = self.map_center_x();
 			let center_y = self.map_center_y();
 			if plus_or_minus == 1 {
@@ -417,8 +417,8 @@ impl Character {
 		let distance_to_target = self.distance( self.target_x, self.target_y );
 
 		if distance_to_target < 20.0 {
-			self.target_x = units::Tile(rng.gen_range(1u32, 58u32)).to_game();
-			self.target_y = units::Tile(rng.gen_range(1u32, 58u32)).to_game();
+			self.target_x = units::Tile(rng.gen_range(1u32..58u32)).to_game();
+			self.target_y = units::Tile(rng.gen_range(1u32..58u32)).to_game();
 		}
 	}
 
